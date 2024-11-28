@@ -1,0 +1,26 @@
+from sqlalchemy import Column, ForeignKey, String, Float
+from ..database import Base
+
+class UserFinancialInfo(Base):
+    __tablename__ = "users_financial_info"
+
+    financial_info_id = Column(String, primary_key=True, index=True, nullable=False)
+    user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    salaryBasic = Column(Float, nullable=False)
+    salaryGross = Column(Float, nullable=False)
+    salaryNet = Column(Float, nullable=False)
+    allowanceHouseRent = Column(Float, nullable=True)
+    allowanceMedical = Column(Float, nullable=True)
+    allowanceSpecial = Column(Float, nullable=True)
+    allowanceFuel = Column(Float, nullable=True)
+    allowancePhoneBill = Column(Float, nullable=True)
+    allowanceOther = Column(Float, nullable=True)
+    allowanceTotal = Column(Float, nullable=True)
+    deductionProvidentFund = Column(Float, nullable=True)
+    deductionTax = Column(Float, nullable=True)
+    deductionOther = Column(Float, nullable=True)
+    deductionTotal = Column(Float, nullable=True)
+    bankName = Column(String, nullable=False)
+    accountName = Column(String, nullable=False)
+    accountNumber = Column(String, nullable=False)
+    iban = Column(String, nullable=True)
