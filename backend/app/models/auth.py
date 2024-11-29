@@ -6,14 +6,14 @@ import enum
 def utc_plus_7():
     return datetime.utcnow() + timedelta(hours=7)
 class StatusEnum(enum.Enum):
-    Active = "A"
-    Inactive = "I"
+    Active = "Active"
+    Inactive = "Inactive"
 
-class PasswordResetCode(Base):
-    __tablename__ = 'password_reset_codes'
+class OTPCode(Base):
+    __tablename__ = 'otp_code'
     
-    reset_id = Column(String, Sequence("code_id_seq"), primary_key=True, index=True)
-    username = Column(String, nullable=False, unique=True)
-    reset_code = Column(String)
+    otp_id = Column(String, Sequence("code_id_seq"), primary_key=True, index=True)
+    username = Column(String, nullable=True, unique=True)
+    otp_code = Column(String)
     status = Column(Enum(StatusEnum), default=StatusEnum.Active)
     expired_in = Column(DateTime, default=utc_plus_7)
