@@ -42,27 +42,3 @@ async def decode_access_token(token: str):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-async def get_current_user(token: str, db: AsyncSession = Depends(get_db)):
-    try:
-        username = await decode_access_token(token)
-        stmt = select(models_user.Users).where(models_user.Users.username == username)
-        result = await db.execute(stmt)
-        user = result.scalars().first()
-        if user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-        return user
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    
-async def get_current_admin(token: str, db: AsyncSession = Depends(get_db)):
-    try:
-        user = await get_current_user(token, db)
-        if user.role != models_user.RoleEnum.Admin:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
-        return user
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
