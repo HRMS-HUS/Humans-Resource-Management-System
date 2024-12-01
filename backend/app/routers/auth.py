@@ -10,15 +10,11 @@ from sqlalchemy import select, and_, func, text, delete
 from ..utils import crypto, jwt, email, otp
 from ..database import get_db
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+import os
+from pathlib import Path
 
 
 router = APIRouter()
-
-
-@router.get("/auth/me", response_model=schemas_user.UserCreate)
-async def read_users_me(token: str = Query(...), db: AsyncSession = Depends(get_db), current: models_user.Users = Depends(jwt.get_current_admin)):
-    user = await jwt.get_current_user(token, db)
-    return user
 
 @router.post("/auth/register", response_model = schemas_user.UserCreate)
 async def register(user: schemas_user.UserCreate = Query(...) ,db: AsyncSession = Depends(get_db)):
@@ -59,78 +55,23 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
         verify_password = crypto.verify_password(form_data.password, db_user.password)
         if not verify_password:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect Username or Password")
+        
         otp_code = otp.create_otp()
         await auth.create_otp_code(db, db_user.username, otp_code)
+        
         subject = "OTP"
         recipient = [email_user]
-        message = f"""<!DOCTYPE html>
-<html>
-<head>
-    <title>Password Reset</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            line-height: 1.5;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f9;
-        }}
-        h1 {{
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #333;
-        }}
-        p {{
-            margin-bottom: 15px;
-            color: #555;
-        }}
-        a {{
-            color: #007bff;
-            text-decoration: none;
-        }}
-        .container {{
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }}
-        .otp {{
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 20px 0;
-            background-color: #007bff;
-            color: #fff;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 5px;
-            letter-spacing: 2px;
-        }}
-        .footer {{
-            margin-top: 30px;
-            font-size: 14px;
-            color: #888;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Hello, {db_user.username}</h1>
-        <p>To log in, please use the following one-time password (OTP):</p>
-        <p class="otp">{otp_code}</p>
-        <p>If you didn't request this, you can ignore this email.</p>
-        <p>Your password won't change until you use the token to create a new one.</p>
-        <div class="footer">
-            <p>Thank you,<br>T1 VÔ ĐỊCH</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
-    await email.send_mail(subject, recipient, message)
-    return {"message:" "OTP sent"}
+        
+        # Read and format the HTML template
+        template_path = Path(__file__).parent.parent / 'templates' / 'otp_email_login.html'
+        with open(template_path, 'r') as file:
+            html_template = file.read()
+        
+        message = html_template.format(username=db_user.username, otp_code=otp_code)
+        
+        await email.send_mail(subject, recipient, message)
+        
+        return {"message": "OTP sent"}
 
 @router.post("/auth/verify-otp")
 async def verify_otp(request: schemas.VerifyOTPRequest = Query(...), db: AsyncSession = Depends(get_db)):
@@ -164,73 +105,16 @@ async def forgot_password(request: schemas.ForgotPassword = Query(...), db: Asyn
     await auth.create_otp_code(db, request.username, reset_code)
     subject = "Reset code"
     recipient = [email_user]
-    message = f"""<!DOCTYPE html>
-<html>
-<head>
-    <title>Password Reset</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            line-height: 1.5;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f9;
-        }}
-        h1 {{
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #333;
-        }}
-        p {{
-            margin-bottom: 15px;
-            color: #555;
-        }}
-        a {{
-            color: #007bff;
-            text-decoration: none;
-        }}
-        .container {{
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }}
-        .otp {{
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 20px 0;
-            background-color: #007bff;
-            color: #fff;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 5px;
-            letter-spacing: 2px;
-        }}
-        .footer {{
-            margin-top: 30px;
-            font-size: 14px;
-            color: #888;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Hello, {request.username}</h1>
-        <p>Someone has requested a password reset. If you requested this, you can use the following token to reset your password:</p>
-        <p class="otp">{reset_code}</p>
-        <p>If you didn't request this, you can ignore this email.</p>
-        <p>Your password won't change until you use the token to create a new one.</p>
-        <div class="footer">
-            <p>Thank you,<br>T1 VÔ ĐỊCH</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
+    
+    # Read and format the HTML template
+    template_path = Path(__file__).parent.parent / 'templates' / 'otp_email_forgot_password.html'
+    with open(template_path, 'r') as file:
+        html_template = file.read()
+    
+    message = html_template.format(username=request.username, reset_code=reset_code)
+    
     await email.send_mail(subject, recipient, message)
+    
     return {"message": "Password reset email sent"}
 
 

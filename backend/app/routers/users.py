@@ -12,3 +12,7 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 
 router = APIRouter()
 
+@router.get("/users/get_user", response_model=schemas.UserCreate)
+async def read_users_me(token: str = Query(...), db: AsyncSession = Depends(get_db), current: models.Users = Depends(users.get_current_admin)):
+    user = await users.get_current_user(token, db)
+    return user

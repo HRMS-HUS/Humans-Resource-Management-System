@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Password Reset</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }}
+        h1 {{
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }}
+        p {{
+            margin-bottom: 15px;
+            color: #555;
+        }}
+        a {{
+            color: #007bff;
+            text-decoration: none;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }}
+        .otp {{
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 20px 0;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            letter-spacing: 2px;
+        }}
+        .footer {{
+            margin-top: 30px;
+            font-size: 14px;
+            color: #888;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hello, {username}</h1>
+        <p>To log in, please use the following one-time password (OTP):</p>
+        <p class="otp">{otp_code}</p>
+        <p>If you didn't request this, you can ignore this email.</p>
+        <p>Your password won't change until you use the token to create a new one.</p>
+        <div class="footer">
+            <p>Thank you,<br>T1 VÔ ĐỊCH</p>
+        </div>
+    </div>
+</body>
+</html>
