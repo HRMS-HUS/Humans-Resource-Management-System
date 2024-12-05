@@ -1,19 +1,31 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import users as models_user
 from ..schemas import users as schemas_user
-from ..models import auth as models
-from ..schemas import auth as schemas
+from ..models import authentication as models
+from ..models import users as user_model
+from ..schemas import authentication as schemas
 from fastapi import HTTPException,status
 from sqlalchemy import select, and_, func, text, delete
 from ..utils import crypto
 
+async def get_user_id_by_username(db: AsyncSession, username: str) -> int:
+    stmt = select(user_model.Users.user_id).where(user_model.Users.username == username)
+    result = await db.execute(stmt)
+    user_id = result.scalars().first()
+    
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    return user_id
+
 async def create_otp_code(db: AsyncSession, username: str, otp_code: str):
+    user_id = await get_user_id_by_username(db, username)
     expired_time = func.now() - text("interval '10 minutes'")
 
     stmt = (
         select(models.OTPCode)
         .where(
-            models.OTPCode.username == username,
+            models.OTPCode.user_id == user_id,
         )
     )
     result = await db.execute(stmt)
@@ -29,7 +41,7 @@ async def create_otp_code(db: AsyncSession, username: str, otp_code: str):
         await db.commit()
     
     new_otp_code = models.OTPCode(
-        username = username,
+        user_id = user_id,
         otp_code = otp_code
     )
     db.add(new_otp_code)

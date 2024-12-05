@@ -11,20 +11,34 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
 
 async def create_access_token(data: dict, expires_delta: timedelta = None):
+    """
+    Create a JWT access token
+    
+    :param data: Payload data to encode in the token
+    :param expires_delta: Optional expiration time delta
+    :return: Encoded JWT token
+    """
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-
 async def decode_access_token(token: str):
+    """
+    Decode and validate a JWT access token
+    
+    :param token: JWT token to decode
+    :return: Username from the token payload
+    :raises HTTPException: If token is invalid
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -42,3 +56,38 @@ async def decode_access_token(token: str):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+    """
+    Get the current user based on the JWT token
+    
+    :param token: OAuth2 bearer token
+    :param db: Database session
+    :return: User model instance
+    :raises HTTPException: If user is not found or token is invalid
+    """
+    try:
+        # Decode the token to get the username
+        username = await decode_access_token(token)
+        
+        # Find user in the database
+        stmt = select(models_user.Users).where(models_user.Users.username == username)
+        result = await db.execute(stmt)
+        user = result.scalars().first()
+        
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        return user
+    
+    except HTTPException as e:
+        raise e
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

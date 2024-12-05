@@ -5,6 +5,7 @@ from ..models import userPersonalInfo as user_info
 from typing import Optional
 
 class UserInfoCreate(BaseModel):
+    user_id: str
     fullname: str
     citizen_card: str
     date_of_birth: date

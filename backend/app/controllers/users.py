@@ -1,43 +1,62 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..database import get_db
+from ..models import userPersonalInfo as models_user_info
 from ..models import users as models
 from ..schemas import users as schemas
-from fastapi import HTTPException,status, Depends
+from ..services import users as users_service
+from fastapi import HTTPException, status, Depends, APIRouter, Query
 from sqlalchemy import select, and_, func, text, delete
-from ..utils import crypto, jwt
+from ..utils import crypto, jwt, email, otp
+from ..database import get_db
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from typing import Optional, List
 
-async def create_user(db: AsyncSession, user: schemas.UserCreate):
-    db_user = models.Users(
-        username=user.username,
-        password=user.password,
+
+async def read_users_me(current_user: models.Users):
+
+    return schemas.User(
+        user_id=current_user.user_id, role=current_user.role, status=current_user.status
     )
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
 
-async def get_current_user(token: str, db: AsyncSession = Depends(get_db)):
-    try:
-        username = await jwt.decode_access_token(token)
-        stmt = select(models.Users).where(models.Users.username == username)
-        result = await db.execute(stmt)
-        user = result.scalars().first()
-        if user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-        return user
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-async def get_active_user(token: str, db: AsyncSession = Depends(get_db)):
-    user = await get_current_user(token, db)
-    if user.status != models.StatusEnum.Active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
-    return user
+async def update_existing_user(
+    db: AsyncSession, user_id: str, user_update: schemas.UserCreate
+):
 
-async def get_current_admin(token: str, db: AsyncSession = Depends(get_db)):
-    user = await get_active_user(token, db)
-    if user.role != models.RoleEnum.Admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
-    return user
+    updated_user = await users_service.update_user(db, user_id, user_update)
+    return schemas.User(
+        user_id=updated_user.user_id, role=updated_user.role, status=updated_user.status
+    )
+
+
+async def delete_existing_user(db: AsyncSession, user_id: str):
+
+    return await users_service.delete_user(db, user_id)
+
+
+async def get_all_users(
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 10,
+    role: Optional[models.RoleEnum] = None,
+    status: Optional[models.StatusEnum] = None,
+) -> dict:
+
+    users = await users_service.get_all_users(
+        db, skip=skip, limit=limit, role=role, status=status
+    )
+
+    # Count total users matching filters
+    total_count = await users_service.count_users(db, role=role, status=status)
+
+    # Transform users to schema
+    user_schemas = [
+        schemas.User(
+            user_id=user.user_id,
+            username=user.username,
+            role=user.role,
+            status=user.status,
+        )
+        for user in users
+    ]
+
+    return {"users": user_schemas, "total": total_count, "skip": skip, "limit": limit}
