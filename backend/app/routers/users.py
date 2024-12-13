@@ -3,7 +3,7 @@ from ..models import userPersonalInfo as models_user_info
 from ..models import users as models
 from ..schemas import users as schemas
 from ..services import users as users_service
-from ..controllers import users as users_controller
+from ..controllers.admin import users as users_controller
 from fastapi import HTTPException, status, Depends, APIRouter, Query
 from ..database import get_db
 from typing import Optional, List

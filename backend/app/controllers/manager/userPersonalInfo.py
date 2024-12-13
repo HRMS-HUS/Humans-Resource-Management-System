@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..services import users as users_service
-from ..schemas import userPersonalInfo as schemas
-from ..services import userPersonalInfo as services
-from ..database import get_db
-from ..models import users as model_user
+from ...services import users as users_service
+from ...schemas import userPersonalInfo as schemas
+from ...services import userPersonalInfo as services
+from ...database import get_db
+from ...models import users as model_user
 
 
 async def create_user_personal_infos(

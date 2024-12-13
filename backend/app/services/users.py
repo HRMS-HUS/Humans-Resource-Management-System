@@ -17,6 +17,7 @@ async def create_user(db: AsyncSession, user: schemas.UserCreate):
     await db.commit()
     await db.refresh(db_user)
     return db_user
+
 async def get_user_by_id(db: AsyncSession, user_id: str):
     result = await db.execute(select(models.Users).filter_by(user_id=user_id))
     user = result.scalar_one_or_none()

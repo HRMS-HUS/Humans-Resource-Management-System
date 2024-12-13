@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..schemas import userPersonalInfo as schemas
-from ..controllers import userPersonalInfo as controllers
+from ..controllers.manager import userPersonalInfo as controllers
 from ..models import users as models
 from ..services import users
 from ..database import get_db

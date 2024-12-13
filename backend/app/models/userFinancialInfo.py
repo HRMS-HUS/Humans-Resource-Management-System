@@ -1,10 +1,10 @@
-from sqlalchemy import Column, ForeignKey, String, Float
+from sqlalchemy import Column, ForeignKey, String, Float, Sequence
 from ..database import Base
 
 class UserFinancialInfo(Base):
     __tablename__ = "users_financial_info"
 
-    financial_info_id = Column(String, primary_key=True, index=True, nullable=False)
+    financial_info_id = Column(String, Sequence("personal_id_seq"), primary_key=True, index=True, nullable=False)
     user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     salaryBasic = Column(Float, nullable=False)
     salaryGross = Column(Float, nullable=False)

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import authentication, userPersonalInfo, users
+from .routers import authentication, userPersonalInfo, users, userFinancialInfo
 from .database import init_db
 
 app = FastAPI()
@@ -11,3 +11,4 @@ async def on_startup():
 app.include_router(users.router)
 app.include_router(authentication.router)
 app.include_router(userPersonalInfo.router)
+app.include_router(userFinancialInfo.router)
