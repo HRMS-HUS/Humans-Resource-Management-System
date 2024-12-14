@@ -24,7 +24,7 @@ const Login = () => {
         </div>
         <input type="submit" value="Đăng nhập" id="btn-login" />
         <div className="forgot-password">
-          <a href="#">Quên mật khẩu?</a>
+          <a href="#">Quên mật khẩu</a>
         </div>
       </form>
     </div>
