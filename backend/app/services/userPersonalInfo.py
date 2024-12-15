@@ -64,8 +64,19 @@ async def update_user_personal_info(
     
     await get_user_personal_info_by_id(db, personal_info_id)
     
-    
-    update_data = user.model_dump(exclude_unset=True)
+    update_data = {
+        "user_id": user.user_id,
+        "fullname": user.fullname,
+        "citizen_card": user.citizen_card,
+        "date_of_birth": user.date_of_birth,
+        "sex": user.sex,
+        "phone": user.phone,
+        "email": user.email,
+        "marital_status": user.marital_status,
+        "address": user.address,
+        "city": user.city,
+        "country": user.country
+    }
     
     stmt = update(models.UserPersonalInfo).where(
         models.UserPersonalInfo.personal_info_id == personal_info_id
@@ -73,7 +84,6 @@ async def update_user_personal_info(
     
     result = await db.execute(stmt)
     await db.commit()
-    
     
     updated_info = await get_user_personal_info_by_id(db, personal_info_id)
     return updated_info
