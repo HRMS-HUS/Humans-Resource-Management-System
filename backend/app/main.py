@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent
+from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job
 from .database import init_db
 
 app = FastAPI()
@@ -13,3 +13,4 @@ app.include_router(authentication.router)
 app.include_router(userPersonalInfo.router)
 app.include_router(userFinancialInfo.router)
 app.include_router(userPersonalEvent.router)
+app.include_router(job.router)
