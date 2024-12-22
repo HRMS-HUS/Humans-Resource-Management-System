@@ -3,3 +3,4 @@
 *.ini
 env.py
 script.py.mako
+data
