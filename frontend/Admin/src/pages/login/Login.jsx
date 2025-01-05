@@ -13,7 +13,7 @@ const Login = () => {
 
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const { login } = useAuthStore()
+    const { login, error, isLoading } = useAuthStore()
 
     const handleLogin = async (e) => {
         e.preventDefault()
@@ -30,15 +30,16 @@ const Login = () => {
                 <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <FormControl>
                         <FormLabel sx={{ fontSize: '16px' }}>Username</FormLabel>
-                        <Input name="username" type="text" placeholder="Username" sx={{ height: '40px' }} onChange={(e) => setUsername(e.target.value)} />
+                        <Input name="username" type="text" placeholder="Username" sx={{ height: '42px' }} onChange={(e) => setUsername(e.target.value)} />
                     </FormControl>
                     <FormControl>
                         <FormLabel sx={{ fontSize: '16px' }}>Password</FormLabel>
-                        <Input name="password" type="password" placeholder="Password" sx={{ height: '40px' }} onChange={(e) => setPassword(e.target.value)} />
+                        <Input name="password" type="password" placeholder="Password" sx={{ height: '42px' }} onChange={(e) => setPassword(e.target.value)} />
                     </FormControl>
-                    <Button sx={{ mt: 1, fontSize: '16px' }}>Log in</Button>
+                    <Button type='submit' sx={{ mt: 1, fontSize: '16px' }}>Log in</Button>
                 </form>
                 <Link href="/forgot-password" sx={{ color: "#1976d2" }}>Forgot password?</Link>
+                {error && <Typography>{error}</Typography>}
             </Sheet>
         </main>
     )
