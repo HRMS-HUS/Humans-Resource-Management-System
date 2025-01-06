@@ -66,18 +66,18 @@ async def delete_user(db: AsyncSession, user_id: str):
     
     return {"detail": "User deleted successfully"}
 
-async def get_current_user(db: AsyncSession = Depends(get_db), token: str = Depends(jwt.oauth2_scheme)):
-    return await jwt.get_current_user(token, db)
+# async def get_current_user(db: AsyncSession = Depends(get_db), token: str = Depends(jwt.oauth2_scheme)):
+#     return await jwt.get_current_user(token, db)
 
-async def get_active_user(db: AsyncSession = Depends(get_db), current_user: models.Users = Depends(get_current_user)):
-    if current_user.status != models.StatusEnum.Active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
-    return current_user
+# async def get_active_user(db: AsyncSession = Depends(get_db), current_user: models.Users = Depends(get_current_user)):
+#     if current_user.status != models.StatusEnum.Active:
+#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
+#     return current_user
 
-async def get_current_admin(db: AsyncSession = Depends(get_db), current_user: models.Users = Depends(get_active_user)):
-    if current_user.role != models.RoleEnum.Admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
-    return current_user
+# async def get_current_admin(db: AsyncSession = Depends(get_db), current_user: models.Users = Depends(get_active_user)):
+#     if current_user.role != models.RoleEnum.Admin:
+#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+#     return current_user
 
 async def get_all_users(
     db: AsyncSession, 

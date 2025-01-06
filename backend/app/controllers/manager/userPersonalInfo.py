@@ -10,7 +10,6 @@ from ...models import users as model_user
 async def create_user_personal_infos(
     user: schemas.UserInfoCreate = Query(...),
     db: AsyncSession = Depends(get_db),
-    current: model_user.Users = Depends(users_service.get_current_admin),
 ):
     try:
         return await services.create_user_info(user, db)

@@ -1,3 +1,4 @@
+# services/userFinancialInfo.py
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 from fastapi import HTTPException, status
@@ -7,19 +8,67 @@ from typing import List
 
 async def create_financial_info(db: AsyncSession, financial: schemas.UserFinancialInfoCreate):
     db_financial = models.UserFinancialInfo(
-        financial_info_id=financial.financial_info_id,
         user_id=financial.user_id,
-        bank_name=financial.bank_name,
-        account_number=financial.account_number,
-        account_type=financial.account_type,
-        balance=financial.balance,
-        currency=financial.currency
+        salaryBasic=financial.salaryBasic,
+        salaryGross=financial.salaryGross,
+        salaryNet=financial.salaryNet,
+        allowanceHouseRent=financial.allowanceHouseRent,
+        allowanceMedical=financial.allowanceMedical,
+        allowanceSpecial=financial.allowanceSpecial,
+        allowanceFuel=financial.allowanceFuel,
+        allowancePhoneBill=financial.allowancePhoneBill,
+        allowanceOther=financial.allowanceOther,
+        allowanceTotal=financial.allowanceTotal,
+        deductionProvidentFund=financial.deductionProvidentFund,
+        deductionTax=financial.deductionTax,
+        deductionOther=financial.deductionOther,
+        deductionTotal=financial.deductionTotal,
+        bankName=financial.bankName,
+        accountName=financial.accountName,
+        accountNumber=financial.accountNumber,
+        iban=financial.iban
     )
     db.add(db_financial)
     await db.commit()
     await db.refresh(db_financial)
     return db_financial
 
+async def update_financial_info(db: AsyncSession, financial_info_id: str, financial: schemas.UserFinancialInfoCreate):
+    await get_financial_info_by_id(db, financial_info_id)
+    
+    update_data = {
+        "user_id": financial.user_id,
+        "salaryBasic": financial.salaryBasic,
+        "salaryGross": financial.salaryGross,
+        "salaryNet": financial.salaryNet,
+        "allowanceHouseRent": financial.allowanceHouseRent,
+        "allowanceMedical": financial.allowanceMedical,
+        "allowanceSpecial": financial.allowanceSpecial,
+        "allowanceFuel": financial.allowanceFuel,
+        "allowancePhoneBill": financial.allowancePhoneBill,
+        "allowanceOther": financial.allowanceOther,
+        "allowanceTotal": financial.allowanceTotal,
+        "deductionProvidentFund": financial.deductionProvidentFund,
+        "deductionTax": financial.deductionTax,
+        "deductionOther": financial.deductionOther,
+        "deductionTotal": financial.deductionTotal,
+        "bankName": financial.bankName,
+        "accountName": financial.accountName,
+        "accountNumber": financial.accountNumber,
+        "iban": financial.iban
+    }
+    
+    stmt = update(models.UserFinancialInfo).where(
+        models.UserFinancialInfo.financial_info_id == financial_info_id
+    ).values(**update_data)
+    
+    await db.execute(stmt)
+    await db.commit()
+    
+    updated_info = await get_financial_info_by_id(db, financial_info_id)
+    return updated_info
+
+# The get_financial_info_by_id, get_all_financial_info, and delete_financial_info functions remain unchanged
 async def get_financial_info_by_id(db: AsyncSession, financial_info_id: str):
     result = await db.execute(
         select(models.UserFinancialInfo).filter(
@@ -48,28 +97,6 @@ async def get_all_financial_info(db: AsyncSession, skip: int = 0, limit: int = 1
         return []
     
     return financial_infos
-
-async def update_financial_info(db: AsyncSession, financial_info_id: str, financial: schemas.UserFinancialInfoCreate):
-    await get_financial_info_by_id(db, financial_info_id)
-    
-    update_data = {
-        "user_id": financial.user_id,
-        "bank_name": financial.bank_name,
-        "account_number": financial.account_number,
-        "account_type": financial.account_type,
-        "balance": financial.balance,
-        "currency": financial.currency
-    }
-    
-    stmt = update(models.UserFinancialInfo).where(
-        models.UserFinancialInfo.financial_info_id == financial_info_id
-    ).values(**update_data)
-    
-    await db.execute(stmt)
-    await db.commit()
-    
-    updated_info = await get_financial_info_by_id(db, financial_info_id)
-    return updated_info
 
 async def delete_financial_info(db: AsyncSession, financial_info_id: str):
     await get_financial_info_by_id(db, financial_info_id)

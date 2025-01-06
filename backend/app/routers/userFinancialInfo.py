@@ -5,6 +5,7 @@ from ..database import get_db
 from ..schemas import userFinancialInfo as schemas
 from ..controllers.manager import userFinancialInfo as controller
 from ..services import users
+from ..utils import jwt
 from typing import List
 
 router = APIRouter(prefix="/api", tags=["financial_info"])
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/api", tags=["financial_info"])
 async def create_financial_info(
     financial: schemas.UserFinancialInfoCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(users.get_current_admin)
+    current_user: dict = Depends(jwt.get_current_admin)
 ):
     return await controller.create_financial_info_controller(db, financial)
 
@@ -28,7 +29,7 @@ async def create_financial_info(
 async def get_financial_info(
     financial_info_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(users.get_current_admin)
+    current_user: dict = Depends(jwt.get_current_admin)
 ):
     return await controller.get_financial_info_by_id_controller(db, financial_info_id)
 
@@ -40,7 +41,7 @@ async def get_all_financial_info(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(users.get_current_admin)
+    current_user: dict = Depends(jwt.get_current_admin)
 ):
     return await controller.get_all_financial_info_controller(db, skip, limit)
 
@@ -52,7 +53,7 @@ async def update_financial_info(
     financial_info_id: str,
     financial: schemas.UserFinancialInfoCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(users.get_current_admin)
+    current_user: dict = Depends(jwt.get_current_admin)
 ):
     return await controller.update_financial_info_controller(
         db, financial_info_id, financial
@@ -62,6 +63,6 @@ async def update_financial_info(
 async def delete_financial_info(
     financial_info_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(users.get_current_admin)
+    current_user: dict = Depends(jwt.get_current_admin)
 ):
     return await controller.delete_financial_info_controller(db, financial_info_id)

@@ -69,3 +69,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+async def get_active_user(db: AsyncSession = Depends(get_db), current_user: models_user.Users = Depends(get_current_user)):
+    if current_user.status != models_user.StatusEnum.Active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
+    return current_user
+
+async def get_current_admin(db: AsyncSession = Depends(get_db), current_user: models_user.Users = Depends(get_active_user)):
+    if current_user.role != models_user.RoleEnum.Admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+    return current_user

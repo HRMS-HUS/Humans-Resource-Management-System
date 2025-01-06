@@ -9,7 +9,7 @@ class JobBase(BaseModel):
     end_date: date
 
 class JobCreate(JobBase):
-    job_id: str
+    pass
 
 class Job(JobBase):
     job_id: str
