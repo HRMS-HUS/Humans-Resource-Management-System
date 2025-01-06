@@ -9,9 +9,9 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: hrms
+      POSTGRES_USER: ${pg_user}
+      POSTGRES_PASSWORD: ${pg_password}
+      POSTGRES_DB: ${pg_db}
     ports:
       - "5432:5432"
     volumes:
