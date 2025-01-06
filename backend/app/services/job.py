@@ -7,7 +7,7 @@ from ..models import job as models
 from ..schemas import job as schemas
 from typing import List, Optional
 
-async def create_job(db: AsyncSession, job: schemas.JobCreate) -> models.Job:
+async def create_job(db: AsyncSession, job: schemas.JobCreate):
     try:
         db_job = models.Job(
             user_id=job.user_id,
