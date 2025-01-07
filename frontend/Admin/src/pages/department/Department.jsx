@@ -31,7 +31,7 @@ function EditToolbar(props) {
         const id = randomId();
         setRows((oldRows) => [
             ...oldRows,
-            { id, department_id: '', department_name: '', manager_id: '', location: '', contact_email: '', email: '', start_date: '', status: '', isNew: true }
+            { id, department_id: '', department_name: '', manager_id: '', location: '', contact_email: '', email: '', start_date: new Date(), status: 'Active', isNew: true }
         ]);
         setRowModesModel((oldModel) => ({
             ...oldModel,
@@ -200,15 +200,16 @@ const Department = () => {
         { field: "location", headerName: "Location", width: 250, editable: true },
         { field: "contact_email", headerName: "Contact Email", width: 250, editable: true },
         {
-            field: "start_date", headerName: "Start Date", width: 100, type: "date", align: "center", headerAlign: "center", editable: true,
+            field: "start_date", headerName: "Start Date", width: 120, type: "date", align: "center", headerAlign: "center", editable: true,
             valueGetter: (params) => {
-                return params.row && params.row.start_date ? new Date(params.row.start_date) : null;
+                return params?.row?.start_date ? new Date(params.row.start_date) : null;
             },
             renderCell: (params) => {
-                const startDate = params.row && params.row.start_date;
+                const startDate = params?.row?.start_date;
                 return startDate ? dayjs(startDate).format('DD/MM/YYYY') : '';
             }
-        },
+        }
+        ,
         {
             field: "status",
             headerName: "Status",
