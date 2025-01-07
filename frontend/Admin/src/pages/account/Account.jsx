@@ -21,7 +21,7 @@ function EditToolbar(props) {
         const id = randomId();
         setRows((oldRows) => [
             ...oldRows,
-            { id, username: '', password: '', status: 'Active', role: 'User', isNew: true }
+            { id, username: '', password: '', status: 'Inactive', role: 'User', isNew: true }
         ]);
         setRowModesModel((oldModel) => ({
             ...oldModel,
@@ -43,23 +43,38 @@ const Account = () => {
     const theme = useTheme()
     const [rowModesModel, setRowModesModel] = useState({});
     const [rows, setRows] = useState([]);
+    const [loading, setLoading] = useState(null);
+    const [activeAccounts, setActiveAccounts] = useState([])
 
     const fetchAccounts = async () => {
+        setLoading(true);
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/users');
-            const dataWithId = response.data.users.map(user => ({
+
+            const [response1, response2] = await Promise.all([
+                axios.get('http://127.0.0.1:8000/api/users'),
+                axios.get('http://127.0.0.1:8000/active-users')
+            ]);
+
+            const dataWithId = response1.data.users.map(user => ({
                 ...user,
                 id: user.user_id
             }));
+
             setRows(dataWithId);
+            setActiveAccounts(response2.data.active_users);
+
         } catch (error) {
             console.error("Error fetching accounts:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchAccounts()
-    }, [])
+        fetchAccounts();
+        console.log(rows)
+        console.log(activeAccounts)
+    }, []);
 
     const handleRowEditStop = (params, event) => {
         if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -91,7 +106,7 @@ const Account = () => {
             console.error('Error deleting user:', error);
         }
     };
-    
+
 
     const handleCancelClick = (id) => () => {
         setRowModesModel({
@@ -107,7 +122,7 @@ const Account = () => {
 
     const processRowUpdate = async (newRow) => {
         const updatedRow = { ...newRow, isNew: false };
-    
+
         try {
             if (newRow.isNew) {
                 const response = await axios.post('http://127.0.0.1:8000/api/users', {
@@ -132,7 +147,7 @@ const Account = () => {
         } catch (error) {
             console.error('Error saving data:', error);
         }
-    };    
+    };
 
     const handleRowModesModelChange = (newRowModesModel) => {
         setRowModesModel(newRowModesModel);
@@ -140,10 +155,34 @@ const Account = () => {
 
     const columns = [
         { field: 'user_id', headerName: 'ID', width: 120, align: "center", headerAlign: "center", editable: true },
-        { field: 'username', headerName: 'Username', flex: 1, align: "left", headerAlign: "left", editable: true },
-        { field: 'password', headerName: 'Password', flex: 1, align: "center", headerAlign: "center", editable: true, renderCell: () => { return 'undefined'; } },
+        { field: 'username', headerName: 'Username', flex: 1, editable: true, },
         {
-            field: 'status', headerName: 'Active Status', flex: 1, align: "center", headerAlign: "center", editable: true, type: 'singleSelect', valueOptions: ['Active', 'Inactive'], renderCell: ({ row: { status } }) => {
+            field: 'password', headerName: 'Password', flex: 1, align: "center", headerAlign: "center", editable: true, renderCell: () => {
+                return <Typography sx={{
+                    fontSize: "13px",
+                    color: "#fff",
+                    fontStyle: "italic",
+                    fontWeight: "bold",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "100%"
+                }}>
+                    Undefined
+                </Typography>
+            }
+        },
+        {
+            field: 'status',
+            headerName: 'Active Status',
+            flex: 1,
+            align: "center",
+            headerAlign: "center",
+            editable: true,
+            type: 'singleSelect',
+            valueOptions: ['Active', 'Inactive'],
+            renderCell: ({ row: { username } }) => {
+                const status = activeAccounts.includes(username) ? "Active" : "Inactive";
                 return (
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
                         <Box sx={{
@@ -160,11 +199,11 @@ const Account = () => {
                             <Typography sx={{ fontSize: "13px", color: "#fff" }}> {status} </Typography>
                         </Box>
                     </div>
-                )
+                );
             }
         },
         {
-            field: 'role', headerName: 'Access', flex: 1, align: "center", headerAlign: "center", editable: true, type: 'singleSelect', valueOptions: ['Admin', 'Manage', 'User'], renderCell: ({ row: { role } }) => {
+            field: 'role', headerName: 'Access', flex: 1, align: "center", headerAlign: "center", editable: true, type: 'singleSelect', valueOptions: ['Admin', 'User'], renderCell: ({ row: { role } }) => {
                 return (
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
                         <Box sx={{
@@ -179,7 +218,6 @@ const Account = () => {
                                 : theme.palette.primary.dark
                         }}>
                             {role === "Admin" && (<AdminPanelSettingsOutlined sx={{ color: "#fff" }} fontSize='small' />)}
-                            {role === "Manage" && (<SecurityOutlined sx={{ color: "#fff" }} fontSize='small' />)}
                             {role === "User" && (<LockOpenOutlined sx={{ color: "#fff" }} fontSize='small' />)}
                             <Typography sx={{ fontSize: "13px", color: "#fff" }}> {role} </Typography>
                         </Box>
@@ -226,6 +264,7 @@ const Account = () => {
                 }}
                 checkboxSelection
                 disableRowSelectionOnClick
+                loading={loading}
             />
         </Box>
     )
