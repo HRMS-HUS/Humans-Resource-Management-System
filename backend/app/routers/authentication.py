@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, APIRouter
-from ..controllers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job
+
+from ..controllers.admin import users
+from ..controllers import authentication
 from ..configs.database import init_db
 import os, redis
 

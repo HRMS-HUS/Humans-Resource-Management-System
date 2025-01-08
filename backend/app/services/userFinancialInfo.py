@@ -32,7 +32,7 @@ async def create_financial_info(
 
 
 async def update_financial_info(
-    db: AsyncSession, financial_info_id: str, financial: schemas.UserFinancialInfoCreate
+    db: AsyncSession, financial_info_id: str, financial: schemas.UserFinancialInfoUpdate
 ):
     async with DistributedLock(f"financial_info:{financial_info_id}"):
         db_financial = await get_financial_info_by_id(db, financial_info_id)

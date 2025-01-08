@@ -25,36 +25,112 @@ async def get_user_by_id(db: AsyncSession, user_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
-async def update_user(db: AsyncSession, user_id: str, user_update: schemas.UserCreate):
+async def update_user(db: AsyncSession, user_id: str, user_update: schemas.UserUpdate):
     existing_user = await get_user_by_id(db, user_id)
     
+    if user_update.username:
+        username_check = await db.execute(
+            select(models.Users)
+            .filter(models.Users.username == user_update.username)
+            .filter(models.Users.user_id != user_id)
+        )
+        if username_check.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Username already exists"
+            )
+        
+        update_data = {"username": user_update.username}
+        
+        if user_update.role is not None:
+            update_data["role"] = user_update.role
+        if user_update.status is not None:
+            update_data["status"] = user_update.status
+            
+        stmt = (
+            update(models.Users)
+            .where(models.Users.user_id == user_id)
+            .values(**update_data)
+        )
+        await db.execute(stmt)
+        await db.commit()
+        await db.refresh(existing_user)
     
-    username_check = await db.execute(
-        select(models.Users)
-        .filter(models.Users.username == user_update.username)
-        .filter(models.Users.user_id != user_id)
-    )
-    if username_check.scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
+    return existing_user
+
+async def change_password(
+    db: AsyncSession, 
+    user_id: str, 
+    current_password: str, 
+    new_password: str
+):
+    user = await get_user_by_id(db, user_id)
     
+    # Verify current password
+    if not crypto.verify_password(current_password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect"
+        )
     
-    hashed_password = crypto.hash_password(user_update.password)
-    
-    
+    # Hash and update new password
+    hashed_password = crypto.hash_password(new_password)
     stmt = (
         update(models.Users)
         .where(models.Users.user_id == user_id)
-        .values(
-            username=user_update.username, 
-            password=hashed_password
-        )
+        .values(password=hashed_password)
     )
     await db.execute(stmt)
     await db.commit()
+    await db.refresh(user)
     
+    return user
+
+async def change_own_password(
+    db: AsyncSession, 
+    user: models.Users,  # Pass the user object directly
+    current_password: str, 
+    new_password: str
+):
+    # Verify current password
+    if not crypto.verify_password(current_password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect"
+        )
     
-    await db.refresh(existing_user)
-    return existing_user
+    # Hash and update new password
+    hashed_password = crypto.hash_password(new_password)
+    stmt = (
+        update(models.Users)
+        .where(models.Users.user_id == user.user_id)
+        .values(password=hashed_password)
+    )
+    await db.execute(stmt)
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+async def admin_change_password(
+    db: AsyncSession, 
+    user_id: str, 
+    new_password: str
+):
+    user = await get_user_by_id(db, user_id)
+    
+    # Hash and update password
+    hashed_password = crypto.hash_password(new_password)
+    stmt = (
+        update(models.Users)
+        .where(models.Users.user_id == user_id)
+        .values(password=hashed_password)
+    )
+    await db.execute(stmt)
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
 
 async def delete_user(db: AsyncSession, user_id: str):
     await get_user_by_id(db, user_id)

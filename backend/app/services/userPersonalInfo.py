@@ -63,7 +63,7 @@ async def get_user_personal_info_by_user_id(db: AsyncSession, user_id: str):
 
 
 async def update_user_personal_info(
-    db: AsyncSession, personal_info_id: str, user: schemas.UserInfoCreate
+    db: AsyncSession, personal_info_id: str, user: schemas.UserInfoUpdate
 ):
     async with DistributedLock(f"personal_info:{personal_info_id}"):
         db_user = await get_user_personal_info_by_id(db, personal_info_id)

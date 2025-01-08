@@ -72,7 +72,7 @@ async def get_jobs_by_user_id(db: AsyncSession, user_id: str):
         )
 
 
-async def update_job(db: AsyncSession, job_id: str, job: schemas.JobCreate):
+async def update_job(db: AsyncSession, job_id: str, job: schemas.JobUpdate):
     async with DistributedLock(f"job:{job_id}"):
         try:
             # First check if job exists

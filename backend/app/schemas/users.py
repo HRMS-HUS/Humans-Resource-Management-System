@@ -14,3 +14,13 @@ class UserCreate(BaseModel):
 class UserUpdate(UserCreate):
     role: Optional[users.RoleEnum] = None
     status: Optional[users.StatusEnum] = None
+
+class UserUpdateMe(User):
+    password: Optional[str] = None
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+class AdminChangePassword(BaseModel):
+    new_password: str
