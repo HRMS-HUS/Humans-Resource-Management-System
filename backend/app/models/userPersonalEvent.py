@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Date, Sequence
-from ..database import Base
+from ..configs.database import Base
 
 class UserPersonalEvent(Base):
     __tablename__ = "user_personal_event"

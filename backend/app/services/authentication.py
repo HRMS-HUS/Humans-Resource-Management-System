@@ -17,7 +17,7 @@ from ..services import users
 from fastapi import HTTPException, status, Depends, APIRouter, Query
 from sqlalchemy import select, and_, func, text, delete
 from ..utils import crypto, jwt, email, otp
-from ..database import get_db
+from ..configs.database import get_db
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import os
 from pathlib import Path

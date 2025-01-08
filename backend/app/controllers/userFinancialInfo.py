@@ -1,7 +1,7 @@
 # routers/userFinancialInfo.py
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..database import get_db
+from ..configs.database import get_db
 from ..schemas import userFinancialInfo as schemas
 from ..models import users as models
 from ..services import userFinancialInfo as services
@@ -20,7 +20,7 @@ async def create_financial_info(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
-    return await services.create_financial_info(db, financial)
+    return await services.create_financial_info(financial, db)
 
 @router.get(
     "/financial_info/{financial_info_id}",

@@ -5,7 +5,7 @@ from ..schemas import job as schemas
 from ..services import job as services
 from ..models import users as models
 from ..utils import jwt
-from ..database import get_db
+from ..configs.database import get_db
 from typing import List
 
 router = APIRouter()

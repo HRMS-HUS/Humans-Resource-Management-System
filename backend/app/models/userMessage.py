@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, ForeignKey
-from ..database import Base
+from ..configs.database import Base
 
 class UserMessage(Base):
     __tablename__ = "user_message"

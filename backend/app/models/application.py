@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Date, Boolean, Enum
-from ..database import Base
+from ..configs.database import Base
 import enum
 
 class LeaveTypeEnum(enum.Enum):

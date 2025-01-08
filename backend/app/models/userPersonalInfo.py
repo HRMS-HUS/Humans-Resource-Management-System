@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Date, Enum, Sequence
-from ..database import Base
+from ..configs.database import Base
 import enum
 
 class MaritalStatusEnum(enum.Enum):

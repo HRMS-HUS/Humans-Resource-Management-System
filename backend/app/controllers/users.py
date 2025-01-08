@@ -5,7 +5,7 @@ from ..schemas import users as schemas
 from ..services import users as users_service
 from ..utils import jwt
 from fastapi import HTTPException, status, Depends, APIRouter, Query
-from ..database import get_db
+from ..configs.database import get_db
 from typing import Optional, List
 
 

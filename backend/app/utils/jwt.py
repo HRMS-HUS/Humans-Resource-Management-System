@@ -4,7 +4,7 @@ from fastapi import HTTPException, status,Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from ..models import users as models_user
-from ..database import get_db, AsyncSession
+from ..configs.database import get_db, AsyncSession
 import os
 
 SECRET_KEY = os.getenv("SECRET_KEY")

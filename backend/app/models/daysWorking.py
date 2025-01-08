@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, DateTime, Date
-from ..database import Base
+from ..configs.database import Base
 
 class DaysWorking(Base):
     __tablename__ = "days_working"

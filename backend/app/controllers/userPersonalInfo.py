@@ -5,7 +5,7 @@ from ..services import userPersonalInfo as services
 from ..services import userPersonalInfo as services
 from ..models import users as models
 from ..services import users
-from ..database import get_db
+from ..configs.database import get_db
 from ..utils import jwt
 from typing import List
 
@@ -22,7 +22,7 @@ async def create_user_personal_info(
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
-    return await services.create_user_info(db, user)
+    return await services.create_user_info(user, db)
 
 
 @router.get("/personal_info/{personal_info_id}", response_model=schemas.UserInfoCreate)

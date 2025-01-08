@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..database import get_db
+from ..configs.database import get_db
 from ..models import users as models
 from ..schemas import users as schemas
 from fastapi import HTTPException, status, Depends

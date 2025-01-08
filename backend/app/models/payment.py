@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Float, Integer, Enum
-from ..database import Base
+from ..configs.database import Base
 import enum
 
 class PaymentEnum(enum.Enum):

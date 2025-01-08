@@ -1,7 +1,7 @@
 # app/routers/auth.py
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..database import get_db
+from ..configs.database import get_db
 from ..schemas import users as schemas_user
 from ..schemas import authentication as schemas_auth
 from fastapi.security import OAuth2PasswordRequestForm

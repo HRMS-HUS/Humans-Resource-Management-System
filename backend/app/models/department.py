@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, ForeignKey, Date, Enum
 import enum
-from ..database import Base
+from ..configs.database import Base
 
 class StatusEnum(enum.Enum):
     Active = "Active"
