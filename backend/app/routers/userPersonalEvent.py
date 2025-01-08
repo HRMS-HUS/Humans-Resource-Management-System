@@ -64,7 +64,7 @@ async def get_all_events(
 ):
     return await controllers.get_all_user_events_controller(db, skip=skip, limit=limit)
 
-@router.get("/me/personal_event", response_model=schemas.UserPersonalEventResponse)
+@router.get("/me/personal_event", response_model=List[schemas.UserPersonalEventResponse])
 async def get_current_user_personal_info(
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
@@ -73,4 +73,13 @@ async def get_current_user_personal_info(
     return await controllers.get_user_events_by_user_id_controller(
         db, current_user.user_id
     )
+
+@router.get("/personal_event/user/{user_id}", response_model=List[schemas.UserPersonalEventResponse])
+async def get_personal_info_by_user_id(
+    user_id: str = Path(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_current_admin),
+):
+
+    return await controllers.get_user_events_by_user_id_controller(db, user_id)
 

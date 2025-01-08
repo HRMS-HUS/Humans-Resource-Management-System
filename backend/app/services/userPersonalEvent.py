@@ -44,7 +44,7 @@ async def get_user_event_by_user_id(db: AsyncSession, user_id: str):
             models.UserPersonalEvent.user_id == user_id
         )
     )
-    event = result.scalar_one_or_none()
+    event = result.scalars().all()
 
     if not event:
         raise HTTPException(

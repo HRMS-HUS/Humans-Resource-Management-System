@@ -79,7 +79,7 @@ async def get_current_user_personal_info(
 
 @router.get("/financial_info/user/{user_id}", response_model=schemas.UserFinancialInfoResponse)
 async def get_financial_info_by_user_id(
-    user_id: str = Path(..., description="User ID to retrieve personal info"),
+    user_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
