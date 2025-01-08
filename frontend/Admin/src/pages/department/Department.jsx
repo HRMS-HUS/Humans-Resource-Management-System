@@ -1,4 +1,4 @@
-import { Box, Button, Typography, useTheme } from '@mui/material';
+import { Alert, Box, Button, Snackbar, Typography, useTheme } from '@mui/material';
 import { DataGrid, GridActionsCellItem, GridRowEditStopReasons, GridRowModes, GridToolbar, GridToolbarContainer } from '@mui/x-data-grid';
 import { randomId } from '@mui/x-data-grid-generator';
 import DomainAddIcon from '@mui/icons-material/DomainAdd';
@@ -53,11 +53,12 @@ const Department = () => {
     const [rows, setRows] = useState([]);
     const [rowModesModel, setRowModesModel] = useState({});
     const [loading, setLoading] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     const fetchManagerInfo = async (managerId) => {
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/personal_info/user/${managerId}`);
-            return response.data.fullname;
+            const response = await axios.get(`http://127.0.0.1:8000/api/users/${managerId}`);
+            return response.data.username;
         } catch (error) {
             console.error("Error fetching manager info:", error);
             return "Unknown Manager";
@@ -70,12 +71,15 @@ const Department = () => {
             const response = await axios.get('http://127.0.0.1:8000/api/departments');
             const dataWithId = await Promise.all(response.data.map(async (item) => {
                 const managerName = await fetchManagerInfo(item.manager_id);
+                const departmentIdSuffix = item.department_id.slice(-3);
                 return {
                     ...item,
                     id: item.department_id,
-                    manager_name: managerName
+                    manager_name: managerName,
+                    department_id_suffix: parseInt(departmentIdSuffix),
                 };
             }));
+            dataWithId.sort((a, b) => a.department_id_suffix - b.department_id_suffix);
             setRows(dataWithId);
         } catch (error) {
             console.error("Error fetching departments:", error);
@@ -84,9 +88,12 @@ const Department = () => {
         }
     };
 
+
     useEffect(() => {
         fetchDepartment();
     }, []);
+
+    const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
 
     const handleRowEditStop = (params, event) => {
         if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -100,6 +107,7 @@ const Department = () => {
 
     const handleSaveClick = (id) => () => {
         setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+        fetchDepartment();
     };
 
     const handleDeleteClick = (id) => async () => {
@@ -110,11 +118,15 @@ const Department = () => {
             const response = await axios.delete(`http://127.0.0.1:8000/api/departments/${department_id}`);
             if (response.status === 200) {
                 setRows(rows.filter((row) => row.id !== id));
+                setSnackbar({ open: true, message: 'Department deleted successfully!', severity: 'success' });
+                fetchDepartment();
             } else {
                 console.error('Error deleting department:', response.data);
+                setSnackbar({ open: true, message: 'Failed to delete department!', severity: 'error' });
             }
         } catch (error) {
             console.error('Error deleting department:', error);
+            setSnackbar({ open: true, message: 'Failed to delete department!', severity: 'error' });
         }
     };
 
@@ -148,6 +160,8 @@ const Department = () => {
                 });
                 updatedRow.department_id = response.data.department_id;
                 setRows(prevRows => [...prevRows.filter(row => row.id !== updatedRow.id), updatedRow]);
+                setSnackbar({ open: true, message: 'Department created successfully!', severity: 'success' });
+                fetchDepartment();
                 return updatedRow;
             } else {
                 const response = await axios.put(`http://127.0.0.1:8000/api/departments/${newRow.department_id}`, {
@@ -160,10 +174,14 @@ const Department = () => {
                 });
 
                 setRows(rows.map((row) => (row.department_id === newRow.department_id ? updatedRow : row)));
+                setSnackbar({ open: true, message: 'Department updated successfully!', severity: 'success' });
+                fetchDepartment();
                 return updatedRow;
             }
         } catch (error) {
             console.error('Error saving data:', error.response?.data || error.message);
+            setSnackbar({ open: true, message: 'Failed to save department!', severity: 'error' });
+            throw error;
         }
     };
 
@@ -179,7 +197,7 @@ const Department = () => {
                 return (
                     <Box sx={{ p: "2px", display: "flex", justifyContent: "left", alignItems: "center", height: "100%" }}>
                         {department_name === "Software Development" && (<ImportantDevicesIcon sx={{ marginRight: 1 }} fontSize='medium' />)}
-                        {department_name === "Cybersecurity" && (<LockIcon sx={{ marginRight: 1 }} fontSize='medium' />)}
+                        {department_name === "CyberSecurity" && (<LockIcon sx={{ marginRight: 1 }} fontSize='medium' />)}
                         {department_name === "Hardware Development" && (<SettingsInputComponentIcon sx={{ marginRight: 1 }} fontSize='medium' />)}
                         {department_name === "Data Development" && (<CloudDownloadIcon sx={{ marginRight: 1 }} fontSize='medium' />)}
                         {department_name === "Research and Development" && (<PsychologyIcon sx={{ marginRight: 1 }} fontSize='medium' />)}
@@ -208,8 +226,7 @@ const Department = () => {
                 const startDate = params?.row?.start_date;
                 return startDate ? dayjs(startDate).format('DD/MM/YYYY') : '';
             }
-        }
-        ,
+        },
         {
             field: "status",
             headerName: "Status",
@@ -273,7 +290,20 @@ const Department = () => {
                 checkboxSelection
                 disableRowSelectionOnClick
                 loading={loading}
+                sortModel={[
+                    { field: 'department_id_suffix', sort: 'asc' },  // Sắp xếp theo ba số cuối của department_id
+                ]}
             />
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbar.message.includes("successfully") ? "success" : "error"} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     )
 }
