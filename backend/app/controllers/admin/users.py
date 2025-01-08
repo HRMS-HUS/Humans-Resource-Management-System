@@ -12,15 +12,6 @@ from typing import Optional, List
 router = APIRouter()
 
 
-@router.get("/users/me", response_model=schemas.User)
-async def read_users_me(
-    db: AsyncSession = Depends(get_db),
-    current_user: models.Users = Depends(jwt.get_current_user),
-):
-
-    return await users_service.get_user_by_id(db, current_user.user_id)
-
-
 @router.put("/admin/users/{user_id}", response_model=schemas.User)
 async def update_user(
     user_id: str,
