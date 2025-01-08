@@ -4,13 +4,9 @@ from fastapi import HTTPException, status
 import asyncio
 import os
 import uuid
+from ..configs.redis import get_redis_client
 
-def get_redis_client():
-    return redis.Redis(
-        host=os.getenv('REDIS_HOST', 'redis'),
-        port=int(os.getenv('REDIS_PORT', 6379)),
-        db=int(os.getenv('REDIS_DB', 0))
-    )
+
 redis_client = get_redis_client()
 
 class DistributedLock:

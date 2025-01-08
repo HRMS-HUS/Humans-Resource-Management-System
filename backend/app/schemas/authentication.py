@@ -1,12 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 from ..models import users
 
 class ForgotPassword(BaseModel):
-    username: str
+    email: EmailStr
 
 class ResetPassword(BaseModel):
-    username: str
+    email: EmailStr
     otp_code: str
     new_password: str
     confirm_password: str

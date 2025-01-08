@@ -32,8 +32,25 @@ async def get_user_id_by_username(db: AsyncSession, username: str) -> int:
     
     return user_id
 
-async def create_otp_code(db: AsyncSession, username: str, otp_code: str):
-    user_id = await get_user_id_by_username(db, username)
+async def get_user_id_by_email(db: AsyncSession, email: str) -> int:
+    stmt = (
+        select(models_user.Users.user_id)
+        .join(
+            models_user_info.UserPersonalInfo,
+            models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id,
+        )
+        .where(models_user_info.UserPersonalInfo.email == email)
+    )
+    result = await db.execute(stmt)
+    user_id = result.scalars().first()
+    
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Email not found")
+    
+    return user_id
+
+async def create_otp_code(db: AsyncSession, email: str, otp_code: str):
+    user_id = await get_user_id_by_email(db, email)
     expired_time = func.now() - text("interval '10 minutes'")
 
     stmt = (
@@ -154,22 +171,24 @@ async def forgot_password(
     request: schemas.ForgotPassword = Query(...), db: AsyncSession = Depends(get_db)
 ):
     stmt = (
-        select(models_user.Users, models_user_info.UserPersonalInfo.email)
+        select(models_user.Users, models_user_info.UserPersonalInfo)
         .join(
             models_user_info.UserPersonalInfo,
             models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id,
         )
-        .where(models_user.Users.username == request.username)
+        .where(models_user_info.UserPersonalInfo.email == request.email)
     )
     result = await db.execute(stmt)
     user_info = result.first()
     if not user_info:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User Not Found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email Not Found"
         )
-    email_user = user_info[1]
+    
+    username = user_info[0].username
+    email_user = user_info[1].email
     reset_code = otp.create_otp()
-    await create_otp_code(db, request.username, reset_code)
+    await create_otp_code(db, email_user, reset_code)
     subject = "Reset code"
     recipient = [email_user]
 
@@ -179,7 +198,7 @@ async def forgot_password(
     with open(template_path, "r") as file:
         html_template = file.read()
 
-    message = html_template.format(username=request.username, reset_code=reset_code)
+    message = html_template.format(username=username, reset_code=reset_code)
 
     await email.send_mail(subject, recipient, message)
 
