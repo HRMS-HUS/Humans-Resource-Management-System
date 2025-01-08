@@ -1,10 +1,10 @@
 # routers/userFinancialInfo.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_db
 from ..schemas import userFinancialInfo as schemas
+from ..models import users as models
 from ..controllers.manager import userFinancialInfo as controller
-from ..services import users
 from ..utils import jwt
 from typing import List
 
@@ -66,3 +66,22 @@ async def delete_financial_info(
     current_user: dict = Depends(jwt.get_current_admin)
 ):
     return await controller.delete_financial_info_controller(db, financial_info_id)
+
+@router.get("/me/financial_info", response_model=schemas.UserFinancialInfoResponse)
+async def get_current_user_personal_info(
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_active_user),
+):
+
+    return await controller.get_user_personal_info_by_user_id_controller(
+        db, current_user.user_id
+    )
+
+@router.get("/financial_info/user/{user_id}", response_model=schemas.UserFinancialInfoResponse)
+async def get_financial_info_by_user_id(
+    user_id: str = Path(..., description="User ID to retrieve personal info"),
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_current_admin),
+):
+
+    return await controller.get_user_personal_info_by_user_id_controller(db, user_id)

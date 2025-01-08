@@ -59,3 +59,13 @@ async def get_all_jobs(
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
     return await controllers.get_all_jobs_controller(db, skip=skip, limit=limit)
+
+@router.get("/me/job", response_model=List[schemas.Job])
+async def get_current_user_personal_info(
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_active_user),
+):
+
+    return await controllers.get_jobs_by_user_id_controller(
+        db, current_user.user_id
+    )

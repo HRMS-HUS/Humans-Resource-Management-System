@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job
 from .database import init_db
+import os, redis
 
 app = FastAPI()
 

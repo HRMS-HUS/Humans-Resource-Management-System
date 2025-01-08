@@ -1,28 +1,32 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete, update
+from fastapi import HTTPException, status
 from ..models import userPersonalInfo as models
 from ..schemas import userPersonalInfo as schemas
-from fastapi import HTTPException,status
-from sqlalchemy import select, delete, update
+from typing import List
+from ..utils.redis_lock import DistributedLock
 
-async def create_user_info(db: AsyncSession, user: schemas.UserInfoCreate):
-    db_user = models.UserPersonalInfo(
-        user_id = user.user_id,
-        fullname = user.fullname,
-        citizen_card = user.citizen_card,
-        date_of_birth = user.date_of_birth,
-        sex = user.sex,
-        phone = user.phone,
-        email = user.email,
-        marital_status = user.marital_status,
-        address = user.address,
-        city = user.city,
-        country = user.country
-    )
-    
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
+
+async def create_user_info(user: schemas.UserInfoCreate, db: AsyncSession):
+    async with DistributedLock(f"personal_info:user:{user.user_id}"):
+        # Check if user already has personal info
+        existing = await db.execute(
+            select(models.UserPersonalInfo).filter(
+                models.UserPersonalInfo.user_id == user.user_id
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Personal info already exists for this user",
+            )
+
+        db_user = models.UserPersonalInfo(**user.dict())
+        db.add(db_user)
+        await db.commit()
+        await db.refresh(db_user)
+        return db_user
+
 
 async def get_user_personal_info_by_id(db: AsyncSession, personal_info_id: str):
     result = await db.execute(
@@ -31,14 +35,15 @@ async def get_user_personal_info_by_id(db: AsyncSession, personal_info_id: str):
         )
     )
     personal_info = result.scalar_one_or_none()
-    
+
     if not personal_info:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Personal information not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Personal information not found",
         )
-    
+
     return personal_info
+
 
 async def get_user_personal_info_by_user_id(db: AsyncSession, user_id: str):
     result = await db.execute(
@@ -47,76 +52,45 @@ async def get_user_personal_info_by_user_id(db: AsyncSession, user_id: str):
         )
     )
     personal_info = result.scalar_one_or_none()
-    
+
     if not personal_info:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Personal information not found for this user"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Personal information not found for this user",
         )
-    
+
     return personal_info
 
+
 async def update_user_personal_info(
-    db: AsyncSession, 
-    personal_info_id: str, 
-    user: schemas.UserInfoCreate
+    db: AsyncSession, personal_info_id: str, user: schemas.UserInfoCreate
 ):
-    
-    await get_user_personal_info_by_id(db, personal_info_id)
-    
-    update_data = {
-        "user_id": user.user_id,
-        "fullname": user.fullname,
-        "citizen_card": user.citizen_card,
-        "date_of_birth": user.date_of_birth,
-        "sex": user.sex,
-        "phone": user.phone,
-        "email": user.email,
-        "marital_status": user.marital_status,
-        "address": user.address,
-        "city": user.city,
-        "country": user.country
-    }
-    
-    stmt = update(models.UserPersonalInfo).where(
-        models.UserPersonalInfo.personal_info_id == personal_info_id
-    ).values(**update_data)
-    
-    result = await db.execute(stmt)
-    await db.commit()
-    
-    updated_info = await get_user_personal_info_by_id(db, personal_info_id)
-    return updated_info
+    async with DistributedLock(f"personal_info:{personal_info_id}"):
+        db_user = await get_user_personal_info_by_id(db, personal_info_id)
+
+        for key, value in user.dict().items():
+            setattr(db_user, key, value)
+
+        await db.commit()
+        await db.refresh(db_user)
+        return db_user
+
 
 async def delete_user_personal_info(db: AsyncSession, personal_info_id: str):
-    
-    await get_user_personal_info_by_id(db, personal_info_id)
-    
-    stmt = delete(models.UserPersonalInfo).where(
-        models.UserPersonalInfo.personal_info_id == personal_info_id
-    )
-    
-    await db.execute(stmt)
-    await db.commit()
-    
-    return {"detail": "Personal information deleted successfully"}
+    async with DistributedLock(f"personal_info:{personal_info_id}"):
+        db_user = await get_user_personal_info_by_id(db, personal_info_id)
+        await db.delete(db_user)
+        await db.commit()
+        return {"message": "Personal info deleted successfully"}
 
-async def get_all_user_personal_info(
-    db: AsyncSession, 
-    skip: int = 0, 
-    limit: int = 100
-):
-    
-    result = await db.execute(
-        select(models.UserPersonalInfo)
-        .offset(skip)
-        .limit(limit)
-    )
-    
+
+async def get_all_user_personal_info(db: AsyncSession, skip: int = 0, limit: int = 100):
+
+    result = await db.execute(select(models.UserPersonalInfo).offset(skip).limit(limit))
+
     personal_infos = result.scalars().all()
-    
-    
+
     if not personal_infos:
         return []
-    
+
     return personal_infos

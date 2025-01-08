@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...schemas import userFinancialInfo as schemas
 from ...services import userFinancialInfo as services
 from typing import List
+from fastapi import HTTPException, status
 
 async def create_financial_info_controller(
     db: AsyncSession, 
@@ -35,3 +36,14 @@ async def delete_financial_info_controller(
     financial_info_id: str
 ):
     return await services.delete_financial_info(db, financial_info_id)
+
+async def get_user_personal_info_by_user_id_controller(db: AsyncSession, user_id: str):
+    try:
+        return await services.get_user_financial_info_by_user_id(db, user_id)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving user personal info: {str(e)}",
+        )
