@@ -1,5 +1,5 @@
 import { DataGrid, GridActionsCellItem, GridRowEditStopReasons, GridRowModes, GridToolbarContainer } from '@mui/x-data-grid';
-import { Button, useTheme } from '@mui/material';
+import { Alert, Button, Snackbar, useTheme } from '@mui/material';
 import { Box, Typography } from "@mui/material";
 import { AdminPanelSettingsOutlined, LockOpenOutlined, SecurityOutlined } from '@mui/icons-material';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
@@ -45,6 +45,7 @@ const Account = () => {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(null);
     const [activeAccounts, setActiveAccounts] = useState([])
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
     const fetchAccounts = async () => {
         setLoading(true);
@@ -72,9 +73,9 @@ const Account = () => {
 
     useEffect(() => {
         fetchAccounts();
-        console.log(rows)
-        console.log(activeAccounts)
     }, []);
+
+    const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
 
     const handleRowEditStop = (params, event) => {
         if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -88,6 +89,7 @@ const Account = () => {
 
     const handleSaveClick = (id) => () => {
         setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+        fetchAccounts()
     };
 
     const handleDeleteClick = (id) => async () => {
@@ -99,11 +101,15 @@ const Account = () => {
             const response = await axios.delete(`http://127.0.0.1:8000/api/users/${user_id}`);
             if (response.status === 200) {
                 setRows(rows.filter((row) => row.id !== id));
+                setSnackbar({ open: true, message: 'Account deleted successfully!', severity: 'success' });
+                fetchAccounts()
             } else {
-                console.error('Error deleting user:', response.data);
+                console.error('Error deleting account:', response.data);
+                setSnackbar({ open: true, message: 'Failed to delete account!', severity: 'error' });
             }
         } catch (error) {
             console.error('Error deleting user:', error);
+            setSnackbar({ open: true, message: 'Failed to delete account!', severity: 'error' });
         }
     };
 
@@ -133,6 +139,8 @@ const Account = () => {
                 });
                 updatedRow.user_id = response.data.user_id;
                 setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+                setSnackbar({ open: true, message: 'Account created successfully!', severity: 'success' });
+                fetchAccounts()
                 return updatedRow;
             } else {
                 const response = await axios.put(`http://127.0.0.1:8000/api/users/${newRow.user_id}`, {
@@ -142,10 +150,14 @@ const Account = () => {
                     role: newRow.role,
                 });
                 setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+                setSnackbar({ open: true, message: 'Account updated successfully!', severity: 'success' });
+                fetchAccounts()
                 return updatedRow;
             }
         } catch (error) {
             console.error('Error saving data:', error);
+            setSnackbar({ open: true, message: 'Failed to save account!', severity: 'error' });
+            throw error;
         }
     };
 
@@ -185,21 +197,12 @@ const Account = () => {
                 const status = activeAccounts.includes(username) ? "Active" : "Inactive";
                 return (
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                        <Box sx={{
-                            p: "5px",
-                            width: "99px",
-                            borderRadius: "3px",
-                            textAlign: "center",
-                            display: "flex",
-                            justifyContent: "space-evenly",
-                            backgroundColor: status === "Active" ? "#00C853" : "#757575"
-                        }}>
-                            {status === "Active" && (<TaskAltIcon sx={{ color: "#fff" }} fontSize='small' />)}
-                            {status === "Inactive" && (<HighlightOffIcon sx={{ color: "#fff" }} fontSize='small' />)}
-                            <Typography sx={{ fontSize: "13px", color: "#fff" }}> {status} </Typography>
-                        </Box>
+                        {status === 'Active'
+                            ? <TaskAltIcon sx={{ marginRight: 1 }} fontSize='small' color="success" />
+                            : <HighlightOffIcon sx={{ marginRight: 1 }} fontSize='small' color="error" />}
+                        {status}
                     </div>
-                );
+                )
             }
         },
         {
@@ -226,20 +229,20 @@ const Account = () => {
             }
         },
         {
-            field: 'actions', type: 'actions', headerName: 'Actions', width: 100, cellClassName: 'actions',
+            field: "actions", type: "actions", headerName: "Actions", width: 100,
             getActions: ({ id }) => {
-                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+                const isRowInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
-                if (isInEditMode) {
+                if (isRowInEditMode) {
                     return [
-                        <GridActionsCellItem icon={<SaveIcon />} label="Save" sx={{ color: 'primary.main', }} onClick={handleSaveClick(id)} />,
-                        <GridActionsCellItem icon={<CancelIcon />} label="Cancel" className="textPrimary" onClick={handleCancelClick(id)} color="inherit" />,
+                        <GridActionsCellItem icon={<SaveIcon />} label="Save" onClick={handleSaveClick(id)} color="primary" />,
+                        <GridActionsCellItem icon={<CancelIcon />} label="Cancel" onClick={handleCancelClick(id)} color="secondary" />,
                     ];
                 }
 
                 return [
-                    <GridActionsCellItem icon={<EditIcon />} label="Edit" className="textPrimary" onClick={handleEditClick(id)} color="inherit" />,
-                    <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={handleDeleteClick(id)} color="inherit" />,
+                    <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={handleEditClick(id)} color="primary" />,
+                    <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={handleDeleteClick(id)} color="error" />,
                 ];
             },
         }
@@ -266,6 +269,16 @@ const Account = () => {
                 disableRowSelectionOnClick
                 loading={loading}
             />
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbar.message.includes("successfully") ? "success" : "error"} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     )
 }
