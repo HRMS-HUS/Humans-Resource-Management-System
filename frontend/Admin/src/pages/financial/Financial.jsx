@@ -1,14 +1,15 @@
-import { Box, Button, LinearProgress, Rating, useTheme } from '@mui/material';
+import { Alert, Box, Button, LinearProgress, Rating, Snackbar, useTheme } from '@mui/material';
 import { DataGrid, getGridNumericOperators, GridActionsCellItem, GridRowEditStopReasons, GridRowModes, GridToolbar, GridToolbarContainer } from '@mui/x-data-grid';
 import { randomId } from '@mui/x-data-grid-generator';
 import AddCardIcon from '@mui/icons-material/AddCard';
-import { useImperativeHandle, useRef, useState } from 'react';
-import { bankLogos, initialRows } from './data';
+import { useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { bankLogos } from './data';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import Header from '../../components/Header';
+import axios from 'axios';
 
 function RatingInputValue(props) {
     const { item, applyValue, focusElementRef } = props;
@@ -39,22 +40,6 @@ function RatingInputValue(props) {
     );
 }
 
-const salaryNetOperators = [
-    {
-        label: 'Above',
-        value: 'above',
-        getApplyFilterFn: (filterItem) => {
-            if (!filterItem.field || !filterItem.value || !filterItem.operator) {
-                return null;
-            }
-            return (value) => Math.floor((Number(value) - Math.min(...initialRows.map(item => item.salaryNet))) / (Math.max(...initialRows.map(item => item.salaryNet)) - Math.min(...initialRows.map(item => item.salaryNet))) * 10) / 2 >= Number(filterItem.value);
-        },
-        InputComponent: RatingInputValue,
-        InputComponentProps: { type: 'number' },
-        getValueAsString: (value) => `${value} Stars`,
-    },
-];
-
 function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
 
@@ -62,11 +47,11 @@ function EditToolbar(props) {
         const id = randomId();
         setRows((oldRows) => [
             ...oldRows,
-            { id, name: '', citizen: '', birthday: '', phone: '', email: '', marital: '', address: '', city: '', country: '', isNew: true }
+            { id, user_id: '', name: '', salaryBasic: '', salaryGross: '', salaryNet: '', allowanceHouseRent: '', allowanceMedical: '', allowanceSpecial: '', allowanceFuel: '', allowancePhoneBill: '', allowanceOther: '', allowanceTotal: '', deductionProvidentFund: '', deductionTax: '', deductionOther: '', deductionTotal: '', bankName: '', accountName: '', accountNumber: '', isNew: true }
         ]);
         setRowModesModel((oldModel) => ({
             ...oldModel,
-            [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
+            [id]: { mode: GridRowModes.Edit, fieldToFocus: 'user_id' },
         }));
     };
 
@@ -82,8 +67,44 @@ function EditToolbar(props) {
 const Financial = () => {
 
     const theme = useTheme()
-    const [rows, setRows] = useState(initialRows);
+    const [rows, setRows] = useState([]);
     const [rowModesModel, setRowModesModel] = useState({});
+    const [loading, setLoading] = useState(null);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+    const fetchUserInfo = async (userId) => {
+        try {
+            const response = await axios.get(`http://127.0.0.1:8000/api/personal_info/user/${userId}`);
+            return response.data.fullname;
+        } catch (error) {
+            console.error("Error fetching user info:", error);
+            return "Unknown User";
+        }
+    };
+
+    const fetchFinancialInformation = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('http://127.0.0.1:8000/api/financial_info');
+            const dataWithId = await Promise.all(response.data.map(async (item) => {
+                const user_name = await fetchUserInfo(item.user_id);
+                return {
+                    ...item,
+                    id: item.financial_info_id,
+                    name: user_name
+                };
+            }));
+            setRows(dataWithId);
+        } catch (error) {
+            console.error("Error fetching financial information:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchFinancialInformation();
+    }, []);
 
     const handleRowEditStop = (params, event) => {
         if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -97,10 +118,27 @@ const Financial = () => {
 
     const handleSaveClick = (id) => () => {
         setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+        fetchFinancialInformation();
     };
 
-    const handleDeleteClick = (id) => () => {
-        setRows(rows.filter((row) => row.id !== id));
+    const handleDeleteClick = (id) => async () => {
+        const financial_info_delete = rows.find((row) => row.id === id);
+        const financial_info_id = financial_info_delete.financial_info_id;
+
+        try {
+            const response = await axios.delete(`http://127.0.0.1:8000/api/financial_info/${financial_info_id}`);
+            if (response.status === 200) {
+                setRows(rows.filter((row) => row.id !== id));
+                setSnackbar({ open: true, message: 'Financial information deleted successfully!', severity: 'success' });
+                fetchFinancialInformation();
+            } else {
+                console.error('Error deleting financial information:', response.data);
+                setSnackbar({ open: true, message: 'Failed to delete financial information!', severity: 'error' });
+            }
+        } catch (error) {
+            console.error('Error deleting financial information:', error);
+            setSnackbar({ open: true, message: 'Failed to delete financial information!', severity: 'error' });
+        }
     };
 
     const handleCancelClick = (id) => () => {
@@ -115,21 +153,107 @@ const Financial = () => {
         }
     };
 
-    const processRowUpdate = (newRow) => {
+    const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
+
+    const processRowUpdate = async (newRow) => {
         const updatedRow = { ...newRow, isNew: false };
-        setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-        return updatedRow;
+
+        try {
+            if (newRow.isNew) {
+                const response = await axios.post('http://127.0.0.1:8000/api/financial_info', {
+                    user_id: newRow.user_id,
+                    salaryBasic: newRow.salaryBasic,
+                    salaryGross: newRow.salaryGross,
+                    salaryNet: newRow.salaryNet,
+                    allowanceHouseRent: newRow.allowanceHouseRent,
+                    allowanceMedical: newRow.allowanceMedical,
+                    allowanceSpecial: newRow.allowanceSpecial,
+                    allowanceFuel: newRow.allowanceFuel,
+                    allowancePhoneBill: newRow.allowancePhoneBill,
+                    allowanceOther: newRow.allowanceOther,
+                    allowanceTotal: newRow.allowanceTotal,
+                    deductionProvidentFund: newRow.deductionProvidentFund,
+                    deductionTax: newRow.deductionTax,
+                    deductionOther: newRow.deductionOther,
+                    deductionTotal: newRow.deductionTotal,
+                    bankName: newRow.bankName,
+                    accountName: newRow.accountName,
+                    accountNumber: newRow.accountNumber,
+                    iban: newRow.iban
+                });
+                updatedRow.user_id = response.data.user_id;
+                setRows(prevRows => [...prevRows.filter(row => row.id !== updatedRow.id), updatedRow]);
+                setSnackbar({ open: true, message: 'Financial information created successfully!', severity: 'success' });
+                fetchFinancialInformation();
+                return updatedRow;
+            } else {
+                const response = await axios.put(`http://127.0.0.1:8000/api/financial_info/${newRow.financial_info_id}`, {
+                    user_id: newRow.user_id,
+                    salaryBasic: newRow.salaryBasic,
+                    salaryGross: newRow.salaryGross,
+                    salaryNet: newRow.salaryNet,
+                    allowanceHouseRent: newRow.allowanceHouseRent,
+                    allowanceMedical: newRow.allowanceMedical,
+                    allowanceSpecial: newRow.allowanceSpecial,
+                    allowanceFuel: newRow.allowanceFuel,
+                    allowancePhoneBill: newRow.allowancePhoneBill,
+                    allowanceOther: newRow.allowanceOther,
+                    allowanceTotal: newRow.allowanceTotal,
+                    deductionProvidentFund: newRow.deductionProvidentFund,
+                    deductionTax: newRow.deductionTax,
+                    deductionOther: newRow.deductionOther,
+                    deductionTotal: newRow.deductionTotal,
+                    bankName: newRow.bankName,
+                    accountName: newRow.accountName,
+                    accountNumber: newRow.accountNumber,
+                    iban: newRow.iban
+                });
+                setSnackbar({ open: true, message: 'User information updated successfully!', severity: 'success' });
+                fetchFinancialInformation();
+                return updatedRow;
+            }
+        } catch (error) {
+            console.error('Error saving data:', error.response?.data || error.message);
+            setSnackbar({ open: true, message: 'Failed to save user information!', severity: 'error' });
+            throw error;
+        }
     };
 
     const handleRowModesModelChange = (newRowModesModel) => {
         setRowModesModel(newRowModesModel);
     };
 
+    const salaryNetOperators = [
+        {
+            label: 'Above',
+            value: 'above',
+            getApplyFilterFn: (filterItem) => {
+                if (!filterItem.field || !filterItem.value || !filterItem.operator) {
+                    return null;
+                }
+                return (value) => Math.floor((Number(value) - Math.min(...rows.map(item => item.salaryNet))) / (Math.max(...rows.map(item => item.salaryNet)) - Math.min(...rows.map(item => item.salaryNet))) * 10) / 2 >= Number(filterItem.value);
+            },
+            InputComponent: RatingInputValue,
+            InputComponentProps: { type: 'number' },
+            getValueAsString: (value) => `${value} Stars`,
+        },
+    ];
+
     const columns = [
-        { field: "id", headerName: "ID", width: 80, align: "center", headerAlign: "center", editable: true },
-        { field: "name", headerName: "Full Name", cellClassName: "name-column--cell", width: 180, editable: true },
-        { field: "salaryBasic", headerName: "Basic Salary", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "salaryGross", headerName: "Gross Salary", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
+        { field: "user_id", headerName: "User ID", width: 80, align: "center", headerAlign: "center", editable: true },
+        { field: "name", headerName: "Full Name", cellClassName: "name-column--cell", width: 180, editable: false },
+        {
+            field: "salaryBasic", headerName: "Basic Salary", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                return `$${params.value.toLocaleString()}`;
+            }
+        },
+        {
+            field: "salaryGross", headerName: "Gross Salary", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                return `$${params.value.toLocaleString()}`;
+            }
+        },
         {
             field: "salaryNet", headerName: "Net Salary", width: 210, align: "left", headerAlign: "center", editable: true, type: 'number',
             filterOperators: [
@@ -138,57 +262,415 @@ const Financial = () => {
             ],
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {params.value.toFixed(2)}
-                    <Rating value={Math.floor((params.value - Math.min(...initialRows.map(item => item.salaryNet))) / (Math.max(...initialRows.map(item => item.salaryNet)) - Math.min(...initialRows.map(item => item.salaryNet))) * 10) / 2} readOnly precision={0.5} style={{ marginLeft: 10 }} />
+                    <Rating value={Math.floor((params.value - Math.min(...rows.map(item => item.salaryNet))) / (Math.max(...rows.map(item => item.salaryNet)) - Math.min(...rows.map(item => item.salaryNet))) * 10) / 2} readOnly precision={0.5} style={{ marginRight: 10 }} />
+                    ${params.value.toFixed(2)}
                 </Box>
             )
         },
         {
-            field: "allowanceHouseRent", headerName: "House Rent Allowance", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number',
+            field: "allowanceHouseRent", headerName: "House Rent Allowance", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
             renderCell: (params) => {
-                const netSalary = params.row.salaryNet;
-                const houseRentAllowance = params.value;
-                const percentage = netSalary ? (houseRentAllowance / netSalary) * 100 : 0;
-
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <LinearProgress
-                            variant="determinate"
-                            value={percentage}
-                            sx={{
-                                height: 22,
-                                width: 90,
-                                border: '0.25px',
-                                backgroundColor: theme.palette.background.default,
-                                borderColor: theme.palette.secondary.main,
-                                '& .MuiLinearProgress-bar': {
-                                    backgroundColor: "red",
-                                }
-                            }}
-                        />
-                        {percentage.toFixed(2)}%
-                    </Box>
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
                 );
             }
         },
-        { field: "allowanceMedical", headerName: "Medical Allowance", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "allowanceSpecial", headerName: "Special Allowance", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "allowanceFuel", headerName: "Fuel Allowance", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "allowancePhoneBill", headerName: "Phone Bill Allowance", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "allowanceOther", headerName: "Other Allowance", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "allowanceTotal", headerName: "Total Allowance", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "deductionProvidentFund", headerName: "Provident Fund Deduction", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "deductionTax", headerName: "Tax Deduction", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "deductionOther", headerName: "Other Deductions", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
-        { field: "deductionTotal", headerName: "Total Deductions", width: 180, align: "center", headerAlign: "center", editable: true, type: 'number' },
         {
-            field: "bankName", headerName: "Bank Name", width: 150, align: "left", headerAlign: "left", editable: true,
+            field: "allowanceMedical", headerName: "Medical Allowance", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "allowanceSpecial", headerName: "Special Allowance", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "allowanceFuel", headerName: "Fuel Allowance", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "allowancePhoneBill", headerName: "Phone Bill Allowance", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "allowanceOther", headerName: "Other Allowance", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "allowanceTotal", headerName: "Total Allowance", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "deductionProvidentFund", headerName: "Provident Fund Deduction", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "deductionTax", headerName: "Tax Deduction", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "deductionOther", headerName: "Other Deductions", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "deductionTotal", headerName: "Total Deductions", width: 190, align: "center", headerAlign: "center", editable: true, type: 'number',
+            renderCell: (params) => {
+                const percentage = params.row.salaryGross ? (params.value / params.row.salaryGross) * 100 : 0;
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 5
+                                            ? "#e74c3c"
+                                            : percentage >= 5 && percentage < 10
+                                                ? "#33CCCC"
+                                                : percentage >= 10 && percentage < 15
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        ${params.value}
+                    </div>
+                );
+            }
+        },
+        {
+            field: "bankName", headerName: "Bank Name", width: 150, align: "left", headerAlign: "left", editable: true, type: 'singleSelect', valueOptions: bankLogos.map(item => item.name),
             renderCell: ({ row: { bankName } }) => {
                 const bank = bankLogos.find(item => item.name === bankName)
                 if (!bank) { return null }
                 return (
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <img src={bank.URL} style={{ width: 20, height: 20, marginRight: 10 }} />
+                        <img src={bank.URL} style={{ width: bank.width, height: bank.height, marginRight: bank.marginRight }} />
                         {bankName}
                     </Box>
                 );
@@ -197,29 +679,30 @@ const Financial = () => {
         {
             field: "accountName", headerName: "Account Name", width: 150, align: "left", headerAlign: "left", editable: true,
             renderCell: (params) => {
-                return <div style={{ textTransform: 'uppercase' }}>{params.value}</div>;
+                const removeVietnameseTones = (str) => { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); };
+                return <div style={{ textTransform: 'uppercase' }}>{removeVietnameseTones(params.value)}</div>;
             }
         },
         { field: "accountNumber", headerName: "Account Number", width: 150, align: "center", headerAlign: "center", editable: true },
         { field: "iban", headerName: "IBAN", width: 150, align: "center", headerAlign: "center", editable: true },
         {
-            field: 'actions', type: 'actions', headerName: 'Actions', width: 100, cellClassName: 'actions',
+            field: "actions", type: "actions", headerName: "Actions", width: 100,
             getActions: ({ id }) => {
-                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+                const isRowInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
-                if (isInEditMode) {
+                if (isRowInEditMode) {
                     return [
-                        <GridActionsCellItem icon={<SaveIcon />} label="Save" sx={{ color: 'primary.main', }} onClick={handleSaveClick(id)} />,
-                        <GridActionsCellItem icon={<CancelIcon />} label="Cancel" className="textPrimary" onClick={handleCancelClick(id)} color="inherit" />,
+                        <GridActionsCellItem icon={<SaveIcon />} label="Save" onClick={handleSaveClick(id)} color="primary" />,
+                        <GridActionsCellItem icon={<CancelIcon />} label="Cancel" onClick={handleCancelClick(id)} color="secondary" />,
                     ];
                 }
 
                 return [
-                    <GridActionsCellItem icon={<EditIcon />} label="Edit" className="textPrimary" onClick={handleEditClick(id)} color="inherit" />,
-                    <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={handleDeleteClick(id)} color="inherit" />,
+                    <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={handleEditClick(id)} color="primary" />,
+                    <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={handleDeleteClick(id)} color="error" />,
                 ];
             },
-        }
+        },
     ]
 
     return (
@@ -244,7 +727,18 @@ const Financial = () => {
                 }}
                 checkboxSelection
                 disableRowSelectionOnClick
+                loading={loading}
             />
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbar.message.includes("successfully") ? "success" : "error"} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     )
 }
