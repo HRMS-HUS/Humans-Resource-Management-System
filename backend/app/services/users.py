@@ -58,33 +58,33 @@ async def update_user(db: AsyncSession, user_id: str, user_update: schemas.UserU
     
     return existing_user
 
-async def change_password(
-    db: AsyncSession, 
-    user_id: str, 
-    current_password: str, 
-    new_password: str
-):
-    user = await get_user_by_id(db, user_id)
+# async def change_password(
+#     db: AsyncSession, 
+#     user_id: str, 
+#     current_password: str, 
+#     new_password: str
+# ):
+#     user = await get_user_by_id(db, user_id)
     
-    # Verify current password
-    if not crypto.verify_password(current_password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Current password is incorrect"
-        )
+#     # Verify current password
+#     if not crypto.verify_password(current_password, user.password):
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Current password is incorrect"
+#         )
     
-    # Hash and update new password
-    hashed_password = crypto.hash_password(new_password)
-    stmt = (
-        update(models.Users)
-        .where(models.Users.user_id == user_id)
-        .values(password=hashed_password)
-    )
-    await db.execute(stmt)
-    await db.commit()
-    await db.refresh(user)
+#     # Hash and update new password
+#     hashed_password = crypto.hash_password(new_password)
+#     stmt = (
+#         update(models.Users)
+#         .where(models.Users.user_id == user_id)
+#         .values(password=hashed_password)
+#     )
+#     await db.execute(stmt)
+#     await db.commit()
+#     await db.refresh(user)
     
-    return user
+#     return user
 
 async def change_own_password(
     db: AsyncSession, 
