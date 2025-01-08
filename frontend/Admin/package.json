@@ -18,6 +18,7 @@
     "@fullcalendar/react": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
     "@mui/icons-material": "^6.2.0",
+    "@mui/lab": "^6.0.0-beta.22",
     "@mui/material": "^6.3.1",
     "@mui/system": "^6.3.1",
     "@mui/x-data-grid": "^7.23.2",
@@ -34,6 +35,7 @@
     "react-hook-form": "^7.54.1",
     "react-router-dom": "^7.0.2",
     "react-world-flags": "^1.6.0",
+    "socket.io-client": "^4.8.1",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
