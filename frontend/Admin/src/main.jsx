@@ -17,6 +17,8 @@ import Information from './pages/information/Information';
 import Department from './pages/department/Department';
 import { useAuthStore } from './pages/login/authStore.js';
 import Login from './pages/login/Login.jsx';
+import ForgotPassword from './pages/login/ForgotPassword.jsx';
+import ResetPassword from './pages/login/ResetPassword.jsx';
 
 const RedirectAuthenticatedUser = ({ children }) => {
   const { isAuthenticated } = useAuthStore()
@@ -40,6 +42,16 @@ const router = createBrowserRouter(
       <Route path="/login" element={
         <RedirectAuthenticatedUser>
           <Login />
+        </RedirectAuthenticatedUser>
+      } />
+      <Route path="/forgot-password" element={
+        <RedirectAuthenticatedUser>
+          <ForgotPassword />
+        </RedirectAuthenticatedUser>
+      } />
+      <Route path="/reset-password" element={
+        <RedirectAuthenticatedUser>
+          <ResetPassword />
         </RedirectAuthenticatedUser>
       } />
       <Route path="/" element={<ProtectedRoute><App /></ProtectedRoute>}>
