@@ -14,11 +14,8 @@ const Pie = ({ isDashboard = false }) => {
                 axios.get('http://127.0.0.1:8000/api/personal_info'),
                 axios.get('http://127.0.0.1:8000/api/departments')
             ]);
-
-            const personalInfo = response1.data;
-            const departments = response2.data;
-
-            const groupedData = personalInfo.reduce((acc, curr) => {
+            
+            const groupedData = response1.data.reduce((acc, curr) => {
                 const department = curr.department_id;
                 if (!acc[department]) {
                     acc[department] = 1;
@@ -29,7 +26,7 @@ const Pie = ({ isDashboard = false }) => {
             }, {});
 
             const formattedData = Object.keys(groupedData).map((key) => {
-                const department = departments.find(dept => dept.department_id === key);
+                const department = response2.data.find(dept => dept.department_id === key);
                 return {
                     id: department ? department.department_name : key,
                     label: key,
