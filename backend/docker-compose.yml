@@ -2,9 +2,11 @@ version: '3.8'
 
 services:
   redis:
-    image: redis
+    image: redis:latest
     ports:
       - "6379:6379"
+    networks:
+      - app-network
 
   postgres:
     image: postgres:latest
@@ -16,9 +18,14 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   web:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: hrms-backend:latest
     ports:
       - "8000:8000"
     volumes:
@@ -28,10 +35,16 @@ services:
       PYTHONPATH: /app
       REDIS_HOST: ${REDIS_HOST}
       DB_URL: ${DB_URL}
+    networks:
+      - app-network
     depends_on:
       - redis
       - postgres
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:
