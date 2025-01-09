@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Snackbar, Typography, useTheme } from '@mui/material';
+import { Alert, Box, Button, LinearProgress, Snackbar, Typography, useTheme } from '@mui/material';
 import { DataGrid, GridActionsCellItem, GridRowEditStopReasons, GridRowModes, GridToolbar, GridToolbarContainer } from '@mui/x-data-grid';
 import { randomId } from '@mui/x-data-grid-generator';
 import DomainAddIcon from '@mui/icons-material/DomainAdd';
@@ -53,6 +53,7 @@ const Department = () => {
     const [rows, setRows] = useState([]);
     const [rowModesModel, setRowModesModel] = useState({});
     const [loading, setLoading] = useState(false);
+    const [personalInfo, setPersonalInfo] = useState([])
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     const fetchManagerInfo = async (managerId) => {
@@ -65,11 +66,32 @@ const Department = () => {
         }
     };
 
+    const fetchPersonalInfo = async () => {
+        try {
+            const response = await axios.get('http://127.0.0.1:8000/api/personal_info');
+            setPersonalInfo(response.data)
+            const departmentCounts = response.data.reduce((acc, item) => {
+                const key = item.department_id;
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            }, {});
+            return departmentCounts
+        } catch (error) {
+            console.error("Error fetching number of employee", error);
+            return "Error";
+        }
+    };
+
     const fetchDepartment = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/departments');
-            const dataWithId = await Promise.all(response.data.map(async (item) => {
+
+            const [departmentsResponse, departmentCounts] = await Promise.all([
+                axios.get('http://127.0.0.1:8000/api/departments'),
+                fetchPersonalInfo(),
+            ]);
+
+            const dataWithId = await Promise.all(departmentsResponse.data.map(async (item) => {
                 const managerName = await fetchManagerInfo(item.manager_id);
                 const departmentIdSuffix = item.department_id.slice(-3);
                 return {
@@ -77,17 +99,18 @@ const Department = () => {
                     id: item.department_id,
                     manager_name: managerName,
                     department_id_suffix: parseInt(departmentIdSuffix),
+                    quantity: departmentCounts[item.department_id] || 0,
                 };
             }));
             dataWithId.sort((a, b) => a.department_id_suffix - b.department_id_suffix);
             setRows(dataWithId);
+
         } catch (error) {
-            console.error("Error fetching departments:", error);
+            console.error("Error fetching departments or employee counts:", error);
         } finally {
             setLoading(false);
         }
     };
-
 
     useEffect(() => {
         fetchDepartment();
@@ -214,7 +237,42 @@ const Department = () => {
         },
         { field: "manager_id", headerName: "Manager ID", width: 100, align: "center", headerAlign: "center", editable: true },
         { field: "manager_name", headerName: "Manager Name", width: 180, editable: false, align: "center", headerAlign: "center" },
-        { field: "quantity", headerName: "Number of Employees", width: 190, align: "center", headerAlign: "center" },
+        {
+            field: "quantity", headerName: "Number of Employees", type: 'number', width: 170, headerAlign: "center",
+            renderCell: (params) => {
+                const percentage = (params.value / personalInfo.length) * 100
+                return (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ position: 'relative', height: 27, width: 100, marginRight: 1.5 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: '1.75px solid',
+                                    backgroundColor: theme.palette.background.default,
+                                    borderColor: theme.palette.divider,
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: percentage < 10
+                                            ? "#e74c3c"
+                                            : percentage >= 10 && percentage < 20
+                                                ? "#33CCCC"
+                                                : percentage >= 20 && percentage < 10
+                                                    ? "#00CC33"
+                                                    : "#607d8b",
+                                    }
+                                }}
+                            />
+                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: theme.palette.text.primary, fontSize: '0.9rem' }}>
+                                {percentage.toFixed(2)}%
+                            </Box>
+                        </Box>
+                        {params.value}
+                    </div>
+                );
+            }
+        },
         { field: "location", headerName: "Location", width: 250, editable: true },
         { field: "contact_email", headerName: "Contact Email", width: 250, editable: true },
         {
@@ -291,7 +349,7 @@ const Department = () => {
                 disableRowSelectionOnClick
                 loading={loading}
                 sortModel={[
-                    { field: 'department_id_suffix', sort: 'asc' },  // Sắp xếp theo ba số cuối của department_id
+                    { field: 'department_id_suffix', sort: 'asc' },
                 ]}
             />
             <Snackbar
