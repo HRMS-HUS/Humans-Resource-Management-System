@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, Date, Enum
+from sqlalchemy import Column, String, ForeignKey, Date, Enum,Sequence
 import enum
 from ..configs.database import Base
 
@@ -8,7 +8,7 @@ class StatusEnum(enum.Enum):
 
 class Department(Base):
     __tablename__ = "department"
-    department_id = Column(String, primary_key=True, index=True, nullable=False)
+    department_id = Column(String, Sequence("department_id_seq"),primary_key=True, index=True, nullable=False)
     department_name = Column(String, nullable=True)
     manager_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     location = Column(String, nullable=True)

@@ -11,5 +11,6 @@ class ResetPassword(BaseModel):
     new_password: str
     confirm_password: str
 
-class VerifyOTPRequest(BaseModel):
+class VerifyOTP(BaseModel):
+    username: str
     otp_code: str
