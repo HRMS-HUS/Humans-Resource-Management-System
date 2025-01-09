@@ -34,7 +34,6 @@ async def on_startup():
     
 app.include_router(users.router)
 app.include_router(authentication.router)
-app.include_router(protected.router)
 app.include_router(userPersonalInfo.router)
 app.include_router(userFinancialInfo.router)
 app.include_router(userPersonalEvent.router)

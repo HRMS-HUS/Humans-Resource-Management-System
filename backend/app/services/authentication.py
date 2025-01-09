@@ -22,6 +22,7 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import os
 from pathlib import Path
 from ..configs.redis import redis_client
+from ..utils.redis_lock import DistributedLock
 
 async def get_user_id_by_username(db: AsyncSession, username: str) -> int:
     stmt = select(user_model.Users.user_id).where(user_model.Users.username == username)
@@ -100,12 +101,16 @@ async def check_otp_code(db: AsyncSession, otp_code: str):
     
     return db_code
 
-async def reset_password(db: AsyncSession,new_password: str, username: str):
+async def reset_password(db: AsyncSession, new_password: str, email: str):
     stmt = (
         select(
             models_user.Users
-            )
-        .where(models_user.Users.username == username)
+        )
+        .join(
+            models_user_info.UserPersonalInfo,
+            models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id,
+        )
+        .where(models_user_info.UserPersonalInfo.email == email)
     )
     result = await db.execute(stmt)
     user = result.scalars().first()
@@ -251,55 +256,63 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
 async def forgot_password(
     request: schemas.ForgotPassword = Query(...), db: AsyncSession = Depends(get_db)
 ):
-    stmt = (
-        select(models_user.Users, models_user_info.UserPersonalInfo)
-        .join(
-            models_user_info.UserPersonalInfo,
-            models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id,
+    async with DistributedLock(f"forgot_password:{request.email}"):
+        stmt = (
+            select(models_user.Users, models_user_info.UserPersonalInfo)
+            .join(
+                models_user_info.UserPersonalInfo,
+                models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id,
+            )
+            .where(models_user_info.UserPersonalInfo.email == request.email)
         )
-        .where(models_user_info.UserPersonalInfo.email == request.email)
-    )
-    result = await db.execute(stmt)
-    user_info = result.first()
-    if not user_info:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email Not Found"
+        result = await db.execute(stmt)
+        user_info = result.first()
+        if not user_info:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Email Not Found"
+            )
+        
+        username = user_info[0].username
+        email_user = user_info[1].email
+        reset_code = otp.create_otp()
+        await redis_client.setex(email_user, 600, reset_code)
+        subject = "Reset code"
+        recipient = [email_user]
+
+        template_path = (
+            Path(__file__).parent.parent / "templates" / "otp_email_forgot_password.html"
         )
-    
-    username = user_info[0].username
-    email_user = user_info[1].email
-    reset_code = otp.create_otp()
-    await create_otp_code(db, email_user, reset_code)
-    subject = "Reset code"
-    recipient = [email_user]
+        with open(template_path, "r") as file:
+            html_template = file.read()
 
-    template_path = (
-        Path(__file__).parent.parent / "templates" / "otp_email_forgot_password.html"
-    )
-    with open(template_path, "r") as file:
-        html_template = file.read()
+        message = html_template.format(username=username, reset_code=reset_code)
 
-    message = html_template.format(username=username, reset_code=reset_code)
+        await email.send_mail(subject, recipient, message)
 
-    await email.send_mail(subject, recipient, message)
-
-    return {"message": "Password reset email sent"}
+        return {"message": "Password reset email sent"}
 
 
 async def reset_passwords(
     request: schemas.ResetPassword = Query(...), db: AsyncSession = Depends(get_db)
 ):
-    otp_code = await check_otp_code(db, request.otp_code)
+    async with DistributedLock(f"reset_password:{request.email}"):
+        redis_otp = await redis_client.get(request.email)
+        if redis_otp is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to retrieve OTP from Redis"
+            )  # Xử lý khi không có giá trị
 
-    if not otp_code:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Reset Code Not Found"
-        )
+        if redis_otp != request.otp_code:
+                raise HTTPException(
+                    status_code=400, detail="Invalid OTP"
+                )
+        await redis_client.delete(request.email)
 
-    if request.new_password != request.confirm_password:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="new same confirm"
-        )
+        if request.new_password != request.confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="new same confirm"
+            )
 
-    await reset_password(db, request.new_password, request.username)
-    return {"message": "Password reset successful"}
+        await reset_password(db, request.new_password, request.email)
+        return {"message": "Password reset successfully"}
