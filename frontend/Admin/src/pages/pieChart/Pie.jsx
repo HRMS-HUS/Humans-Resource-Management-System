@@ -1,5 +1,6 @@
 import { Box, useTheme } from '@mui/material'
 import { ResponsivePie } from '@nivo/pie'
+import axios from 'axios'
 import { useEffect, useState } from 'react'
 
 const Pie = ({ isDashboard = false }) => {
@@ -9,10 +10,15 @@ const Pie = ({ isDashboard = false }) => {
 
     const fetchData = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/api/personal_info");
-            const data = await response.json();
+            const [response1, response2] = await Promise.all([
+                axios.get('http://127.0.0.1:8000/api/personal_info'),
+                axios.get('http://127.0.0.1:8000/api/departments')
+            ]);
 
-            const groupedData = data.reduce((acc, curr) => {
+            const personalInfo = response1.data;
+            const departments = response2.data;
+
+            const groupedData = personalInfo.reduce((acc, curr) => {
                 const department = curr.department_id;
                 if (!acc[department]) {
                     acc[department] = 1;
@@ -22,11 +28,14 @@ const Pie = ({ isDashboard = false }) => {
                 return acc;
             }, {});
 
-            const formattedData = Object.keys(groupedData).map((key) => ({
-                id: key,
-                label: key,
-                value: groupedData[key],
-            }));
+            const formattedData = Object.keys(groupedData).map((key) => {
+                const department = departments.find(dept => dept.department_id === key);
+                return {
+                    id: department ? department.department_name : key,
+                    label: key,
+                    value: groupedData[key],
+                };
+            });
 
             setChartData(formattedData);
         } catch (error) {
