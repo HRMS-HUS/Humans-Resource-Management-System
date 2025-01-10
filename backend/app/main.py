@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job,  department, daysHoliday, daysWorking
+from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job,  department, daysHoliday, daysWorking, deptAnnouncement
 from .configs.database import init_db
 import os, redis
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,3 +41,4 @@ app.include_router(job.router)
 app.include_router(department.router)
 app.include_router(daysHoliday.router)
 app.include_router(daysWorking.router)
+app.include_router(deptAnnouncement.router)

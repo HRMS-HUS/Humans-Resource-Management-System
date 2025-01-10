@@ -75,65 +75,29 @@ async def update_holiday(
 
 async def get_holiday_by_id(db: AsyncSession, holiday_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.DaysHoliday).filter(
-                    models.DaysHoliday.holiday_id == holiday_id
-                )
-            )
-            holiday = result.scalar_one_or_none()
-
-            if not holiday:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, 
-                    detail="Holiday not found"
-                )
-            return holiday
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Database operation failed: {str(e)}"
-        )
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error: {str(e)}"
-        )
-
-
-async def get_all_holidays(
-    db: AsyncSession, skip: int = 0, limit: int = 100
-) -> List[models.DaysHoliday]:
-    try:
         result = await db.execute(
-            select(models.DaysHoliday).offset(skip).limit(limit)
+            select(models.DaysHoliday).filter(
+                models.DaysHoliday.holiday_id == holiday_id
+            )
         )
-        holidays = result.scalars().all()
+        holiday = result.scalar_one_or_none()
 
-        if not holidays:
-            return []
-
-        return holidays
+        if not holiday:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Holiday not found"
+            )
+        return holiday
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+
+
+async def get_all_holidays(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[models.DaysHoliday]:
+    result = await db.execute(
+        select(models.DaysHoliday).offset(skip).limit(limit)
+    )
+    holidays = result.scalars().all()
+    return holidays if holidays else []
 
 
 async def delete_holiday(db: AsyncSession, holiday_id: str):

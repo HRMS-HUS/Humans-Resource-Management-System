@@ -41,90 +41,47 @@ async def create_user_event(db: AsyncSession, event: schemas.UserPersonalEventCr
 
 async def get_user_event_by_id(db: AsyncSession, event_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.UserPersonalEvent).filter(
-                    models.UserPersonalEvent.event_id == event_id
-                )
+        result = await db.execute(
+            select(models.UserPersonalEvent).filter(
+                models.UserPersonalEvent.event_id == event_id
             )
-            event = result.scalar_one_or_none()
+        )
+        event = result.scalar_one_or_none()
 
-            if not event:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Event not found"
-                )
-            return event
+        if not event:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Event not found"
+            )
+        return event
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 async def get_user_event_by_user_id(db: AsyncSession, user_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.UserPersonalEvent).filter(
-                    models.UserPersonalEvent.user_id == user_id
-                )
+        result = await db.execute(
+            select(models.UserPersonalEvent).filter(
+                models.UserPersonalEvent.user_id == user_id
             )
-            events = result.scalars().all()
+        )
+        events = result.scalars().all()
 
-            if not events:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Event not found"
-                )
-            return events
+        if not events:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Event not found"
+            )
+        return events
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 async def get_all_events(
     db: AsyncSession, skip: int = 0, limit: int = 100
 ) -> List[models.UserPersonalEvent]:
-    try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.UserPersonalEvent).offset(skip).limit(limit)
-            )
-            return result.scalars().all()
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+    result = await db.execute(
+        select(models.UserPersonalEvent).offset(skip).limit(limit)
+    )
+    return result.scalars().all()
 
 async def update_user_event(
     db: AsyncSession, event_id: str, event: schemas.UserPersonalEventUpdate

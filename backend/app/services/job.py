@@ -43,60 +43,33 @@ async def create_job(db: AsyncSession, job: schemas.JobCreate):
 
 async def get_job_by_id(db: AsyncSession, job_id: str):
     try:
-        async with db.begin():
-            query = select(models.Job).where(models.Job.job_id == job_id)
-            result = await db.execute(query)
-            job = result.scalar_one_or_none()
+        query = select(models.Job).where(models.Job.job_id == job_id)
+        result = await db.execute(query)
+        job = result.scalar_one_or_none()
 
-            if not job:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
-                )
-            return job
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found"
+            )
+        return job
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 async def get_jobs_by_user_id(db: AsyncSession, user_id: str):
     try:
-        async with db.begin():
-            query = select(models.Job).where(models.Job.user_id == user_id)
-            result = await db.execute(query)
-            jobs = result.scalars().all()
+        query = select(models.Job).where(models.Job.user_id == user_id)
+        result = await db.execute(query)
+        jobs = result.scalars().all()
 
-            if not jobs:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="No jobs found for this user",
-                )
-            return list(jobs)
+        if not jobs:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No jobs found for this user",
+            )
+        return list(jobs)
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 async def update_job(db: AsyncSession, job_id: str, job: schemas.JobUpdate):
     async with DistributedLock(f"job:{job_id}"):
@@ -165,27 +138,8 @@ async def delete_job(db: AsyncSession, job_id: str):
                 detail="Internal server error"
             )
 
-async def get_all_jobs(
-    db: AsyncSession, skip: int = 0, limit: int = 100
-) -> List[models.Job]:
-    try:
-        async with db.begin():
-            query = select(models.Job).offset(skip).limit(limit)
-            result = await db.execute(query)
-            jobs = result.scalars().all()
-            return list(jobs)
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+async def get_all_jobs(db: AsyncSession, skip: int = 0, limit: int = 100):
+    query = select(models.Job).offset(skip).limit(limit)
+    result = await db.execute(query)
+    jobs = result.scalars().all()
+    return list(jobs)

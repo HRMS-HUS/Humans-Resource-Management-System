@@ -1,4 +1,3 @@
-
 services:
   redis:
     image: redis:latest
@@ -21,15 +20,15 @@ services:
       - app-network
 
   web:
-    build: 
-      context: .
+    build:
+      context: backend # Build context pointing to the 'web/backend' directory
       dockerfile: Dockerfile
     image: hrms-backend:latest
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
-    working_dir: /app
+      - ./backend:/app  # Mount the 'web/backend' directory to '/app' inside the container
+    working_dir: /app  # Set the working directory to '/app'
     environment:
       PYTHONPATH: /app
       REDIS_HOST: ${REDIS_HOST}
@@ -39,11 +38,11 @@ services:
     depends_on:
       - redis
       - postgres
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload  # Point to main.py directly in the 'backend' folder
+# Load the environment variables from the .env file
 
 networks:
   app-network:
     driver: bridge
-
 volumes:
   postgres_data:

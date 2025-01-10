@@ -48,68 +48,40 @@ async def create_user_info(user: schemas.UserInfoCreate, db: AsyncSession):
 
 async def get_user_personal_info_by_id(db: AsyncSession, personal_info_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.UserPersonalInfo).filter(
-                    models.UserPersonalInfo.personal_info_id == personal_info_id
-                )
+        result = await db.execute(
+            select(models.UserPersonalInfo).filter(
+                models.UserPersonalInfo.personal_info_id == personal_info_id
             )
-            personal_info = result.scalar_one_or_none()
+        )
+        personal_info = result.scalar_one_or_none()
 
-            if not personal_info:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Personal information not found",
-                )
-            return personal_info
+        if not personal_info:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Personal information not found",
+            )
+        return personal_info
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 
 async def get_user_personal_info_by_user_id(db: AsyncSession, user_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.UserPersonalInfo).filter(
-                    models.UserPersonalInfo.user_id == user_id
-                )
+        result = await db.execute(
+            select(models.UserPersonalInfo).filter(
+                models.UserPersonalInfo.user_id == user_id
             )
-            personal_info = result.scalar_one_or_none()
+        )
+        personal_info = result.scalar_one_or_none()
 
-            if not personal_info:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Personal information not found for this user",
-                )
-            return personal_info
+        if not personal_info:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Personal information not found for this user",
+            )
+        return personal_info
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 
 async def update_user_personal_info(
@@ -167,25 +139,8 @@ async def delete_user_personal_info(db: AsyncSession, personal_info_id: str):
 
 
 async def get_all_user_personal_info(db: AsyncSession, skip: int = 0, limit: int = 100):
-    try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.UserPersonalInfo).offset(skip).limit(limit)
-            )
-            personal_infos = result.scalars().all()
-            return personal_infos if personal_infos else []
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+    result = await db.execute(
+        select(models.UserPersonalInfo).offset(skip).limit(limit)
+    )
+    personal_infos = result.scalars().all()
+    return personal_infos if personal_infos else []

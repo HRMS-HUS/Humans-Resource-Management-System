@@ -81,35 +81,21 @@ async def update_financial_info(
 
 async def get_financial_info_by_id(db: AsyncSession, financial_info_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.UserFinancialInfo).filter(
-                    models.UserFinancialInfo.financial_info_id == financial_info_id
-                )
+        result = await db.execute(
+            select(models.UserFinancialInfo).filter(
+                models.UserFinancialInfo.financial_info_id == financial_info_id
             )
-            financial_info = result.scalar_one_or_none()
+        )
+        financial_info = result.scalar_one_or_none()
 
-            if not financial_info:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, 
-                    detail="Financial info not found"
-                )
-            return financial_info
+        if not financial_info:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Financial info not found"
+            )
+        return financial_info
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 
 async def get_all_financial_info(
@@ -119,11 +105,7 @@ async def get_all_financial_info(
         select(models.UserFinancialInfo).offset(skip).limit(limit)
     )
     financial_infos = result.scalars().all()
-
-    if not financial_infos:
-        return []
-
-    return financial_infos
+    return financial_infos if financial_infos else []
 
 
 async def delete_financial_info(db: AsyncSession, financial_info_id: str):
@@ -157,32 +139,18 @@ async def delete_financial_info(db: AsyncSession, financial_info_id: str):
 
 async def get_user_financial_info_by_user_id(db: AsyncSession, user_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.UserFinancialInfo).filter(
-                    models.UserFinancialInfo.user_id == user_id
-                )
+        result = await db.execute(
+            select(models.UserFinancialInfo).filter(
+                models.UserFinancialInfo.user_id == user_id
             )
-            user_financial_info = result.scalar_one_or_none()
+        )
+        user_financial_info = result.scalar_one_or_none()
 
-            if not user_financial_info:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Personal information not found for this user",
-                )
-            return user_financial_info
+        if not user_financial_info:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Personal information not found for this user",
+            )
+        return user_financial_info
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )

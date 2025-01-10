@@ -22,5 +22,5 @@ class UserPersonalInfo(Base):
     address = Column(String, nullable=True)
     city = Column(String, nullable=True)
     country = Column(String, nullable=True)
-#     department_id = Column(String, ForeignKey("department.department_id", ondelete="CASCADE"), nullable=True)
-#     photo_url = Column(String, nullable=True)
+    department_id = Column(String, ForeignKey("department.department_id", ondelete="CASCADE"), nullable=True)
+    photo_url = Column(String, nullable=True)

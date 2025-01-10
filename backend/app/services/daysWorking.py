@@ -75,61 +75,31 @@ async def update_working_day(
 
 async def get_working_day_by_id(db: AsyncSession, working_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.DaysWorking).filter(
-                    models.DaysWorking.working_id == working_id
-                )
+        result = await db.execute(
+            select(models.DaysWorking).filter(
+                models.DaysWorking.working_id == working_id
             )
-            working = result.scalar_one_or_none()
+        )
+        working = result.scalar_one_or_none()
 
-            if not working:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Working day not found"
-                )
-            return working
+        if not working:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Working day not found"
+            )
+        return working
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 
 async def get_all_working_days(
     db: AsyncSession, skip: int = 0, limit: int = 100
 ) -> List[models.DaysWorking]:
-    try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.DaysWorking).offset(skip).limit(limit)
-            )
-            working_days = result.scalars().all()
-            return working_days if working_days else []
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+    result = await db.execute(
+        select(models.DaysWorking).offset(skip).limit(limit)
+    )
+    working_days = result.scalars().all()
+    return working_days if working_days else []
 
 
 async def delete_working_day(db: AsyncSession, working_id: str):

@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 from fastapi import HTTPException, status
 from ..models import department as models
+from ..models import userPersonalInfo as models_user_info
 from ..schemas import department as schemas
 from typing import List
 from ..utils.redis_lock import DistributedLock
@@ -79,61 +80,29 @@ async def update_department(
 
 async def get_department_by_id(db: AsyncSession, department_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.Department).filter(
-                    models.Department.department_id == department_id
-                )
+        result = await db.execute(
+            select(models.Department).filter(
+                models.Department.department_id == department_id
             )
-            department = result.scalar_one_or_none()
-
-            if not department:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Department not found"
-                )
-            return department
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
         )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+        department = result.scalar_one_or_none()
 
-
-async def get_all_departments(
-    db: AsyncSession, skip: int = 0, limit: int = 100
-) -> List[models.Department]:
-    try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.Department).offset(skip).limit(limit)
+        if not department:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Department not found"
             )
-            departments = result.scalars().all()
-            return departments if departments else []
+        return department
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+
+
+async def get_all_departments(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[models.Department]:
+    result = await db.execute(
+        select(models.Department).offset(skip).limit(limit)
+    )
+    departments = result.scalars().all()
+    return departments if departments else []
 
 
 async def delete_department(db: AsyncSession, department_id: str):
@@ -168,32 +137,27 @@ async def delete_department(db: AsyncSession, department_id: str):
 
 async def get_department_by_manager_id(db: AsyncSession, manager_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(
-                select(models.Department).filter(
-                    models.Department.manager_id == manager_id
-                )
+        result = await db.execute(
+            select(models.Department).filter(
+                models.Department.manager_id == manager_id
             )
-            department = result.scalar_one_or_none()
+        )
+        department = result.scalar_one_or_none()
 
-            if not department:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Department not found for this manager",
-                )
-            return department
+        if not department:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Department not found for this manager",
+            )
+        return department
     except HTTPException:
-        await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+
+# async def get_user_department(db: AsyncSession, user_id: int):
+#     query = select(models.Department).join(
+#         models_user_info.UserPersonalInfo,
+#         models_user_info.UserPersonalInfo.department_id == models.Department.department_id
+#     ).where(models_user_info.UserPersonalInfo.user_id == user_id)
+    
+#     result = await db.execute(query)
+#     return result.scalar_one_or_none()

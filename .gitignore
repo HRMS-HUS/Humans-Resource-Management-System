@@ -1,0 +1,6 @@
+.env
+**/__pycache__/
+*.ini
+env.py
+script.py.mako
+data
