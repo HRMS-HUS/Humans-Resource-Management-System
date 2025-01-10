@@ -153,11 +153,11 @@ async def get_department_by_manager_id(db: AsyncSession, manager_id: str):
     except HTTPException:
         raise
 
-# async def get_user_department(db: AsyncSession, user_id: int):
-#     query = select(models.Department).join(
-#         models_user_info.UserPersonalInfo,
-#         models_user_info.UserPersonalInfo.department_id == models.Department.department_id
-#     ).where(models_user_info.UserPersonalInfo.user_id == user_id)
+async def get_user_department(db: AsyncSession, user_id: int):
+    query = select(models.Department).join(
+        models_user_info.UserPersonalInfo,
+        models_user_info.UserPersonalInfo.department_id == models.Department.department_id
+    ).where(models_user_info.UserPersonalInfo.user_id == user_id)
     
-#     result = await db.execute(query)
-#     return result.scalar_one_or_none()
+    result = await db.execute(query)
+    return result.scalar_one_or_none()

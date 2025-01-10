@@ -26,7 +26,7 @@ async def get_current_user_personal_info(
 )
 async def update_current_user_personal_info(
     personal_id: str,
-    info_update: schemas.UserInfoUpdate,
+    info_update: schemas.UserInfoUpdateNoDepartment,
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
