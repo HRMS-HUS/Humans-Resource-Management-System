@@ -6,6 +6,7 @@ from ..schemas import users as schemas_user
 from ..schemas import authentication as schemas_auth
 from fastapi.security import OAuth2PasswordRequestForm
 from ..services import authentication
+from ..utils.jwt import get_current_user  # Add this import at the top
 
 router = APIRouter()
 
@@ -49,3 +50,10 @@ async def logout_user(
     request: str, db: AsyncSession = Depends(get_db)
 ):
     return await authentication.logout(request, db)
+
+@router.post("/logout/me")
+async def logout_me(
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    return await authentication.logout_me(current_user, db)

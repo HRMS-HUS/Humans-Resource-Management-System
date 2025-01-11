@@ -87,6 +87,8 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
             data={"sub": db_user.user_id}, expires_delta=access_token_expires
         )
 
+
+        await redis_client.setex(db_user.user_id, int(access_token_expires.total_seconds()), access_token)
         await logger.info("User logged in", {"username": form_data.username})
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
@@ -386,4 +388,25 @@ async def reset_passwords(
         except Exception as e:
             await logger.error("Password reset failed", error=e)
             raise
+
+async def logout_me(current_user: models_user.Users, db: AsyncSession):
+    try:
+        # Extract user_id from the User object
+        user_id = str(current_user.user_id)
+        # Remove access token from Redis using user_id as key
+        deleted = await redis_client.delete(user_id)
+        if deleted == 0:
+            await logger.warning("Logout failed: Token not found", {"user_id": user_id})
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User is not logged in or token already expired"
+            )
+        await logger.info("User logged out successfully", {"user_id": user_id})
+        return {"detail": "Logged out successfully"}
+    except Exception as e:
+        await logger.error("Error during logout", {"error": str(e)})
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error during logout: {str(e)}"
+        )
 
