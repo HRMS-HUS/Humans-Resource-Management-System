@@ -15,7 +15,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_payment(
-    payment: schemas.PaymentCreate,
+    payment: schemas.PaymentCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -37,7 +37,7 @@ async def get_payment_by_id(
     response_model=schemas.PaymentResponse
 )
 async def update_payment(
-    payment: schemas.PaymentUpdate,
+    payment: schemas.PaymentUpdate = Query(...),
     payment_id: str = Path(..., description="Payment ID to update"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),

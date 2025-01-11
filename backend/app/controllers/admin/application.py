@@ -15,7 +15,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_application(
-    application: schemas.ApplicationCreate,
+    application: schemas.ApplicationCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -37,7 +37,7 @@ async def get_application_by_id(
     response_model=schemas.ApplicationResponse
 )
 async def update_application(
-    application: schemas.ApplicationUpdate,
+    application: schemas.ApplicationUpdate = Query(...),
     application_id: str = Path(..., description="Application ID to update"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),

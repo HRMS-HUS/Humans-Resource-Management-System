@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...configs.database import get_db
 from ...schemas import daysHoliday as schemas
@@ -14,7 +14,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED
 )
 async def create_holiday(
-    holiday: schemas.DaysHolidayCreate,
+    holiday: schemas.DaysHolidayCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -26,7 +26,7 @@ async def create_holiday(
 )
 async def update_holiday(
     holiday_id: str,
-    holiday: schemas.DaysHolidayUpdate,
+    holiday: schemas.DaysHolidayUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):

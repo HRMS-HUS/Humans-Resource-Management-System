@@ -16,10 +16,11 @@ class StatusEnum(str, Enum):
 
 class ApplicationBase(BaseModel):
     user_id: str
-    leave_type: LeaveTypeEnum
-    reason: str
-    start_date: date
-    end_date: date
+    leave_type: Optional[LeaveTypeEnum] = None
+    reason: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    status: Optional[StatusEnum] = None
 
 class ApplicationCreate(ApplicationBase):
     pass
@@ -33,7 +34,6 @@ class ApplicationUpdate(BaseModel):
 
 class ApplicationResponse(ApplicationBase):
     application_id: str
-    status: StatusEnum = StatusEnum.Pending
-
+    
     class Config:
         orm_mode = True

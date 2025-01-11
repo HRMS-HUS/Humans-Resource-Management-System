@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, File, UploadFile, Form, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...schemas import userPersonalInfo as schemas
 from ...services import userPersonalInfo as services
@@ -8,6 +8,8 @@ from ...services import users
 from ...configs.database import get_db
 from ...utils import jwt
 from typing import List
+from ...utils.cloudinary_helper import upload_photo
+import json
 
 router = APIRouter()
 
@@ -18,7 +20,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_user_personal_info(
-    user: schemas.UserInfoCreate,
+    user: schemas.UserInfoCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -49,15 +51,41 @@ async def get_personal_info_by_user_id(
 
 @router.put("/admin/personal_info/{personal_info_id}", response_model=schemas.UserInfoResponse)
 async def update_personal_info(
-    user: schemas.UserInfoUpdate,
-    personal_info_id: str = Path(..., description="Personal Info ID to update"),
+    data: schemas.UserInfoUpdate = Query(...),
+    personal_info_id: str = Path(...),
+    file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
+    try:
+        # Upload photo and update photo_url
+        photo_url = await upload_photo(file)
+        data.photo_url = photo_url
+        
+        # Call the service to update user data in DB
+        updated_user = await services.update_user_personal_info(db, personal_info_id, data)
 
-    return await services.update_user_personal_info(
-        db, personal_info_id, user
-    )
+        return updated_user
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+# @router.put("/admin/personal_info/{personal_info_id}/photo", response_model=schemas.UserInfoResponse)
+# async def update_user_photo(
+#     personal_info_id: str,
+#     users: schemas.UserInfoUpdate,
+    
+#     db: AsyncSession = Depends(get_db),
+#     current_user: models.Users = Depends(jwt.get_current_admin),
+# ):
+#     # Upload photo and get URL
+#     photo_url = await upload_photo(file)
+    
+#     # Update the personal info with the new photo URL
+#     return await services.update_user_personal_info(db, personal_info_id, users)
 
 
 @router.delete("/admin/personal_info/{personal_info_id}")

@@ -3,9 +3,9 @@ from typing import Optional
 from datetime import date, datetime
 
 class DaysWorkingBase(BaseModel):
-    day: date
-    starting_hours: datetime
-    ending_hours: datetime
+    day: Optional[date] = None
+    starting_hours: Optional[datetime] = None
+    ending_hours: Optional[datetime] = None
 
 class DaysWorkingCreate(DaysWorkingBase):
     pass

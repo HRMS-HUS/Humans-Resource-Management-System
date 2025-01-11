@@ -16,7 +16,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_user_event(
-    event: schemas.UserPersonalEventCreate,
+    event: schemas.UserPersonalEventCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):

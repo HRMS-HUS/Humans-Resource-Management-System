@@ -4,7 +4,7 @@ from typing import Optional
 class MessageBase(BaseModel):
     sender_id: str
     receiver_id: str
-    text: str
+    ext: Optional[str] = None
 
 class MessageCreate(MessageBase):
     pass

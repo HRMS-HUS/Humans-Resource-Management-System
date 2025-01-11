@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...configs.database import get_db
 from ...schemas import department as schemas
@@ -15,7 +15,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED
 )
 async def create_department(
-    department: schemas.DepartmentCreate,
+    department: schemas.DepartmentCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -26,7 +26,7 @@ async def create_department(
     response_model=schemas.DepartmentResponse
 )
 async def get_department(
-    department_id: str,
+    department_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -60,7 +60,7 @@ async def update_department(
 
 @router.delete("/admin/department/{department_id}")
 async def delete_department(
-    department_id: str,
+    department_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):

@@ -1,5 +1,5 @@
 # routers/userFinancialInfo.py
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...configs.database import get_db
 from ...schemas import userFinancialInfo as schemas
@@ -16,7 +16,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED
 )
 async def create_financial_info(
-    financial: schemas.UserFinancialInfoCreate,
+    financial: schemas.UserFinancialInfoCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -27,7 +27,7 @@ async def create_financial_info(
     response_model=schemas.UserFinancialInfoResponse
 )
 async def get_financial_info(
-    financial_info_id: str,
+    financial_info_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -50,8 +50,8 @@ async def get_all_financial_info(
     response_model=schemas.UserFinancialInfoResponse
 )
 async def update_financial_info(
-    financial_info_id: str,
-    financial: schemas.UserFinancialInfoUpdate,
+    financial_info_id: str = Path(...),
+    financial: schemas.UserFinancialInfoUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -61,7 +61,7 @@ async def update_financial_info(
 
 @router.delete("/financial_info/{financial_info_id}")
 async def delete_financial_info(
-    financial_info_id: str,
+    financial_info_id: str  = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):

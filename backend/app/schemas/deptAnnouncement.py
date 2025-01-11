@@ -3,9 +3,9 @@ from typing import Optional
 from datetime import datetime
 
 class DeptAnnouncementBase(BaseModel):
-    department_id: str
-    announcement_title: str
-    announcement_description: str
+    department_id: Optional[str] = None
+    announcement_title: Optional[str] = None
+    announcement_description: Optional[str] = None
 
 class DeptAnnouncementCreate(DeptAnnouncementBase):
     pass

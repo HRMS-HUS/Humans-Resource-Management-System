@@ -4,7 +4,7 @@ from ...models import users as models
 from ...schemas import users as schemas
 from ...services import users as users_service
 from ...utils import jwt
-from fastapi import HTTPException, status, Depends, APIRouter, Query
+from fastapi import HTTPException, status, Depends, APIRouter, Query, Path
 from ...configs.database import get_db
 from typing import Optional, List
 
@@ -15,7 +15,7 @@ router = APIRouter()
 @router.put("/admin/users/{user_id}", response_model=schemas.User)
 async def update_user(
     user_id: str,
-    user_update: schemas.UserUpdate,
+    user_update: schemas.UserUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -24,7 +24,7 @@ async def update_user(
 
 @router.delete("/admin/users/{user_id}")
 async def delete_user(
-    user_id: str,
+    user_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -50,7 +50,7 @@ async def get_all_users(
 
 @router.get("/admin/users/{user_id}", response_model=schemas.User)
 async def get_user(
-    user_id: str,
+    user_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):

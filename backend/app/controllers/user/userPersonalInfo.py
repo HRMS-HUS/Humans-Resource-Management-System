@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...schemas import userPersonalInfo as schemas
 from ...services import userPersonalInfo as services
@@ -7,6 +7,7 @@ from ...services import users
 from ...configs.database import get_db
 from ...utils import jwt
 from typing import List
+from ...utils.cloudinary_helper import upload_photo
 
 router = APIRouter()
 
@@ -44,3 +45,33 @@ async def update_current_user_personal_info(
         )
     
     return await services.update_user_personal_info(db, personal_id, info_update)
+
+@router.put(
+    "/me/personal_info/{personal_id}/photo",
+    response_model=schemas.UserInfoResponse,
+)
+async def update_current_user_photo(
+    personal_id: str,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_active_user),
+):
+    # Check if personal info exists and belongs to current user
+    existing_info = await services.get_user_personal_info_by_id(db, personal_id)
+    if not existing_info:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Personal info not found"
+        )
+    if existing_info.user_id != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this personal info"
+        )
+    
+    # Upload photo and get URL
+    photo_url = await upload_photo(file)
+    
+    # Update the personal info with the new photo URL
+    info_update = schemas.UserInfoUpdateNoDepartment(photo_url=photo_url)
+    return await services.update_user_personal_info_no_department(db, personal_id, info_update)

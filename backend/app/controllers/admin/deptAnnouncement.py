@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...configs.database import get_db
 from ...schemas import deptAnnouncement as schemas
@@ -14,7 +14,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED
 )
 async def create_announcement(
-    announcement: schemas.DeptAnnouncementCreate,
+    announcement: schemas.DeptAnnouncementCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...configs.database import get_db
 from ...services import userMessage as message_service
@@ -46,7 +46,7 @@ async def get_message(
 
 @router.delete("/admin/messages/{message_id}")
 async def delete_message(
-    message_id: str,
+    message_id: str = Path(..., description="Message ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -64,7 +64,7 @@ async def delete_message(
 
 @router.get("/admin/messages/user/{user_id}", response_model=List[MessageResponse])
 async def get_user_messages(
-    user_id: str,
+    user_id: str = Path(..., description="User ID to retrieve messages for"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):

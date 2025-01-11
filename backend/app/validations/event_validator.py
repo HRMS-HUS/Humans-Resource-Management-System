@@ -1,17 +1,6 @@
 from datetime import date
 from ..exceptions.validation_exceptions import EventValidationError
 
-def validate_event_title(title: str) -> bool:
-    """Validate event title"""
-    if not (3 <= len(title) <= 100):
-        raise EventValidationError("event_title", "Event title must be between 3 and 100 characters")
-    return True
-
-def validate_event_description(description: str) -> bool:
-    """Validate event description"""
-    if not (10 <= len(description) <= 500):
-        raise EventValidationError("event_description", "Event description must be between 10 and 500 characters")
-    return True
 
 def validate_event_dates(start_date: date, end_date: date) -> bool:
     """Validate event dates"""

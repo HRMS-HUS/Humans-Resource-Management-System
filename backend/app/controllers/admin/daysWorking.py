@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...configs.database import get_db
 from ...schemas import daysWorking as schemas
@@ -14,7 +14,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED
 )
 async def create_working_day(
-    working: schemas.DaysWorkingCreate,
+    working: schemas.DaysWorkingCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -25,8 +25,8 @@ async def create_working_day(
     response_model=schemas.DaysWorkingResponse
 )
 async def update_working_day(
-    working_id: str,
-    working: schemas.DaysWorkingUpdate,
+    working_id: str = Path(..., description="Working ID to update"),
+    working: schemas.DaysWorkingUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -36,7 +36,7 @@ async def update_working_day(
 
 @router.delete("/admin/working/{working_id}")
 async def delete_working_day(
-    working_id: str,
+    working_id: str = Path(..., description="Working ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):

@@ -42,194 +42,192 @@ async def register(
     return await users.create_user(db, user)
 
 
-# async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
-#     try:
-#         # Check if input is email or username
-#         is_email = '@' in form_data.username
-
-#         if (is_email):
-#             # Query user by email
-#             stmt = (
-#                 select(models_user.Users)
-#                 .join(
-#                     models_user_info.UserPersonalInfo,
-#                     models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id,
-#                 )
-#                 .where(models_user_info.UserPersonalInfo.email == form_data.username)
-#             )
-#         else:
-#             # Query user by username
-#             stmt = select(models_user.Users).where(
-#                 models_user.Users.username == form_data.username
-#             )
-
-#         result = await db.execute(stmt)
-#         user_info = result.scalars().first()
-
-#         if not user_info:
-#             raise HTTPException(
-#                 status_code=status.HTTP_401_UNAUTHORIZED,
-#                 detail="Incorrect username/email or password",
-#                 headers={"WWW-Authenticate": "Bearer"},
-#             )
-
-#         db_user = user_info
-
-#         if not crypto.verify_password(form_data.password, db_user.password):
-#             raise HTTPException(
-#                 status_code=status.HTTP_401_UNAUTHORIZED,
-#                 detail="Incorrect username/email or password",
-#                 headers={"WWW-Authenticate": "Bearer"},
-#             )
-
-#         access_token_expires = jwt.timedelta(minutes=jwt.ACCESS_TOKEN_EXPIRE_MINUTES)
-#         access_token = await jwt.create_access_token(
-#             data={"sub": db_user.user_id}, expires_delta=access_token_expires
-#         )
-
-#         await logger.info("User logged in", {"username": form_data.username})
-#         return {"access_token": access_token, "token_type": "bearer"}
-#     except Exception as e:
-#         await logger.error("Login failed", error=e)
-#         raise
-
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
     try:
         # Check if input is email or username
         is_email = '@' in form_data.username
 
-        if is_email:
+        if (is_email):
             # Query user by email
             stmt = (
-                select(models_user.Users, models_user_info.UserPersonalInfo.email)
+                select(models_user.Users)
                 .join(
                     models_user_info.UserPersonalInfo,
-                    models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id
+                    models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id,
                 )
                 .where(models_user_info.UserPersonalInfo.email == form_data.username)
             )
         else:
             # Query user by username
-            stmt = (
-                select(models_user.Users, models_user_info.UserPersonalInfo.email)
-                .join(
-                    models_user_info.UserPersonalInfo,
-                    models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id
-                )
-                .where(models_user.Users.username == form_data.username)
-            )
-
-        
-        result = await db.execute(stmt)
-        user_info = result.first()
-
-        if not user_info:
-            await logger.warning("Login attempt failed: Incorrect Username or Password", {"username": form_data.username})
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect Username or Password"
-            )
-        
-        db_user, email_user = user_info
-
-        if not crypto.verify_password(form_data.password, db_user.password):
-            await logger.warning("Login attempt failed: Incorrect Password", {"username": form_data.username})
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect Username or Password"
-            )
-        
-        # Generate and store OTP
-        otp_code = otp.create_otp()
-        await redis_client.setex(db_user.user_id, 600, otp_code)
-        # Send email with OTP
-        subject = "OTP for Login"
-        recipient = [email_user]
-        
-        template_path = Path(__file__).parent.parent / 'templates' / 'otp_email_login.html'
-        with open(template_path, 'r') as file:
-            html_template = file.read()
-        
-        message = html_template.format(username=db_user.username, otp_code=otp_code)
-        
-        await email.send_mail(subject, recipient, message)
-        await logger.info("OTP sent successfully", {"username": db_user.username})
-        
-        return {"message": "OTP sent successfully"}
-    except Exception as e:
-        await logger.error("Error during login process", {"error": str(e)})
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error sending OTP: {str(e)}"
-        )
-
-async def verify_otp(request: schemas.VerifyOTP = Query(...), db: AsyncSession = Depends(get_db)):
-    try:
-        # Check if input is email or username
-        is_email = '@' in request.username
-
-        if is_email:
-            # Query user by email
-            stmt = (
-                select(models_user.Users)
-                .join(
-                    models_user_info.UserPersonalInfo,
-                    models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id
-                )
-                .where(models_user_info.UserPersonalInfo.email == request.username)
-            )
-        else:
-            # Query user by username
-            stmt = (
-                select(models_user.Users)
-                .where(models_user.Users.username == request.username)
+            stmt = select(models_user.Users).where(
+                models_user.Users.username == form_data.username
             )
 
         result = await db.execute(stmt)
         user_info = result.scalars().first()
 
         if not user_info:
-            await logger.warning("OTP verification failed: User not found", {"username": request.username})
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid Username or Email"
-            )
-        
-        # Use user_id as the key for Redis to unify username/email
-        redis_otp = await redis_client.get(user_info.user_id)
-        
-        if redis_otp is None:
-            await logger.warning("OTP verification failed: OTP not found", {"username": request.username})
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to retrieve OTP from Redis"
-            )
-        if redis_otp != request.otp_code:
-            await logger.warning("OTP verification failed: Invalid OTP", {"username": request.username})
-            raise HTTPException(
-                status_code=400, detail="Invalid OTP"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username/email or password",
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
-        await redis_client.delete(user_info.user_id)
+        db_user = user_info
+
+        if not crypto.verify_password(form_data.password, db_user.password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username/email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         access_token_expires = jwt.timedelta(minutes=jwt.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = await jwt.create_access_token(
-            data={"sub": user_info.user_id},
-            expires_delta=access_token_expires
+            data={"sub": db_user.user_id}, expires_delta=access_token_expires
         )
 
-        await redis_client.setex(user_info.user_id, int(access_token_expires.total_seconds()), access_token)
-        await logger.info("User logged in successfully", {"username": user_info.username})
-
+        await logger.info("User logged in", {"username": form_data.username})
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
-        await logger.error("Error during OTP verification", {"error": str(e)})
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error verifying OTP: {str(e)}"
-        )
+        await logger.error("Login failed", error=e)
+        raise
 
+# async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+#     try:
+#         # Check if input is email or username
+#         is_email = '@' in form_data.username
 
+#         if is_email:
+#             # Query user by email
+#             stmt = (
+#                 select(models_user.Users, models_user_info.UserPersonalInfo.email)
+#                 .join(
+#                     models_user_info.UserPersonalInfo,
+#                     models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id
+#                 )
+#                 .where(models_user_info.UserPersonalInfo.email == form_data.username)
+#             )
+#         else:
+#             # Query user by username
+#             stmt = (
+#                 select(models_user.Users, models_user_info.UserPersonalInfo.email)
+#                 .join(
+#                     models_user_info.UserPersonalInfo,
+#                     models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id
+#                 )
+#                 .where(models_user.Users.username == form_data.username)
+#             )
+
+        
+#         result = await db.execute(stmt)
+#         user_info = result.first()
+
+#         if not user_info:
+#             await logger.warning("Login attempt failed: Incorrect Username or Password", {"username": form_data.username})
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#                 detail="Incorrect Username or Password"
+#             )
+        
+#         db_user, email_user = user_info
+
+#         if not crypto.verify_password(form_data.password, db_user.password):
+#             await logger.warning("Login attempt failed: Incorrect Password", {"username": form_data.username})
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#                 detail="Incorrect Username or Password"
+#             )
+        
+#         # Generate and store OTP
+#         otp_code = otp.create_otp()
+#         await redis_client.setex(db_user.user_id, 600, otp_code)
+#         # Send email with OTP
+#         subject = "OTP for Login"
+#         recipient = [email_user]
+        
+#         template_path = Path(__file__).parent.parent / 'templates' / 'otp_email_login.html'
+#         with open(template_path, 'r') as file:
+#             html_template = file.read()
+        
+#         message = html_template.format(username=db_user.username, otp_code=otp_code)
+        
+#         await email.send_mail(subject, recipient, message)
+#         await logger.info("OTP sent successfully", {"username": db_user.username})
+        
+#         return {"message": "OTP sent successfully"}
+#     except Exception as e:
+#         await logger.error("Error during login process", {"error": str(e)})
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=f"Error sending OTP: {str(e)}"
+#         )
+
+# async def verify_otp(request: schemas.VerifyOTP = Query(...), db: AsyncSession = Depends(get_db)):
+#     try:
+#         # Check if input is email or username
+#         is_email = '@' in request.username
+
+#         if is_email:
+#             # Query user by email
+#             stmt = (
+#                 select(models_user.Users)
+#                 .join(
+#                     models_user_info.UserPersonalInfo,
+#                     models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id
+#                 )
+#                 .where(models_user_info.UserPersonalInfo.email == request.username)
+#             )
+#         else:
+#             # Query user by username
+#             stmt = (
+#                 select(models_user.Users)
+#                 .where(models_user.Users.username == request.username)
+#             )
+
+#         result = await db.execute(stmt)
+#         user_info = result.scalars().first()
+
+#         if not user_info:
+#             await logger.warning("OTP verification failed: User not found", {"username": request.username})
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#                 detail="Invalid Username or Email"
+#             )
+        
+#         # Use user_id as the key for Redis to unify username/email
+#         redis_otp = await redis_client.get(user_info.user_id)
+        
+#         if redis_otp is None:
+#             await logger.warning("OTP verification failed: OTP not found", {"username": request.username})
+#             raise HTTPException(
+#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                 detail="Failed to retrieve OTP from Redis"
+#             )
+#         if redis_otp != request.otp_code:
+#             await logger.warning("OTP verification failed: Invalid OTP", {"username": request.username})
+#             raise HTTPException(
+#                 status_code=400, detail="Invalid OTP"
+#             )
+
+#         await redis_client.delete(user_info.user_id)
+
+#         access_token_expires = jwt.timedelta(minutes=jwt.ACCESS_TOKEN_EXPIRE_MINUTES)
+#         access_token = await jwt.create_access_token(
+#             data={"sub": user_info.user_id},
+#             expires_delta=access_token_expires
+#         )
+
+#         await redis_client.setex(user_info.user_id, int(access_token_expires.total_seconds()), access_token)
+#         await logger.info("User logged in successfully", {"username": user_info.username})
+
+#         return {"access_token": access_token, "token_type": "bearer"}
+#     except Exception as e:
+#         await logger.error("Error during OTP verification", {"error": str(e)})
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=f"Error verifying OTP: {str(e)}"
+#         )
 
 
 async def forgot_password(
@@ -270,54 +268,54 @@ async def forgot_password(
 
         return {"message": "Password reset email sent"}
     
-async def logout(request: str, db: AsyncSession):
-    try:
-        # Get user_id from username
-        is_email = '@' in request
+# async def logout(request: str, db: AsyncSession):
+#     try:
+#         # Get user_id from username
+#         is_email = '@' in request
 
-        if is_email:
-            # Query user by email
-            stmt = (
-                select(models_user.Users)
-                .join(
-                    models_user_info.UserPersonalInfo,
-                    models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id
-                )
-                .where(models_user_info.UserPersonalInfo.email == request)
-            )
-        else:
-            # Query user by username
-            stmt = (
-                select(models_user.Users)
-                .where(models_user.Users.username == request)
-            )
+#         if is_email:
+#             # Query user by email
+#             stmt = (
+#                 select(models_user.Users)
+#                 .join(
+#                     models_user_info.UserPersonalInfo,
+#                     models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id
+#                 )
+#                 .where(models_user_info.UserPersonalInfo.email == request)
+#             )
+#         else:
+#             # Query user by username
+#             stmt = (
+#                 select(models_user.Users)
+#                 .where(models_user.Users.username == request)
+#             )
 
-        result = await db.execute(stmt)
-        user_info = result.scalars().first()
+#         result = await db.execute(stmt)
+#         user_info = result.scalars().first()
 
-        if not user_info:
-            await logger.warning("OTP verification failed: User not found")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid Username or Email"
-            )
+#         if not user_info:
+#             await logger.warning("OTP verification failed: User not found")
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#                 detail="Invalid Username or Email"
+#             )
         
-        # Remove access token from Redis using user_id as key
-        deleted = await redis_client.delete(user_info.user_id)
-        if deleted == 0:
-            await logger.warning("Logout failed: Token not found", {"user_id": user_info.user_id})
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User is not logged in or token already expired"
-            )
-        await logger.info("User logged out successfully", {"user_id": user_info.user_id})
-        return {"detail": "Logged out successfully"}
-    except Exception as e:
-        await logger.error("Error during logout", {"error": str(e)})
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error during logout: {str(e)}"
-        )
+#         # Remove access token from Redis using user_id as key
+#         deleted = await redis_client.delete(user_info.user_id)
+#         if deleted == 0:
+#             await logger.warning("Logout failed: Token not found", {"user_id": user_info.user_id})
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#                 detail="User is not logged in or token already expired"
+#             )
+#         await logger.info("User logged out successfully", {"user_id": user_info.user_id})
+#         return {"detail": "Logged out successfully"}
+#     except Exception as e:
+#         await logger.error("Error during logout", {"error": str(e)})
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=f"Error during logout: {str(e)}"
+#         )
 
 async def reset_password(db: AsyncSession, new_password: str, email: str):
     stmt = (

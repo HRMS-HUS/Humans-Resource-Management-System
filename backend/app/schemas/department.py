@@ -8,12 +8,12 @@ class StatusEnum(str, Enum):
     Inactive = "Inactive"
 
 class DepartmentBase(BaseModel):
-    department_name: str
-    manager_id: str
+    department_name: Optional[str] = None
+    manager_id: Optional[str] = None
     location: Optional[str] = None
-    contact_email: EmailStr
+    contact_email: Optional[EmailStr] = None
     start_date: Optional[date] = None
-    status: StatusEnum = StatusEnum.Active
+    status: Optional[StatusEnum] = None
 
 class DepartmentCreate(DepartmentBase):
     pass

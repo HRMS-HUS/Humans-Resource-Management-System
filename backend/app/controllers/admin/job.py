@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/admin/job", response_model=schemas.Job, status_code=201)
 async def create_job(
-    job: schemas.JobCreate,
+    job: schemas.JobCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -36,7 +36,7 @@ async def get_jobs_by_user_id(
 
 @router.put("/admin/job/{job_id}", response_model=schemas.Job)
 async def update_job(
-    job: schemas.JobUpdate,
+    job: schemas.JobUpdate = Query(...),
     job_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),

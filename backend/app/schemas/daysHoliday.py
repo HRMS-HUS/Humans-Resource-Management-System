@@ -3,8 +3,8 @@ from typing import Optional
 from datetime import date
 
 class DaysHolidayBase(BaseModel):
-    holiday_name: str
-    holiday_date: date
+    holiday_name: Optional[str] = None
+    holiday_date: Optional[date] = None
 
 class DaysHolidayCreate(DaysHolidayBase):
     pass
