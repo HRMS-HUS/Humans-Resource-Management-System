@@ -6,6 +6,7 @@ from sqlalchemy import select, delete, update
 from typing import List
 from ..utils.redis_lock import DistributedLock
 from ..services import users as user_service
+from ..utils.logger import logger
 
 async def _validate_user_exists(db: AsyncSession, user_id: str):
     try:
@@ -21,33 +22,26 @@ async def _validate_user_exists(db: AsyncSession, user_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error while validating user: {str(e)}"
+            detail=f"Internal server error while validating user"
         )
 
 async def create_payment(db: AsyncSession, payment: schemas.PaymentCreate):
-    await _validate_user_exists(db, payment.user_id)
-    
-    async with DistributedLock(f"payment:user:{payment.user_id}"):
-        try:
-            db_payment = models.Payment(
-                user_id=payment.user_id,
-                payment_method=payment.payment_method,
-                payment_month=payment.payment_month,
-                payment_date=payment.payment_date,
-                payment_amount=payment.payment_amount,
-                payment_fine=payment.payment_fine,
-                comments=payment.comments
-            )
-            db.add(db_payment)
-            await db.commit()
-            await db.refresh(db_payment)
-            return db_payment
-        except Exception as e:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)
-            )
+    try:
+        await _validate_user_exists(db, payment.user_id)
+        db_payment = models.Payment(**payment.dict())
+        db.add(db_payment)
+        await db.commit()
+        await db.refresh(db_payment)
+        await logger.info("Created payment", {
+            "payment_id": db_payment.payment_id,
+            "user_id": payment.user_id,
+            "amount": payment.payment_amount
+        })
+        return db_payment
+    except Exception as e:
+        await logger.error("Create payment failed", error=e)
+        await db.rollback()
+        raise
 
 async def get_payment_by_id(db: AsyncSession, payment_id: str):
     try:

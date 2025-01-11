@@ -5,6 +5,7 @@ from ..models import deptAnnouncement as models
 from ..schemas import deptAnnouncement as schemas
 from typing import List
 from ..utils.redis_lock import DistributedLock
+from ..utils.logger import logger
 
 class DatabaseOperationError(Exception):
     pass
@@ -19,19 +20,15 @@ async def create_dept_announcement(
             db.add(db_announcement)
             await db.commit()
             await db.refresh(db_announcement)
+            await logger.info("Created department announcement", {
+                "announcement_id": db_announcement.announcement_id,
+                "department_id": announcement.department_id
+            })
             return db_announcement
-        except DatabaseOperationError:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database operation failed"
-            )
         except Exception as e:
+            await logger.error("Create department announcement failed", error=e)
             await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)
-            )
+            raise
 
 async def get_dept_announcement_by_id(db: AsyncSession, announcement_id: str):
     try:
@@ -84,11 +81,16 @@ async def update_dept_announcement(
 
             await db.commit()
             await db.refresh(db_announcement)
+            await logger.info("Updated department announcement", {
+                "announcement_id": db_announcement.announcement_id,
+                "department_id": db_announcement.department_id
+            })
             return db_announcement
         except HTTPException:
             await db.rollback()
             raise
-        except Exception:
+        except Exception as e:
+            await logger.error("Update department announcement failed", error=e)
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -105,12 +107,15 @@ async def delete_dept_announcement(db: AsyncSession, announcement_id: str):
             )
             await db.execute(stmt)
             await db.commit()
-
+            await logger.info("Deleted department announcement", {
+                "announcement_id": announcement_id
+            })
             return {"detail": "Announcement deleted successfully"}
         except HTTPException:
             await db.rollback()
             raise
-        except Exception:
+        except Exception as e:
+            await logger.error("Delete department announcement failed", error=e)
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

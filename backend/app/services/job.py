@@ -7,39 +7,47 @@ from ..models import job as models
 from ..schemas import job as schemas
 from typing import List, Optional
 from ..utils.redis_lock import DistributedLock
+from ..utils.logger import logger
+from ..services import users as user_service
 
 class DatabaseOperationError(Exception):
     pass
 
+async def _validate_user_exists(db: AsyncSession, user_id: str):
+    try:
+        user = await user_service.get_user_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        return user
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while validating user"
+        )
+
 async def create_job(db: AsyncSession, job: schemas.JobCreate):
     async with DistributedLock(f"job:user:{job.user_id}"):
         try:
-            db_job = models.Job(
-                user_id=job.user_id,
-                job_tittle=job.job_tittle,  # Note: There's a typo in 'tittle', should be 'title'
-                start_date=job.start_date,
-                end_date=job.end_date,
-            )
-
+            await _validate_user_exists(db, job.user_id)
+            db_job = models.Job(**job.dict())
             db.add(db_job)
             await db.commit()
             await db.refresh(db_job)
+            await logger.info("Created job", {
+                "job_id": db_job.job_id,
+                "user_id": job.user_id,
+                "job_title": job.job_tittle
+            })
             return db_job
-        except HTTPException:
+        except Exception as e:
+            await logger.error("Create job failed", error=e)
             await db.rollback()
             raise
-        except DatabaseOperationError:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database operation failed"
-            )
-        except Exception:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal server error"
-            )
 
 async def get_job_by_id(db: AsyncSession, job_id: str):
     try:
@@ -58,6 +66,7 @@ async def get_job_by_id(db: AsyncSession, job_id: str):
 
 async def get_jobs_by_user_id(db: AsyncSession, user_id: str):
     try:
+        await _validate_user_exists(db, user_id)
         query = select(models.Job).where(models.Job.user_id == user_id)
         result = await db.execute(query)
         jobs = result.scalars().all()
@@ -75,7 +84,8 @@ async def update_job(db: AsyncSession, job_id: str, job: schemas.JobUpdate):
     async with DistributedLock(f"job:{job_id}"):
         try:
             # First check if job exists
-            await get_job_by_id(db, job_id)
+            existing_job = await get_job_by_id(db, job_id)
+            await _validate_user_exists(db, existing_job.user_id)
 
             # Prepare update data
             update_data = job.dict(exclude_unset=True)
@@ -111,7 +121,8 @@ async def delete_job(db: AsyncSession, job_id: str):
     async with DistributedLock(f"job:{job_id}"):
         try:
             # First check if job exists
-            await get_job_by_id(db, job_id)
+            existing_job = await get_job_by_id(db, job_id)
+            await _validate_user_exists(db, existing_job.user_id)
 
             # Execute delete
             query = (

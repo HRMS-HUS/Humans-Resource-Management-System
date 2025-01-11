@@ -5,6 +5,7 @@ from ..models import daysWorking as models
 from ..schemas import daysWorking as schemas
 from typing import List
 from ..utils.redis_lock import DistributedLock
+from ..utils.logger import logger
 
 class DatabaseOperationError(Exception):
     pass
@@ -24,6 +25,10 @@ async def create_working_day(
             db_working = models.DaysWorking(**working.dict())
             db.add(db_working)
             await db.commit()
+            await logger.info("Created working day", {
+                "working_id": db_working.working_id,
+                "day": str(working.day)
+            })
             await db.refresh(db_working)
             return db_working
         except HTTPException:
@@ -35,7 +40,8 @@ async def create_working_day(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database operation failed"
             )
-        except Exception:
+        except Exception as e:
+            await logger.error("Create working day failed", error=e)
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -55,6 +61,10 @@ async def update_working_day(
 
             await db.commit()
             await db.refresh(db_working)
+            await logger.info("Updated working day", {
+                "working_id": db_working.working_id,
+                "day": str(db_working.day)
+            })
             return db_working
         except HTTPException:
             await db.rollback()
@@ -65,7 +75,8 @@ async def update_working_day(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database operation failed"
             )
-        except Exception:
+        except Exception as e:
+            await logger.error("Update working day failed", error=e)
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -83,12 +94,17 @@ async def get_working_day_by_id(db: AsyncSession, working_id: str):
         working = result.scalar_one_or_none()
 
         if not working:
+            await logger.warning("Working day not found", {"working_id": working_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Working day not found"
             )
+        await logger.info("Retrieved working day", {"working_id": working_id})
         return working
     except HTTPException:
+        raise
+    except Exception as e:
+        await logger.error("Get working day failed", error=e)
         raise
 
 
@@ -99,6 +115,11 @@ async def get_all_working_days(
         select(models.DaysWorking).offset(skip).limit(limit)
     )
     working_days = result.scalars().all()
+    await logger.info("Retrieved all working days", {
+        "count": len(working_days),
+        "skip": skip,
+        "limit": limit
+    })
     return working_days if working_days else []
 
 
@@ -113,7 +134,7 @@ async def delete_working_day(db: AsyncSession, working_id: str):
 
             await db.execute(stmt)
             await db.commit()
-
+            await logger.info("Deleted working day", {"working_id": working_id})
             return {"detail": "Working day deleted successfully"}
         except HTTPException:
             await db.rollback()
@@ -124,7 +145,8 @@ async def delete_working_day(db: AsyncSession, working_id: str):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database operation failed"
             )
-        except Exception:
+        except Exception as e:
+            await logger.error("Delete working day failed", error=e)
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

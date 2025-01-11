@@ -4,3 +4,4 @@
 env.py
 script.py.mako
 data
+backend/logs

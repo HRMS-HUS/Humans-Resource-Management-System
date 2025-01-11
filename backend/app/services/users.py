@@ -7,36 +7,27 @@ from sqlalchemy import select, and_, func, text, delete, update
 from ..utils import crypto, jwt
 from ..services import authentication
 from typing import Optional, List
+from ..utils.logger import logger
 
 class DatabaseOperationError(Exception):
     pass
 
 async def create_user(db: AsyncSession, user: schemas.UserCreate):
     try:
-        db_user = models.Users(
-            username=user.username,
-            password=user.password,
-            role=user.role  # Add role from the schema
-        )
+        db_user = models.Users(**user.dict())
         db.add(db_user)
         await db.commit()
         await db.refresh(db_user)
+        await logger.info("Created user", {
+            "user_id": db_user.user_id,
+            "username": user.username,
+            "role": user.role
+        })
         return db_user
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Create user failed", error=e)
         await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 async def get_user_by_id(db: AsyncSession, user_id: str):
     try:

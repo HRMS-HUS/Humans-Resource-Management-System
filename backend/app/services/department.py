@@ -6,15 +6,35 @@ from ..models import userPersonalInfo as models_user_info
 from ..schemas import department as schemas
 from typing import List
 from ..utils.redis_lock import DistributedLock
+from ..utils.logger import logger
+from ..services import users as user_service
 
 class DatabaseOperationError(Exception):
     pass
+
+async def _validate_user_exists(db: AsyncSession, user_id: str):
+    try:
+        user = await user_service.get_user_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        return user
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while validating user"
+        )
 
 async def create_department(
     department: schemas.DepartmentCreate, db: AsyncSession
 ):
     async with DistributedLock(f"department:manager:{department.manager_id}"):
         try:
+            await _validate_user_exists(db, department.manager_id)
             existing = await db.execute(
                 select(models.Department).filter(
                     models.Department.manager_id == department.manager_id
@@ -30,6 +50,10 @@ async def create_department(
             db.add(db_department)
             await db.commit()
             await db.refresh(db_department)
+            await logger.info("Created department", {
+                "department_id": db_department.department_id,
+                "manager_id": department.manager_id
+            })
             return db_department
         except HTTPException:
             await db.rollback()
@@ -40,7 +64,8 @@ async def create_department(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database operation failed"
             )
-        except Exception:
+        except Exception as e:
+            await logger.error("Create department failed", error=e)
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -60,6 +85,7 @@ async def update_department(
 
             await db.commit()
             await db.refresh(db_department)
+            await logger.info("Updated department", {"department_id": department_id})
             return db_department
         except HTTPException:
             await db.rollback()
@@ -70,7 +96,8 @@ async def update_department(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database operation failed"
             )
-        except Exception:
+        except Exception as e:
+            await logger.error("Update department failed", error=e)
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -116,7 +143,7 @@ async def delete_department(db: AsyncSession, department_id: str):
 
             await db.execute(stmt)
             await db.commit()
-
+            await logger.info("Deleted department", {"department_id": department_id})
             return {"detail": "Department deleted successfully"}
         except HTTPException:
             await db.rollback()
@@ -127,7 +154,8 @@ async def delete_department(db: AsyncSession, department_id: str):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database operation failed"
             )
-        except Exception:
+        except Exception as e:
+            await logger.error("Delete department failed", error=e)
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

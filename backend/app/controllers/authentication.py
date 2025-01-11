@@ -23,11 +23,11 @@ async def user_login(
 ):
     return await authentication.login(form_data, db)
 
-# @router.post("/verify-otp")
-# async def verify_otp(
-#     request: schemas_auth.VerifyOTP = Query(...), db: AsyncSession = Depends(get_db)
-# ):
-#     return await authentication.verify_otp(request, db)
+@router.post("/verify-otp")
+async def verify_otp(
+    request: schemas_auth.VerifyOTP = Query(...), db: AsyncSession = Depends(get_db)
+):
+    return await authentication.verify_otp(request, db)
 
 
 @router.post("/forgot-password")
@@ -43,3 +43,9 @@ async def reset_password(
     request: schemas_auth.ResetPassword = Query(...), db: AsyncSession = Depends(get_db)
 ):
     return await authentication.reset_passwords(request, db)
+
+@router.post("/logout")
+async def logout_user(
+    request: str, db: AsyncSession = Depends(get_db)
+):
+    return await authentication.logout(request, db)
