@@ -10,6 +10,7 @@ import { Box, Snackbar, Alert } from '@mui/material';
 import { useState } from 'react';
 import { useAuthStore } from './authStore';
 import { useNavigate } from 'react-router-dom';
+import './Image.css'
 
 const ForgotPassword = () => {
 
@@ -41,16 +42,16 @@ const ForgotPassword = () => {
 
     return (
         <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', margin: 0, backgroundImage: 'url("https://images4.alphacoders.com/211/thumb-1920-211006.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', }}>
-            <Sheet sx={{ width: 370, mx: 'auto', my: 4, py: 3, px: 2, display: 'flex', flexDirection: 'column', gap: 2, borderRadius: 'sm', boxShadow: 'md', background: 'transparent', backgroundColor: 'rgba(128, 128, 128, 0.6)' }} variant="outlined">
+            <Sheet sx={{ width: 370, mx: 'auto', my: 4, py: 3, px: 2, display: 'flex', flexDirection: 'column', gap: 2, borderRadius: 'sm', boxShadow: 'md', background: 'transparent', backgroundColor: 'rgba(128, 128, 128, 0.3)' }} variant="outlined">
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '28vh', textAlign: 'center', }}>
-                    <img src={'https://cdnlogo.com/logos/n/71/nvidia.svg'} style={{ width: 120, height: 120 }} />
+                    <img src={'https://cdnlogo.com/logos/n/71/nvidia.svg'} className="rotate-img" alt="NVIDIA logo" />
                     <Typography level="h2" component="h1"><b>Forgot Password</b></Typography>
                     <Typography>Enter your username and we'll send you a link to reset your password.</Typography>
                 </Box>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <FormControl>
                         <FormLabel sx={{ fontSize: '16px' }}>Username</FormLabel>
-                        <Input name="username" type="text" placeholder="Username" sx={{ height: '42px', backgroundColor: 'rgba(128, 128, 128, 0.6)' }} onChange={(e) => setUsername(e.target.value)} />
+                        <Input name="username" type="text" placeholder="Username" sx={{ height: '42px', backgroundColor: 'rgba(128, 128, 128, 0.8)' }} onChange={(e) => setUsername(e.target.value)} />
                     </FormControl>
                     <LoadingButton
                         type="submit"
