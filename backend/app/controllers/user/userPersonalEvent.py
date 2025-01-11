@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post(
     "/me/personal_event",
-    response_model=schemas.UserPersonalEventCreate,
+    response_model=schemas.UserPersonalEventResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_user_event_me(

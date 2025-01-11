@@ -51,55 +51,55 @@ async def get_user_id_by_email(db: AsyncSession, email: str) -> int:
     
     return user_id
 
-async def create_otp_code(db: AsyncSession, email: str, otp_code: str):
-    user_id = await get_user_id_by_email(db, email)
-    expired_time = func.now() - text("interval '10 minutes'")
+# async def create_otp_code(db: AsyncSession, email: str, otp_code: str):
+#     user_id = await get_user_id_by_email(db, email)
+#     expired_time = func.now() - text("interval '10 minutes'")
 
-    stmt = (
-        select(models.OTPCode)
-        .where(
-            models.OTPCode.user_id == user_id,
-        )
-    )
-    result = await db.execute(stmt)
-    old_code = result.scalars().first()
+#     stmt = (
+#         select(models.OTPCode)
+#         .where(
+#             models.OTPCode.user_id == user_id,
+#         )
+#     )
+#     result = await db.execute(stmt)
+#     old_code = result.scalars().first()
 
-    if old_code:
-        await db.execute(
-            delete(models.OTPCode)
-            .where(models.OTPCode.otp_id == old_code.otp_id)
-        )
-        await db.commit()
+#     if old_code:
+#         await db.execute(
+#             delete(models.OTPCode)
+#             .where(models.OTPCode.otp_id == old_code.otp_id)
+#         )
+#         await db.commit()
     
-    new_otp_code = models.OTPCode(
-        user_id = user_id,
-        otp_code = otp_code
-    )
-    db.add(new_otp_code)
-    await db.commit()
-    await db.refresh(new_otp_code)
-    return new_otp_code
+#     new_otp_code = models.OTPCode(
+#         user_id = user_id,
+#         otp_code = otp_code
+#     )
+#     db.add(new_otp_code)
+#     await db.commit()
+#     await db.refresh(new_otp_code)
+#     return new_otp_code
 
-async def check_otp_code(db: AsyncSession, otp_code: str):
-    expired_time = func.now() - text("interval '10 minutes'")
-    stmt = (
-        select(models.OTPCode)
-        .where(
-            and_(
-                models.OTPCode.status == models.StatusEnum.Active,
-                models.OTPCode.otp_code == otp_code,
-                models.OTPCode.expired_in >= expired_time
-            )
-        )
-    )
+# async def check_otp_code(db: AsyncSession, otp_code: str):
+#     expired_time = func.now() - text("interval '10 minutes'")
+#     stmt = (
+#         select(models.OTPCode)
+#         .where(
+#             and_(
+#                 models.OTPCode.status == models.StatusEnum.Active,
+#                 models.OTPCode.otp_code == otp_code,
+#                 models.OTPCode.expired_in >= expired_time
+#             )
+#         )
+#     )
     
-    result = await db.execute(stmt)
-    db_code = result.scalars().first()
+#     result = await db.execute(stmt)
+#     db_code = result.scalars().first()
     
-    if not db_code:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset password code")
+#     if not db_code:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset password code")
     
-    return db_code
+#     return db_code
 
 async def reset_password(db: AsyncSession, new_password: str, email: str):
     stmt = (
@@ -140,17 +140,32 @@ async def register(
 
 
 async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
+    # Check if input is email or username
+    is_email = '@' in form_data.username
 
-    stmt = select(models_user.Users).where(
-        models_user.Users.username == form_data.username
-    )
+    if (is_email):
+        # Query user by email
+        stmt = (
+            select(models_user.Users)
+            .join(
+                models_user_info.UserPersonalInfo,
+                models_user.Users.user_id == models_user_info.UserPersonalInfo.user_id,
+            )
+            .where(models_user_info.UserPersonalInfo.email == form_data.username)
+        )
+    else:
+        # Query user by username
+        stmt = select(models_user.Users).where(
+            models_user.Users.username == form_data.username
+        )
+
     result = await db.execute(stmt)
     user_info = result.scalars().first()
 
     if not user_info:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect username/email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -159,13 +174,13 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
     if not crypto.verify_password(form_data.password, db_user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect username/email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     access_token_expires = jwt.timedelta(minutes=jwt.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = await jwt.create_access_token(
-        data={"sub": db_user.username}, expires_delta=access_token_expires
+        data={"sub": db_user.user_id}, expires_delta=access_token_expires
     )
 
     return {"access_token": access_token, "token_type": "bearer"}

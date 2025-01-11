@@ -40,23 +40,10 @@ async def create_user(db: AsyncSession, user: schemas.UserCreate):
 
 async def get_user_by_id(db: AsyncSession, user_id: str):
     try:
-        async with db.begin():
-            result = await db.execute(select(models.Users).filter_by(user_id=user_id))
-            user = result.scalar_one_or_none()
-            if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-            return user
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
+        result = await db.execute(select(models.Users).filter_by(user_id=user_id))
+        user = result.scalar_one_or_none()
+        return user
     except Exception:
-        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
@@ -253,18 +240,8 @@ async def get_all_users(
         result = await db.execute(query)
         users = result.scalars().all()
         
-        return users
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
+        return users if users else []
     except Exception:
-        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"

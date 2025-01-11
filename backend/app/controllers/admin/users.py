@@ -48,6 +48,15 @@ async def get_all_users(
     )
 
 
+@router.get("/admin/users/{user_id}", response_model=schemas.User)
+async def get_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_current_admin),
+):
+    return await users_service.get_user_by_id(db, user_id)
+
+
 # @router.put("/admin/users/{user_id}/change-password", response_model=schemas.User)
 # async def admin_change_user_password(
 #     user_id: str,

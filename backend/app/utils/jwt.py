@@ -28,14 +28,14 @@ async def create_access_token(data: dict, expires_delta: timedelta = None):
 async def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        user_id: str = payload.get("sub")
+        if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return username
+        return user_id
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -46,10 +46,10 @@ async def decode_access_token(token: str):
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
     try:
         # Decode the token to get the username
-        username = await decode_access_token(token)
+        user_id = await decode_access_token(token)
         
         # Find user in the database
-        stmt = select(models_user.Users).where(models_user.Users.username == username)
+        stmt = select(models_user.Users).where(models_user.Users.user_id == user_id)
         result = await db.execute(stmt)
         user = result.scalars().first()
         
