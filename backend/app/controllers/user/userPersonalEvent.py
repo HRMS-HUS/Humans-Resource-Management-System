@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ...schemas import userPersonalEvent as schemas
 from ...models import users as models
 from ...services import userPersonalEvent as services
@@ -8,6 +10,8 @@ from ...utils import jwt
 from ...configs.database import get_db
 from typing import List
 
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter()
 
 @router.post(
@@ -15,7 +19,9 @@ router = APIRouter()
     response_model=schemas.UserPersonalEventResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("5/minute")
 async def create_user_event_me(
+    request: Request,
     event: schemas.UserPersonalEventCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
@@ -33,7 +39,9 @@ async def create_user_event_me(
     "/me/personal_event/{event_id}",
     response_model=schemas.UserPersonalEventResponse,
 )
+@limiter.limit("5/minute")
 async def update_user_event_me(
+    request: Request,
     event_id: str = Path(..., description="Event ID to update"),
     event_update: schemas.UserPersonalEventUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
@@ -55,7 +63,9 @@ async def update_user_event_me(
     return await services.update_user_event(db, event_id, event_update)
 
 @router.get("/me/personal_event", response_model=List[schemas.UserPersonalEventResponse])
+@limiter.limit("10/minute")
 async def get_current_user_personal_event(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -65,7 +75,9 @@ async def get_current_user_personal_event(
     )
 
 @router.delete("/me/personal_event/{event_id}")
+@limiter.limit("3/minute")
 async def delete_event(
+    request: Request,
     event_id: str = Path(..., description="Event ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),

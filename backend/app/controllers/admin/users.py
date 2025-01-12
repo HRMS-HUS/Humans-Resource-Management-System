@@ -4,16 +4,21 @@ from ...models import users as models
 from ...schemas import users as schemas
 from ...services import users as users_service
 from ...utils import jwt
-from fastapi import HTTPException, status, Depends, APIRouter, Query, Path
+from fastapi import HTTPException, status, Depends, APIRouter, Query, Path, Request
 from ...configs.database import get_db
 from typing import Optional, List
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 
 
 @router.put("/admin/users/{user_id}", response_model=schemas.User)
+@limiter.limit("5/minute")
 async def update_user(
+    request: Request,
     user_id: str,
     user_update: schemas.UserUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
@@ -23,7 +28,9 @@ async def update_user(
 
 
 @router.delete("/admin/users/{user_id}")
+@limiter.limit("3/minute")
 async def delete_user(
+    request: Request,
     user_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
@@ -32,7 +39,9 @@ async def delete_user(
 
 
 @router.get("/admin/users", response_model=List[schemas.User])
+@limiter.limit("10/minute")
 async def get_all_users(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(10, ge=1, le=100, description="Number of records to return"),
@@ -49,7 +58,9 @@ async def get_all_users(
 
 
 @router.get("/admin/users/{user_id}", response_model=schemas.User)
+@limiter.limit("10/minute")
 async def get_user(
+    request: Request,
     user_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),

@@ -1,11 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ...schemas import userMessage as schemas
 from ...models import users as models
 from ...services import userMessage as services
 from ...utils import jwt
 from ...configs.database import get_db
 from typing import List
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 
@@ -14,7 +18,9 @@ router = APIRouter()
     response_model=schemas.MessageResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("5/minute")
 async def create_message_me(
+    request: Request,
     message: schemas.MessageCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
@@ -32,7 +38,9 @@ async def create_message_me(
     "/me/messages/sent",
     response_model=List[schemas.MessageResponse]
 )
+@limiter.limit("10/minute")
 async def get_sent_messages_me(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -42,7 +50,9 @@ async def get_sent_messages_me(
     "/me/messages/received",
     response_model=List[schemas.MessageResponse]
 )
+@limiter.limit("10/minute")
 async def get_received_messages_me(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -52,7 +62,9 @@ async def get_received_messages_me(
     "/me/messages/{message_id}",
     response_model=schemas.MessageResponse
 )
+@limiter.limit("10/minute")
 async def get_message_me(
+    request: Request,
     message_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
@@ -69,7 +81,9 @@ async def get_message_me(
     "/me/messages/{message_id}",
     response_model=schemas.MessageResponse
 )
+@limiter.limit("5/minute")
 async def update_message_me(
+    request: Request,
     message_id: str = Path(...),
     message: schemas.MessageUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
@@ -86,7 +100,9 @@ async def update_message_me(
     return await services.update_message(db, message_id, message)
 
 @router.delete("/me/messages/{message_id}")
+@limiter.limit("3/minute")
 async def delete_message_me(
+    request: Request,
     message_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),

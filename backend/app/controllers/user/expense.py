@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...schemas import expense as schemas
 from ...models import users as models
@@ -7,6 +9,8 @@ from ...utils import jwt
 from ...configs.database import get_db
 from typing import List
 
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter()
 
 @router.post(
@@ -14,7 +18,9 @@ router = APIRouter()
     response_model=schemas.ExpenseResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("5/minute")
 async def create_expense_me(
+    request: Request,
     expense: schemas.ExpenseCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
@@ -32,7 +38,9 @@ async def create_expense_me(
     "/me/expense/{expense_id}",
     response_model=schemas.ExpenseResponse,
 )
+@limiter.limit("5/minute")
 async def update_expense_me(
+    request: Request,
     expense_id: str = Path(..., description="Expense ID to update"),
     expense_update: schemas.ExpenseUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
@@ -54,7 +62,9 @@ async def update_expense_me(
     return await services.update_expense(db, expense_id, expense_update)
 
 @router.get("/me/expense", response_model=List[schemas.ExpenseResponse])
+@limiter.limit("10/minute")
 async def get_current_user_expense(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -63,7 +73,9 @@ async def get_current_user_expense(
     )
 
 @router.delete("/me/expense/{expense_id}")
+@limiter.limit("3/minute")
 async def delete_expense_me(
+    request: Request,
     expense_id: str = Path(..., description="Expense ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),

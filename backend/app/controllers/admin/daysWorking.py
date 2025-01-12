@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ...configs.database import get_db
 from ...schemas import daysWorking as schemas
 from ...services import daysWorking as services
 from ...utils import jwt
 from typing import List
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 
@@ -13,7 +17,9 @@ router = APIRouter()
     response_model=schemas.DaysWorkingResponse,
     status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("5/minute")
 async def create_working_day(
+    request: Request,
     working: schemas.DaysWorkingCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
@@ -24,7 +30,9 @@ async def create_working_day(
     "/admin/working/{working_id}",
     response_model=schemas.DaysWorkingResponse
 )
+@limiter.limit("5/minute")
 async def update_working_day(
+    request: Request,
     working_id: str = Path(..., description="Working ID to update"),
     working: schemas.DaysWorkingUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
@@ -35,7 +43,9 @@ async def update_working_day(
     )
 
 @router.delete("/admin/working/{working_id}")
+@limiter.limit("3/minute")
 async def delete_working_day(
+    request: Request,
     working_id: str = Path(..., description="Working ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
@@ -46,7 +56,9 @@ async def delete_working_day(
     "/admin/working",
     response_model=List[schemas.DaysWorkingResponse]
 )
+@limiter.limit("10/minute")
 async def get_all_working_days(
+    request: Request,
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
@@ -58,7 +70,9 @@ async def get_all_working_days(
     "/admin/working/{working_id}",
     response_model=schemas.DaysWorkingResponse
 )
+@limiter.limit("10/minute")
 async def get_working_day(
+    request: Request,
     working_id: str,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)

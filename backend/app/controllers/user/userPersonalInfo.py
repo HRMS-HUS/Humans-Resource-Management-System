@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, File, UploadFile, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ...schemas import userPersonalInfo as schemas
 from ...services import userPersonalInfo as services
 from ...models import users as models
@@ -9,10 +11,14 @@ from ...utils import jwt
 from typing import List
 from ...utils.cloudinary_helper import upload_photo
 
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter()
 
 @router.get("/me/personal_info", response_model=schemas.UserInfoResponse)
+@limiter.limit("10/minute")
 async def get_current_user_personal_info(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -22,7 +28,9 @@ async def get_current_user_personal_info(
     )
 
 @router.put("/me/personal_info/{personal_info_id}", response_model=schemas.UserInfoResponse)
+@limiter.limit("5/minute")
 async def update_personal_info(
+    request: Request,
     data: schemas.UserInfoUpdateNoDepartment = Query(...),
     personal_info_id: str = Path(...),
     file: UploadFile = File(...),

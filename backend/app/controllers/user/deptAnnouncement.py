@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status ,Query, Path
+from fastapi import APIRouter, Depends, HTTPException, status ,Query, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ...configs.database import get_db
 from ...schemas import deptAnnouncement as schemas
 from ...models import users as models
@@ -7,6 +9,8 @@ from ...services import deptAnnouncement as services
 from ...services import department as dept_services
 from ...utils import jwt
 from typing import List
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 
@@ -49,7 +53,9 @@ async def check_manager_permission(
     "/manager/departments/{department_id}/announcements",
     response_model=schemas.DeptAnnouncementResponse
 )
+@limiter.limit("5/minute")
 async def create_department_announcement(
+    request: Request,
     announcement: schemas.DeptAnnouncementCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
@@ -64,7 +70,9 @@ async def create_department_announcement(
     "/manager/announcements/{announcement_id}",
     response_model=schemas.DeptAnnouncementResponse
 )
+@limiter.limit("5/minute")
 async def update_department_announcement(
+    request: Request,
     announcement_id: str = Path(..., description="Announcement ID to update"),
     announcement: schemas.DeptAnnouncementUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
@@ -79,7 +87,9 @@ async def update_department_announcement(
     "/manager/announcements/{announcement_id}",
     status_code=status.HTTP_204_NO_CONTENT
 )
+@limiter.limit("3/minute")
 async def delete_department_announcement(
+    request: Request,
     announcement_id: str = Path(..., description="Announcement ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
@@ -93,7 +103,9 @@ async def delete_department_announcement(
     "/manager/departments/{department_id}/announcements",
     response_model=List[schemas.DeptAnnouncementResponse]
 )
+@limiter.limit("10/minute")
 async def get_manager_department_announcements(
+    request: Request,
     department_id: str = Path(..., description="Department ID to retrieve announcements"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
@@ -105,7 +117,9 @@ async def get_manager_department_announcements(
     "/me/announcements", 
     response_model=List[schemas.DeptAnnouncementResponse]
 )
+@limiter.limit("10/minute")
 async def get_my_department_announcements(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):

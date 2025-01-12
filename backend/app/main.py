@@ -8,8 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from .exceptions.validation_exceptions import UserValidationError, EventValidationError, FinancialValidationError
 from .api.error_handlers import validation_exception_handler, event_validation_exception_handler, financial_validation_exception_handler
 from pydantic import ValidationError
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from .controllers.admin.userPersonalInfo import limiter
 
 app = FastAPI()
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

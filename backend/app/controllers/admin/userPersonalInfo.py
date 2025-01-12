@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, File, UploadFile, Form, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, File, UploadFile, Form, Body, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...schemas import userPersonalInfo as schemas
 from ...services import userPersonalInfo as services
@@ -10,7 +10,10 @@ from ...utils import jwt
 from typing import List
 from ...utils.cloudinary_helper import upload_photo
 import json
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 
@@ -19,7 +22,9 @@ router = APIRouter()
     response_model=schemas.UserInfoResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("5/minute")
 async def create_user_personal_info(
+    request: Request,
     user: schemas.UserInfoCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
@@ -28,7 +33,9 @@ async def create_user_personal_info(
 
 
 @router.get("/admin/personal_info/{personal_info_id}", response_model=schemas.UserInfoResponse)
+@limiter.limit("10/minute")
 async def get_personal_info_by_id(
+    request: Request,
     personal_info_id: str = Path(..., description="Personal Info ID to retrieve"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
@@ -40,7 +47,9 @@ async def get_personal_info_by_id(
 
 
 @router.get("/admin/personal_info/user/{user_id}", response_model=schemas.UserInfoResponse)
+@limiter.limit("10/minute")
 async def get_personal_info_by_user_id(
+    request: Request,
     user_id: str = Path(..., description="User ID to retrieve personal info"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
@@ -50,7 +59,9 @@ async def get_personal_info_by_user_id(
 
 
 @router.put("/admin/personal_info/{personal_info_id}", response_model=schemas.UserInfoResponse)
+@limiter.limit("5/minute")
 async def update_personal_info(
+    request: Request,
     data: schemas.UserInfoUpdate = Query(...),
     personal_info_id: str = Path(...),
     file: UploadFile = File(...),
@@ -95,7 +106,9 @@ async def update_personal_info(
 
 
 @router.delete("/admin/personal_info/{personal_info_id}")
+@limiter.limit("3/minute")
 async def delete_personal_info(
+    request: Request,
     personal_info_id: str = Path(..., description="Personal Info ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
@@ -105,7 +118,9 @@ async def delete_personal_info(
 
 
 @router.get("/admin/personal_info", response_model=List[schemas.UserInfoResponse])
+@limiter.limit("10/minute")
 async def get_all_personal_info(
+    request: Request,
     skip: int = Query(0, description="Number of records to skip"),
     limit: int = Query(100, description="Maximum number of records to return"),
     db: AsyncSession = Depends(get_db),
