@@ -64,7 +64,6 @@ async def update_personal_info(
     request: Request,
     data: schemas.UserInfoUpdate = Query(...),
     personal_info_id: str = Path(...),
-    file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -75,13 +74,8 @@ async def update_personal_info(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Personal info not found"
             )
-        # Upload photo and update photo_url
-        photo_url = await upload_photo(file)
-        data.photo_url = photo_url
         
-        # Call the service to update user data in DB
         updated_user = await services.update_user_personal_info(db, personal_info_id, data)
-
         return updated_user
         
     except Exception as e:
@@ -90,19 +84,34 @@ async def update_personal_info(
             detail=str(e)
         )
 
-# @router.put("/admin/personal_info/{personal_info_id}/photo", response_model=schemas.UserInfoResponse)
-# async def update_user_photo(
-#     personal_info_id: str,
-#     users: schemas.UserInfoUpdate,
-    
-#     db: AsyncSession = Depends(get_db),
-#     current_user: models.Users = Depends(jwt.get_current_admin),
-# ):
-#     # Upload photo and get URL
-#     photo_url = await upload_photo(file)
-    
-#     # Update the personal info with the new photo URL
-#     return await services.update_user_personal_info(db, personal_info_id, users)
+@router.put("/admin/personal_info/{personal_info_id}/photo", response_model=schemas.UserInfoResponse)
+@limiter.limit("5/minute")
+async def update_profile_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    personal_info_id: str = Path(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_current_admin),
+):
+    try:
+        existing_info = await services.get_user_personal_info_by_id(db, personal_info_id)
+        if not existing_info:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Personal info not found"
+            )
+        
+        photo_url = await upload_photo(file)
+        photo_data = schemas.UserInfoPhotoUpdate(photo_url=photo_url)
+        
+        updated_user = await services.update_user_personal_info_photo(db, personal_info_id, photo_data)
+        return updated_user
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.delete("/admin/personal_info/{personal_info_id}")

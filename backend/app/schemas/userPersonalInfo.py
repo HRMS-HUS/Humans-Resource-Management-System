@@ -48,7 +48,6 @@ class UserInfoUpdate(BaseModel):
     city: Optional[str] = None
     country: Optional[str] = None
     department_id: Optional[str] = None
-    photo_url: Optional[str] = None
 
     @validator('phone')
     def check_phone(cls, v):
@@ -73,7 +72,6 @@ class UserInfoUpdateNoDepartment(BaseModel):
     address: Optional[str] = None
     city: Optional[str] = None
     country: Optional[str] = None
-    photo_url: Optional[str] = None
 
     @validator('phone')
     def check_phone(cls, v):
@@ -87,6 +85,8 @@ class UserInfoUpdateNoDepartment(BaseModel):
             validate_citizen_card(v)
         return v
 
+class UserInfoPhotoUpdate(BaseModel):
+    photo_url: Optional[str] = None
 
 class UserInfoResponse(UserInfoBase):
     personal_info_id: str

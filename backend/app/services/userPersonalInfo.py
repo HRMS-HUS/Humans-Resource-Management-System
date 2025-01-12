@@ -194,6 +194,38 @@ async def update_user_personal_info_no_department(
             )
 
 
+async def update_user_personal_info_photo(
+    db: AsyncSession, personal_info_id: str, photo_data: schemas.UserInfoPhotoUpdate
+):
+    async with DistributedLock(f"personal_info:{personal_info_id}"):
+        try:
+            db_user = await get_user_personal_info_by_id(db, personal_info_id)
+            db_user.photo_url = photo_data.photo_url
+
+            await db.commit()
+            await db.refresh(db_user)
+            await logger.info("Updated user profile photo", {
+                "personal_info_id": personal_info_id
+            })
+            return db_user
+        except HTTPException:
+            await db.rollback()
+            raise
+        except DatabaseOperationError:
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database operation failed"
+            )
+        except Exception as e:
+            await logger.error("Update user profile photo failed", error=e)
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error"
+            )
+
+
 async def delete_user_personal_info(db: AsyncSession, personal_info_id: str):
     async with DistributedLock(f"personal_info:{personal_info_id}"):
         try:
