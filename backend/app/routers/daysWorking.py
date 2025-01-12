@@ -5,23 +5,6 @@ from ..controllers.manager import daysWorking as manager_controller
 
 router = APIRouter()
 
-# Admin routes
-router.include_router(
-    admin_controller.router,
-    prefix="/api",
-    tags=["daysWorking_admin"]
-)
-
-# User routes
-router.include_router(
-    user_controller.router,
-    prefix="/api",
-    tags=["daysWorking_user"]
-)
-
-# Manager routes
-router.include_router(
-    manager_controller.router,
-    prefix="/api",
-    tags=["daysWorking_manager"]
-)
+router.include_router(admin_controller.router, prefix="/api", tags=["Admin"])
+router.include_router(user_controller.router, prefix="/api", tags=["User"])
+router.include_router(manager_controller.router, prefix="/api", tags=["Manager"])

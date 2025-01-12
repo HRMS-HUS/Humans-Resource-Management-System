@@ -33,3 +33,4 @@ class Users(Base):
     expenses = relationship("Expense", back_populates="user")
     managed_departments = relationship("Department", back_populates="manager")
     applications = relationship("Application", back_populates="user")
+    attendance_records = relationship("DaysWorking", back_populates="user", cascade="all, delete")

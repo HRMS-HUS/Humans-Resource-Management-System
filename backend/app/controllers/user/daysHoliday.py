@@ -14,7 +14,7 @@ limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 @router.get(
-    "me/holiday/{holiday_id}",
+    "/me/holiday/{holiday_id}",
     response_model=schemas.DaysHolidayResponse
 )
 @limiter.limit("10/minute")
@@ -27,7 +27,7 @@ async def get_holiday(
     return await services.get_holiday_by_id(db, holiday_id)
 
 @router.get(
-    "me/holidays",
+    "/me/holidays",
     response_model=List[schemas.DaysHolidayResponse]
 )
 @limiter.limit("10/minute")

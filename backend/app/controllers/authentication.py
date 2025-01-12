@@ -24,12 +24,31 @@ async def user_login(
 ):
     return await authentication.login(form_data, db)
 
+@router.post("/logout/me")
+async def logout_me(
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    return await authentication.logout_me(current_user, db)
+
+@router.post("/login/admin")
+async def admin_login(
+    form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
+):
+    return await authentication.login_admin(form_data, db)
+
 @router.post("/verify-otp")
 async def verify_otp(
     request: schemas_auth.VerifyOTP = Query(...), db: AsyncSession = Depends(get_db)
 ):
     return await authentication.verify_otp(request, db)
 
+@router.post("/logout/admin")
+async def logout_admin(
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    return await authentication.logout_admin(current_user, db)
 
 @router.post("/forgot-password")
 async def forgot_password_request(
@@ -45,15 +64,9 @@ async def reset_password(
 ):
     return await authentication.reset_passwords(request, db)
 
-@router.post("/logout")
-async def logout_user(
-    request: str, db: AsyncSession = Depends(get_db)
-):
-    return await authentication.logout(request, db)
+# @router.post("/logout")
+# async def logout_user(
+#     request: str, db: AsyncSession = Depends(get_db)
+# ):
+#     return await authentication.logout(request, db)
 
-@router.post("/logout/me")
-async def logout_me(
-    db: AsyncSession = Depends(get_db),
-    current_user: str = Depends(get_current_user)
-):
-    return await authentication.logout_me(current_user, db)
