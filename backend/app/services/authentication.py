@@ -188,6 +188,13 @@ async def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Asyn
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        if not db_user.role == user_model.RoleEnum.Admin:
+            await logger.warning("Login attempt by non-admin user", {"username": form_data.username})
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access this resource",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         
         # Generate and store OTP
         otp_code = otp.create_otp()
