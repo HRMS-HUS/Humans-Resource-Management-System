@@ -20,11 +20,11 @@ async def create_job_me(
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
-    if job.user_id and job.user_id != current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot create jobs for other users"
-        )
+    # if job.user_id and job.user_id != current_user.user_id:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="Cannot create jobs for other users"
+    #     )
     job.user_id = current_user.user_id
     return await services.create_job(db, job)
 

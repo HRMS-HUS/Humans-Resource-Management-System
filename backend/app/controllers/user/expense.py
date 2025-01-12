@@ -19,12 +19,12 @@ async def create_expense_me(
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
-    # Validate and set user_id
-    if expense.user_id and expense.user_id != current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot create expenses for other users"
-        )
+    # # Validate and set user_id
+    # if expense.user_id and expense.user_id != current_user.user_id:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="Cannot create expenses for other users"
+    #     )
     expense.user_id = current_user.user_id
     return await services.create_expense(db, expense)
 
