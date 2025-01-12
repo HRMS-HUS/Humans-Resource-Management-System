@@ -16,7 +16,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_user_event_me(
-    event: schemas.UserPersonalEventCreate,
+    event: schemas.UserPersonalEventCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -34,8 +34,8 @@ async def create_user_event_me(
     response_model=schemas.UserPersonalEventResponse,
 )
 async def update_user_event_me(
-    event_id: str,
-    event_update: schemas.UserPersonalEventUpdate,
+    event_id: str = Path(..., description="Event ID to update"),
+    event_update: schemas.UserPersonalEventUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):

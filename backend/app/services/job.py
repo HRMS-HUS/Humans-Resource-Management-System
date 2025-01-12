@@ -56,12 +56,15 @@ async def get_job_by_id(db: AsyncSession, job_id: str):
         job = result.scalar_one_or_none()
 
         if not job:
+            await logger.warning("Job not found", {"job_id": job_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Job not found"
             )
+        await logger.info("Retrieved job", {"job_id": job_id})
         return job
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get job by id failed", error=e)
         raise
 
 async def get_jobs_by_user_id(db: AsyncSession, user_id: str):
@@ -72,12 +75,15 @@ async def get_jobs_by_user_id(db: AsyncSession, user_id: str):
         jobs = result.scalars().all()
 
         if not jobs:
+            await logger.warning("No jobs found", {"user_id": user_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No jobs found for this user",
             )
+        await logger.info("Retrieved jobs for user", {"user_id": user_id, "count": len(jobs)})
         return list(jobs)
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get jobs by user failed", error=e)
         raise
 
 async def update_job(db: AsyncSession, job_id: str, job: schemas.JobUpdate):
@@ -150,7 +156,12 @@ async def delete_job(db: AsyncSession, job_id: str):
             )
 
 async def get_all_jobs(db: AsyncSession, skip: int = 0, limit: int = 100):
-    query = select(models.Job).offset(skip).limit(limit)
-    result = await db.execute(query)
-    jobs = result.scalars().all()
-    return list(jobs)
+    try:
+        query = select(models.Job).offset(skip).limit(limit)
+        result = await db.execute(query)
+        jobs = result.scalars().all()
+        await logger.info("Retrieved all jobs", {"count": len(jobs), "skip": skip, "limit": limit})
+        return list(jobs)
+    except Exception as e:
+        await logger.error("Get all jobs failed", error=e)
+        raise

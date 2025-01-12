@@ -53,12 +53,15 @@ async def get_message_by_id(db: AsyncSession, message_id: str):
         message = result.scalar_one_or_none()
 
         if not message:
+            await logger.warning("Message not found", {"message_id": message_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Message not found"
             )
+        await logger.info("Retrieved message by id", {"message_id": message_id})
         return message
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get message by id failed", error=e)
         raise
 
 async def get_sent_messages(db: AsyncSession, user_id: str):
@@ -69,8 +72,10 @@ async def get_sent_messages(db: AsyncSession, user_id: str):
             )
         )
         messages = result.scalars().all()
+        await logger.info("Retrieved sent messages", {"user_id": user_id, "count": len(messages)})
         return messages
     except Exception as e:
+        await logger.error("Get sent messages failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -84,8 +89,10 @@ async def get_received_messages(db: AsyncSession, user_id: str):
             )
         )
         messages = result.scalars().all()
+        await logger.info("Retrieved received messages", {"user_id": user_id, "count": len(messages)})
         return messages
     except Exception as e:
+        await logger.error("Get received messages failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -156,8 +163,11 @@ async def get_all_messages(
         result = await db.execute(
             select(models.UserMessage).offset(skip).limit(limit)
         )
-        return result.scalars().all()
+        messages = result.scalars().all()
+        await logger.info("Retrieved all messages", {"count": len(messages), "skip": skip, "limit": limit})
+        return messages if messages else []
     except Exception as e:
+        await logger.error("Get all messages failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

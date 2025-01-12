@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job,  department, daysHoliday, daysWorking, deptAnnouncement, application, payment, userMessage
+from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job,  department, daysHoliday, daysWorking, deptAnnouncement, application, payment, userMessage, expense
 from .configs.database import init_db
 from .configs.cloudinary import init_cloudinary
 import os, redis
@@ -55,3 +55,4 @@ app.include_router(deptAnnouncement.router)
 app.include_router(application.router)
 app.include_router(payment.router)
 app.include_router(userMessage.router)
+app.include_router(expense.router)

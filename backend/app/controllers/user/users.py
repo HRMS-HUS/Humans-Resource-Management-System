@@ -21,13 +21,13 @@ async def read_users_me(
 
 @router.put("/me/user/change-password", response_model=schemas.User)
 async def change_password(
-    password_change: schemas.ChangePassword,
+    password_change: schemas.ChangePassword = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
     return await users_service.change_own_password(
         db, 
-        current_user,  # Pass current_user directly
+        current_user,
         password_change.current_password,
         password_change.new_password
     )

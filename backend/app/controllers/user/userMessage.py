@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...schemas import userMessage as schemas
 from ...models import users as models
@@ -15,7 +15,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_message_me(
-    message: schemas.MessageCreate,
+    message: schemas.MessageCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -53,7 +53,7 @@ async def get_received_messages_me(
     response_model=schemas.MessageResponse
 )
 async def get_message_me(
-    message_id: str,
+    message_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -70,8 +70,8 @@ async def get_message_me(
     response_model=schemas.MessageResponse
 )
 async def update_message_me(
-    message_id: str,
-    message: schemas.MessageUpdate,
+    message_id: str = Path(...),
+    message: schemas.MessageUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -87,7 +87,7 @@ async def update_message_me(
 
 @router.delete("/me/messages/{message_id}")
 async def delete_message_me(
-    message_id: str,
+    message_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):

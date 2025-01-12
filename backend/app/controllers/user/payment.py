@@ -24,7 +24,7 @@ async def get_current_user_payments(
     response_model=schemas.PaymentResponse
 )
 async def get_payment_me(
-    payment_id: str,
+    payment_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):

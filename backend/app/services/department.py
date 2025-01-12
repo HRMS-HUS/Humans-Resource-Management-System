@@ -115,21 +115,32 @@ async def get_department_by_id(db: AsyncSession, department_id: str):
         department = result.scalar_one_or_none()
 
         if not department:
+            await logger.warning("Department not found", {"department_id": department_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Department not found"
             )
+        await logger.info("Retrieved department", {"department_id": department_id})
         return department
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get department by id failed", error=e)
         raise
 
 
 async def get_all_departments(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[models.Department]:
-    result = await db.execute(
-        select(models.Department).offset(skip).limit(limit)
-    )
-    departments = result.scalars().all()
-    return departments if departments else []
+    try:
+        result = await db.execute(
+            select(models.Department).offset(skip).limit(limit)
+        )
+        departments = result.scalars().all()
+        await logger.info("Retrieved all departments", {"count": len(departments), "skip": skip, "limit": limit})
+        return departments if departments else []
+    except Exception as e:
+        await logger.error("Get all departments failed", error=e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
 
 async def delete_department(db: AsyncSession, department_id: str):
@@ -173,19 +184,37 @@ async def get_department_by_manager_id(db: AsyncSession, manager_id: str):
         department = result.scalar_one_or_none()
 
         if not department:
+            await logger.warning("Department not found for manager", {"manager_id": manager_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Department not found for this manager",
             )
+        await logger.info("Retrieved department for manager", {"manager_id": manager_id})
         return department
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get department by manager failed", error=e)
         raise
 
+
 async def get_user_department(db: AsyncSession, user_id: int):
-    query = select(models.Department).join(
-        models_user_info.UserPersonalInfo,
-        models_user_info.UserPersonalInfo.department_id == models.Department.department_id
-    ).where(models_user_info.UserPersonalInfo.user_id == user_id)
-    
-    result = await db.execute(query)
-    return result.scalar_one_or_none()
+    try:
+        query = select(models.Department).join(
+            models_user_info.UserPersonalInfo,
+            models_user_info.UserPersonalInfo.department_id == models.Department.department_id
+        ).where(models_user_info.UserPersonalInfo.user_id == user_id)
+        
+        result = await db.execute(query)
+        department = result.scalar_one_or_none()
+        
+        if department:
+            await logger.info("Retrieved user's department", {"user_id": user_id})
+        else:
+            await logger.warning("No department found for user", {"user_id": user_id})
+        
+        return department
+    except Exception as e:
+        await logger.error("Get user department failed", error=e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

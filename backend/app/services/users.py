@@ -33,8 +33,13 @@ async def get_user_by_id(db: AsyncSession, user_id: str):
     try:
         result = await db.execute(select(models.Users).filter_by(user_id=user_id))
         user = result.scalar_one_or_none()
+        if user:
+            await logger.info("Retrieved user by id", {"user_id": user_id})
+        else:
+            await logger.warning("User not found", {"user_id": user_id})
         return user
-    except Exception:
+    except Exception as e:
+        await logger.error("Get user by id failed", {"user_id": user_id, "error": str(e)})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
@@ -51,6 +56,7 @@ async def update_user(db: AsyncSession, user_id: str, user_update: schemas.UserU
                 .filter(models.Users.user_id != user_id)
             )
             if username_check.scalar_one_or_none():
+                await logger.warning("Username already exists", {"username": user_update.username})
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, 
                     detail="Username already exists"
@@ -71,23 +77,13 @@ async def update_user(db: AsyncSession, user_id: str, user_update: schemas.UserU
             await db.execute(stmt)
             await db.commit()
             await db.refresh(existing_user)
+            await logger.info("Updated user", {"user_id": user_id, "updates": update_data})
         
         return existing_user
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Update user failed", {"user_id": user_id, "error": str(e)})
         await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 async def change_own_password(
     db: AsyncSession, 
@@ -98,6 +94,7 @@ async def change_own_password(
     try:
         # Verify current password
         if not crypto.verify_password(current_password, user.password):
+            await logger.warning("Invalid current password", {"user_id": user.user_id})
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Current password is incorrect"
@@ -113,23 +110,13 @@ async def change_own_password(
         await db.execute(stmt)
         await db.commit()
         await db.refresh(user)
+        await logger.info("Changed own password", {"user_id": user.user_id})
         
         return user
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Change password failed", {"user_id": user.user_id, "error": str(e)})
         await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 async def admin_change_password(
     db: AsyncSession, 
@@ -149,23 +136,13 @@ async def admin_change_password(
         await db.execute(stmt)
         await db.commit()
         await db.refresh(user)
+        await logger.info("Admin changed user password", {"user_id": user_id})
         
         return user
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Admin change password failed", {"user_id": user_id, "error": str(e)})
         await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 async def delete_user(db: AsyncSession, user_id: str):
     try:
@@ -175,23 +152,13 @@ async def delete_user(db: AsyncSession, user_id: str):
         stmt = delete(models.Users).where(models.Users.user_id == user_id)
         result = await db.execute(stmt)
         await db.commit()
+        await logger.info("Deleted user", {"user_id": user_id})
         
         return {"detail": "User deleted successfully"}
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Delete user failed", {"user_id": user_id, "error": str(e)})
         await db.rollback()
         raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
 
 # async def get_current_user(db: AsyncSession = Depends(get_db), token: str = Depends(jwt.oauth2_scheme)):
 #     return await jwt.get_current_user(token, db)
@@ -216,23 +183,28 @@ async def get_all_users(
     try:
         query = select(models.Users)
         
-        
         if role is not None:
             query = query.filter(models.Users.role == role)
-        
         
         if status is not None:
             query = query.filter(models.Users.status == status)
         
-        
         query = query.offset(skip).limit(limit)
-        
         
         result = await db.execute(query)
         users = result.scalars().all()
         
+        await logger.info("Retrieved all users", {
+            "count": len(users),
+            "skip": skip,
+            "limit": limit,
+            "role": str(role) if role else None,
+            "status": str(status) if status else None
+        })
+        
         return users if users else []
-    except Exception:
+    except Exception as e:
+        await logger.error("Get all users failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
@@ -246,28 +218,24 @@ async def count_users(
     try:
         query = select(func.count(models.Users.user_id))
         
-        
         if role is not None:
             query = query.filter(models.Users.role == role)
-        
         
         if status is not None:
             query = query.filter(models.Users.status == status)
         
-        
         result = await db.execute(query)
-        return result.scalar_one()
-    except HTTPException:
-        await db.rollback()
-        raise
-    except DatabaseOperationError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed"
-        )
-    except Exception:
-        await db.rollback()
+        count = result.scalar_one()
+        
+        await logger.info("Counted users", {
+            "count": count,
+            "role": str(role) if role else None,
+            "status": str(status) if status else None
+        })
+        
+        return count
+    except Exception as e:
+        await logger.error("Count users failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"

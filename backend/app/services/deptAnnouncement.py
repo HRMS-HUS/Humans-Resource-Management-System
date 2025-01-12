@@ -39,12 +39,15 @@ async def get_dept_announcement_by_id(db: AsyncSession, announcement_id: str):
         )
         announcement = result.scalar_one_or_none()
         if not announcement:
+            await logger.warning("Announcement not found", {"announcement_id": announcement_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Announcement not found"
             )
+        await logger.info("Retrieved announcement", {"announcement_id": announcement_id})
         return announcement
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get announcement by id failed", error=e)
         raise
 
 async def get_all_dept_announcements(
@@ -52,20 +55,30 @@ async def get_all_dept_announcements(
     skip: int = 0, 
     limit: int = 100
 ) -> List[models.DeptAnnouncement]:
-    result = await db.execute(
-        select(models.DeptAnnouncement).offset(skip).limit(limit)
-    )
-    announcements = result.scalars().all()
-    return announcements if announcements else []
+    try:
+        result = await db.execute(
+            select(models.DeptAnnouncement).offset(skip).limit(limit)
+        )
+        announcements = result.scalars().all()
+        await logger.info("Retrieved all announcements", {"count": len(announcements), "skip": skip, "limit": limit})
+        return announcements if announcements else []
+    except Exception as e:
+        await logger.error("Get all announcements failed", error=e)
+        raise
 
 async def get_announcements_by_department_id(db: AsyncSession, department_id: str):
-    result = await db.execute(
-        select(models.DeptAnnouncement).filter(
-            models.DeptAnnouncement.department_id == department_id
+    try:
+        result = await db.execute(
+            select(models.DeptAnnouncement).filter(
+                models.DeptAnnouncement.department_id == department_id
+            )
         )
-    )
-    announcements = result.scalars().all()
-    return announcements if announcements else []
+        announcements = result.scalars().all()
+        await logger.info("Retrieved department announcements", {"department_id": department_id, "count": len(announcements)})
+        return announcements if announcements else []
+    except Exception as e:
+        await logger.error("Get announcements by department failed", error=e)
+        raise
 
 async def update_dept_announcement(
     db: AsyncSession, 

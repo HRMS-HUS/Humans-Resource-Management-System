@@ -58,6 +58,12 @@ async def update_personal_info(
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
     try:
+        existing_info = await services.get_user_personal_info_by_id(db, personal_info_id)
+        if not existing_info:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Personal info not found"
+            )
         # Upload photo and update photo_url
         photo_url = await upload_photo(file)
         data.photo_url = photo_url

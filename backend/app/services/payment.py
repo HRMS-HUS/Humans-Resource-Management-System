@@ -53,12 +53,15 @@ async def get_payment_by_id(db: AsyncSession, payment_id: str):
         payment = result.scalar_one_or_none()
 
         if not payment:
+            await logger.warning("Payment not found", {"payment_id": payment_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Payment not found"
             )
+        await logger.info("Retrieved payment", {"payment_id": payment_id})
         return payment
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get payment by id failed", error=e)
         raise
 
 async def get_payments_by_user_id(db: AsyncSession, user_id: str):
@@ -71,21 +74,30 @@ async def get_payments_by_user_id(db: AsyncSession, user_id: str):
         payments = result.scalars().all()
 
         if not payments:
+            await logger.warning("No payments found", {"user_id": user_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No payments found for this user"
             )
+        await logger.info("Retrieved payments for user", {"user_id": user_id, "count": len(payments)})
         return payments
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get payments by user failed", error=e)
         raise
 
 async def get_all_payments(
     db: AsyncSession, skip: int = 0, limit: int = 100
 ) -> List[models.Payment]:
-    result = await db.execute(
-        select(models.Payment).offset(skip).limit(limit)
-    )
-    return result.scalars().all()
+    try:
+        result = await db.execute(
+            select(models.Payment).offset(skip).limit(limit)
+        )
+        payments = result.scalars().all()
+        await logger.info("Retrieved all payments", {"count": len(payments), "skip": skip, "limit": limit})
+        return payments
+    except Exception as e:
+        await logger.error("Get all payments failed", error=e)
+        raise
 
 async def update_payment(
     db: AsyncSession, payment_id: str, payment: schemas.PaymentUpdate

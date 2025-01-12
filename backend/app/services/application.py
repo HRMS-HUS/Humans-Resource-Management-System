@@ -6,6 +6,7 @@ from sqlalchemy import select, delete, update
 from typing import List
 from ..utils.redis_lock import DistributedLock
 from ..services import users as user_service  # Add this import
+from ..utils.logger import logger
 
 class DatabaseOperationError(Exception):
     pass
@@ -48,13 +49,15 @@ async def create_application(db: AsyncSession, application: schemas.ApplicationC
             db.add(db_application)
             await db.commit()
             await db.refresh(db_application)
+            await logger.info("Created application", {
+                "application_id": db_application.application_id,
+                "user_id": application.user_id
+            })
             return db_application
         except Exception as e:
+            await logger.error("Create application failed", error=e)
             await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)
-            )
+            raise
 
 async def get_application_by_id(db: AsyncSession, application_id: str):
     try:
@@ -66,12 +69,15 @@ async def get_application_by_id(db: AsyncSession, application_id: str):
         application = result.scalar_one_or_none()
 
         if not application:
+            await logger.warning("Application not found", {"application_id": application_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Application not found"
             )
+        await logger.info("Retrieved application", {"application_id": application_id})
         return application
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get application by id failed", error=e)
         raise
 
 async def get_applications_by_user_id(db: AsyncSession, user_id: str):
@@ -84,21 +90,33 @@ async def get_applications_by_user_id(db: AsyncSession, user_id: str):
         applications = result.scalars().all()
 
         if not applications:
+            await logger.warning("No applications found", {"user_id": user_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No applications found for this user"
             )
+        await logger.info("Retrieved applications for user", {"user_id": user_id, "count": len(applications)})
         return applications
-    except HTTPException:
+    except Exception as e:
+        await logger.error("Get applications by user failed", error=e)
         raise
 
 async def get_all_applications(
     db: AsyncSession, skip: int = 0, limit: int = 100
 ) -> List[models.Application]:
-    result = await db.execute(
-        select(models.Application).offset(skip).limit(limit)
-    )
-    return result.scalars().all()
+    try:
+        result = await db.execute(
+            select(models.Application).offset(skip).limit(limit)
+        )
+        applications = result.scalars().all()
+        await logger.info("Retrieved all applications", {"count": len(applications), "skip": skip, "limit": limit})
+        return applications if applications else []
+    except Exception as e:
+        await logger.error("Get all applications failed", error=e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
 async def update_application(
     db: AsyncSession, application_id: str, application: schemas.ApplicationUpdate
@@ -115,21 +133,22 @@ async def update_application(
             await db.commit()
 
             if result.rowcount == 0:
+                await logger.warning("Application not found for update", {"application_id": application_id})
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Application not found"
                 )
 
-            return await get_application_by_id(db, application_id)
-        except HTTPException:
+            updated_app = await get_application_by_id(db, application_id)
+            await logger.info("Updated application", {
+                "application_id": application_id,
+                "new_status": updated_app.status
+            })
+            return updated_app
+        except Exception as e:
+            await logger.error("Update application failed", {"application_id": application_id, "error": str(e)})
             await db.rollback()
             raise
-        except Exception:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal server error"
-            )
 
 async def delete_application(db: AsyncSession, application_id: str):
     async with DistributedLock(f"application:{application_id}"):
@@ -142,18 +161,15 @@ async def delete_application(db: AsyncSession, application_id: str):
             await db.commit()
 
             if result.rowcount == 0:
+                await logger.warning("Application not found for deletion", {"application_id": application_id})
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Application not found"
                 )
 
+            await logger.info("Deleted application", {"application_id": application_id})
             return {"message": "Application deleted successfully"}
-        except HTTPException:
+        except Exception as e:
+            await logger.error("Delete application failed", {"application_id": application_id, "error": str(e)})
             await db.rollback()
             raise
-        except Exception:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal server error"
-            )

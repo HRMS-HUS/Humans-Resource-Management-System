@@ -111,16 +111,23 @@ async def get_working_day_by_id(db: AsyncSession, working_id: str):
 async def get_all_working_days(
     db: AsyncSession, skip: int = 0, limit: int = 100
 ) -> List[models.DaysWorking]:
-    result = await db.execute(
-        select(models.DaysWorking).offset(skip).limit(limit)
-    )
-    working_days = result.scalars().all()
-    await logger.info("Retrieved all working days", {
-        "count": len(working_days),
-        "skip": skip,
-        "limit": limit
-    })
-    return working_days if working_days else []
+    try:
+        result = await db.execute(
+            select(models.DaysWorking).offset(skip).limit(limit)
+        )
+        working_days = result.scalars().all()
+        await logger.info("Retrieved all working days", {
+            "count": len(working_days),
+            "skip": skip,
+            "limit": limit
+        })
+        return working_days if working_days else []
+    except Exception as e:
+        await logger.error("Get all working days failed", error=e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
 
 async def delete_working_day(db: AsyncSession, working_id: str):

@@ -52,11 +52,12 @@ async def get_holiday_by_id(db: AsyncSession, holiday_id: str):
         holiday = result.scalar_one_or_none()
 
         if not holiday:
+            await logger.warning("Holiday not found", {"holiday_id": holiday_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
                 detail="Holiday not found"
             )
-        
+        await logger.info("Retrieved holiday", {"holiday_id": holiday_id})
         return holiday
     except Exception as e:
         await logger.error("Get holiday by id failed", error=e)
@@ -68,6 +69,7 @@ async def get_all_holidays(db: AsyncSession, skip: int = 0, limit: int = 100) ->
             select(models.DaysHoliday).offset(skip).limit(limit)
         )
         holidays = result.scalars().all()
+        await logger.info("Retrieved all holidays", {"count": len(holidays), "skip": skip, "limit": limit})
         return holidays if holidays else []
     except Exception as e:
         await logger.error("Get all holidays failed", error=e)

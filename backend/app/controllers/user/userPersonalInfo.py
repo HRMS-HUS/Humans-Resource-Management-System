@@ -25,53 +25,88 @@ async def get_current_user_personal_info(
     "/me/personal_info/{personal_id}",
     response_model=schemas.UserInfoResponse,
 )
-async def update_current_user_personal_info(
-    personal_id: str,
-    info_update: schemas.UserInfoUpdateNoDepartment,
-    db: AsyncSession = Depends(get_db),
-    current_user: models.Users = Depends(jwt.get_active_user),
-):
-    # Check if personal info exists and belongs to current user
-    existing_info = await services.get_user_personal_info_by_id(db, personal_id)
-    if not existing_info:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Personal info not found"
-        )
-    if existing_info.user_id != current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this personal info"
-        )
+# async def update_current_user_personal_info(
+#     personal_id: str = Path(...),
+#     info_update: schemas.UserInfoUpdateNoDepartment = Query(...),
+#     db: AsyncSession = Depends(get_db),
+#     current_user: models.Users = Depends(jwt.get_active_user),
+# ):
+#     # Check if personal info exists and belongs to current user
+#     existing_info = await services.get_user_personal_info_by_id(db, personal_id)
+#     if not existing_info:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Personal info not found"
+#         )
+#     if existing_info.user_id != current_user.user_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Not authorized to update this personal info"
+#         )
     
-    return await services.update_user_personal_info(db, personal_id, info_update)
+#     return await services.update_user_personal_info(db, personal_id, info_update)
 
-@router.put(
-    "/me/personal_info/{personal_id}/photo",
-    response_model=schemas.UserInfoResponse,
-)
-async def update_current_user_photo(
-    personal_id: str,
+# @router.put(
+#     "/me/personal_info/{personal_id}/photo",
+#     response_model=schemas.UserInfoResponse,
+# )
+# async def update_current_user_photo(
+#     personal_id: str,
+#     file: UploadFile = File(...),
+#     db: AsyncSession = Depends(get_db),
+#     current_user: models.Users = Depends(jwt.get_active_user),
+# ):
+#     # Check if personal info exists and belongs to current user
+#     existing_info = await services.get_user_personal_info_by_id(db, personal_id)
+#     if not existing_info:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Personal info not found"
+#         )
+#     if existing_info.user_id != current_user.user_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Not authorized to update this personal info"
+#         )
+    
+#     # Upload photo and get URL
+#     photo_url = await upload_photo(file)
+    
+#     # Update the personal info with the new photo URL
+#     info_update = schemas.UserInfoUpdateNoDepartment(photo_url=photo_url)
+#     return await services.update_user_personal_info_no_department(db, personal_id, info_update)
+
+@router.put("/me/personal_info/{personal_info_id}", response_model=schemas.UserInfoResponse)
+async def update_personal_info(
+    data: schemas.UserInfoUpdateNoDepartment = Query(...),
+    personal_info_id: str = Path(...),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
-    # Check if personal info exists and belongs to current user
-    existing_info = await services.get_user_personal_info_by_id(db, personal_id)
-    if not existing_info:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Personal info not found"
+    try:
+        # Upload photo and update photo_url
+        existing_info = await services.get_user_personal_info_by_id(db, personal_info_id)
+        if not existing_info:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Personal info not found"
         )
-    if existing_info.user_id != current_user.user_id:
+        if existing_info.user_id != current_user.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to update this personal info"
+            )
+        photo_url = await upload_photo(file)
+        data.photo_url = photo_url
+        
+        # Call the service to update user data in DB
+        updated_user = await services.update_user_personal_info_no_department(db, personal_info_id, data)
+
+        return updated_user
+        
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this personal info"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
         )
-    
-    # Upload photo and get URL
-    photo_url = await upload_photo(file)
-    
-    # Update the personal info with the new photo URL
-    info_update = schemas.UserInfoUpdateNoDepartment(photo_url=photo_url)
-    return await services.update_user_personal_info_no_department(db, personal_id, info_update)

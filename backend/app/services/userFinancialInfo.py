@@ -196,18 +196,13 @@ async def get_user_financial_info_by_user_id(db: AsyncSession, user_id: str):
         user_financial_info = result.scalar_one_or_none()
 
         if not user_financial_info:
-            await logger.warning("Financial info not found", {"user_id": user_id})
+            await logger.warning("Financial info not found for user", {"user_id": user_id})
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Personal information not found for this user",
             )
-        await logger.info("Retrieved financial info", {"user_id": user_id})
+        await logger.info("Retrieved user financial info", {"user_id": user_id})
         return user_financial_info
-    except HTTPException:
-        raise
     except Exception as e:
-        await logger.error("Get financial info failed", error=e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+        await logger.error("Get user financial info failed", {"user_id": user_id, "error": str(e)})
+        raise

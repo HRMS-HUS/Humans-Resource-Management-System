@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status ,Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...configs.database import get_db
 from ...schemas import deptAnnouncement as schemas
@@ -50,12 +50,14 @@ async def check_manager_permission(
     response_model=schemas.DeptAnnouncementResponse
 )
 async def create_department_announcement(
-    announcement: schemas.DeptAnnouncementCreate,
+    announcement: schemas.DeptAnnouncementCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
 ):
+    # Check if user is a manager of the department
+    announcement.department_id = current_user.department_id
     await check_manager_permission(db, current_user, announcement.department_id)
- # Set department_id in announcement
+    # Set department_id in announcement
     return await services.create_dept_announcement(announcement, db)
 
 @router.put(
@@ -63,11 +65,12 @@ async def create_department_announcement(
     response_model=schemas.DeptAnnouncementResponse
 )
 async def update_department_announcement(
-    announcement_id: str,
-    announcement: schemas.DeptAnnouncementUpdate,
+    announcement_id: str = Path(..., description="Announcement ID to update"),
+    announcement: schemas.DeptAnnouncementUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
 ):
+    announcement.department_id = current_user.department_id
     existing = await services.get_dept_announcement_by_id(db, announcement_id)
     await check_manager_permission(db, current_user, existing.department_id)
     return await services.update_dept_announcement(db, announcement_id, announcement)
@@ -77,11 +80,12 @@ async def update_department_announcement(
     status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_department_announcement(
-    announcement_id: str,
+    announcement_id: str = Path(..., description="Announcement ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
 ):
     existing = await services.get_dept_announcement_by_id(db, announcement_id)
+    existing.department_id = current_user.department_id
     await check_manager_permission(db, current_user, existing.department_id)
     await services.delete_dept_announcement(db, announcement_id)
 
@@ -90,7 +94,7 @@ async def delete_department_announcement(
     response_model=List[schemas.DeptAnnouncementResponse]
 )
 async def get_manager_department_announcements(
-    department_id: str,
+    department_id: str = Path(..., description="Department ID to retrieve announcements"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
 ):

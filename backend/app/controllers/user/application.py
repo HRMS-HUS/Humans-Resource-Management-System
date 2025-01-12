@@ -15,16 +15,10 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_application_me(
-    application: schemas.ApplicationCreate,
+    application: schemas.ApplicationCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
-    # Validate and set user_id
-    if application.user_id and application.user_id != current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot create applications for other users"
-        )
     application.user_id = current_user.user_id
     return await services.create_application(db, application)
 
@@ -43,7 +37,7 @@ async def get_current_user_applications(
     response_model=schemas.ApplicationResponse
 )
 async def get_application_me(
-    application_id: str,
+    application_id: str = Path(..., description="Application ID to retrieve"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -60,8 +54,8 @@ async def get_application_me(
     response_model=schemas.ApplicationResponse
 )
 async def update_application_me(
-    application_id: str,
-    application: schemas.ApplicationUpdate,
+    application_id: str = Path(..., description="Application ID to update"),
+    application: schemas.ApplicationUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -84,7 +78,7 @@ async def update_application_me(
 
 @router.delete("/me/application/{application_id}")
 async def delete_application_me(
-    application_id: str,
+    application_id: str = Path(..., description="Application ID to delete"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):

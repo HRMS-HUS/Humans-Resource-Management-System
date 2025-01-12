@@ -16,7 +16,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_job_me(
-    job: schemas.JobCreate,
+    job: schemas.JobCreate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
@@ -33,8 +33,8 @@ async def create_job_me(
     response_model=schemas.Job,
 )
 async def update_job_me(
-    job_id: str,
-    job: schemas.JobUpdate,
+    job_id: str = Path(..., description="Job ID to update"),
+    job: schemas.JobUpdate = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
