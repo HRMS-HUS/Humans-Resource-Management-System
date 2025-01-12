@@ -11,8 +11,8 @@ class DeptAnnouncement(Base):
 
     announcement_id = Column(String, Sequence("deptAnnou_id_seq"),primary_key=True, index=True, nullable=False)
     department_id = Column(String, ForeignKey("department.department_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-    announcement_title = Column(String, nullable=False)
-    announcement_description = Column(String, nullable=False)
+    announcement_title = Column(String, nullable=True)
+    announcement_description = Column(String, nullable=True)
     create_at = Column(DateTime(timezone=True), default=utc_plus_7)
     
     # Relationships

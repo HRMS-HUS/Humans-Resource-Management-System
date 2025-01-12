@@ -8,7 +8,7 @@ from ..validations.financial_validator import (
 )
 
 class UserFinancialInfoBase(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     salaryBasic: float = Field(gt=0)
     salaryGross: float = Field(gt=0)
     salaryNet: float = Field(gt=0)

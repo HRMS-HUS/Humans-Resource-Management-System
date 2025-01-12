@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Date, Sequence
+from sqlalchemy import Column, String, DateTime, Date, Sequence, Time
 from ..configs.database import Base
 
 class DaysWorking(Base):

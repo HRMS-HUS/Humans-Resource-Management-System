@@ -7,7 +7,7 @@ from ..validations.user_info_validator import (
 from typing import Optional
 
 class UserInfoBase(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     fullname: Optional[str] = None
     citizen_card: Optional[str] = None
     date_of_birth: Optional[date] = None

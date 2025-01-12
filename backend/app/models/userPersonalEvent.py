@@ -7,10 +7,10 @@ class UserPersonalEvent(Base):
 
     event_id = Column(String, Sequence("event_id_seq"),  primary_key=True, index=True, nullable=False)
     user_id = Column(String, ForeignKey("users.user_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-    event_title = Column(String, nullable=False)
-    event_description = Column(String, nullable=False)
-    event_start_date = Column(Date, nullable=False)
-    event_end_date = Column(Date, nullable=False)
+    event_title = Column(String, nullable=True)
+    event_description = Column(String, nullable=True)
+    event_start_date = Column(Date, nullable=True)
+    event_end_date = Column(Date, nullable=True)
     
     # Relationships
     user = relationship("Users", back_populates="events")

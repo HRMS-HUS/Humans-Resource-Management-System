@@ -6,7 +6,7 @@ from ..validations.event_validator import (
 )
 
 class UserPersonalEventBase(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     event_title: Optional[str] = None
     event_description: Optional[str] = None
     event_start_date: Optional[date] = None

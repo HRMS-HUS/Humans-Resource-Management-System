@@ -82,6 +82,15 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        # Add check for inactive user
+        if not db_user.status == user_model.StatusEnum.Active:
+            await logger.warning("Login attempt by inactive user", {"username": form_data.username})
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This account is inactive. Please contact administrator.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         access_token_expires = jwt.timedelta(minutes=jwt.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = await jwt.create_access_token(
             data={"sub": db_user.user_id}, expires_delta=access_token_expires
@@ -140,6 +149,15 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
 #                 status_code=status.HTTP_400_BAD_REQUEST,
 #                 detail="Incorrect Username or Password"
 #             )
+#         # Add check for inactive user
+#         if not db_user.status == user_model.StatusEnum.Active:
+#             await logger.warning("Login attempt by inactive user", {"username": form_data.username})
+#             raise HTTPException(
+#                 status_code=status.HTTP_403_FORBIDDEN,
+#                 detail="This account is inactive. Please contact administrator.",
+#                 headers={"WWW-Authenticate": "Bearer"},
+#             )
+
         
 #         # Generate and store OTP
 #         otp_code = otp.create_otp()

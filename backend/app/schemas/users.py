@@ -11,7 +11,7 @@ class User(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
-    role: Optional[users.RoleEnum] = users.RoleEnum.User  # Default to User role if not specified
+    role: Optional[users.RoleEnum] = None  # Default to User role if not specified
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None

@@ -2,10 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import date
 from enum import Enum
-
-class StatusEnum(str, Enum):
-    Active = "Active"
-    Inactive = "Inactive"
+from ..models import department
 
 class DepartmentBase(BaseModel):
     department_name: Optional[str] = None
@@ -13,7 +10,7 @@ class DepartmentBase(BaseModel):
     location: Optional[str] = None
     contact_email: Optional[EmailStr] = None
     start_date: Optional[date] = None
-    status: Optional[StatusEnum] = None
+    status: Optional[department.StatusEnum] = None
 
 class DepartmentCreate(DepartmentBase):
     pass
@@ -24,7 +21,7 @@ class DepartmentUpdate(BaseModel):
     location: Optional[str] = None
     contact_email: Optional[EmailStr] = None
     start_date: Optional[date] = None
-    status: Optional[StatusEnum] = None
+    status: Optional[department.StatusEnum] = None
 
 class DepartmentResponse(DepartmentBase):
     department_id: str

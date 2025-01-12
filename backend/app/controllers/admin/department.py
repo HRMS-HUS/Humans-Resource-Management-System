@@ -62,7 +62,7 @@ async def get_all_departments(
 async def update_department(
     request: Request,
     department_id: str,
-    department: schemas.DepartmentUpdate,
+    department: schemas.DepartmentUpdate = Query(...),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):

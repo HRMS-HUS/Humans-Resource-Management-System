@@ -15,7 +15,7 @@ class StatusEnum(str, Enum):
     Pending = "Pending"
 
 class ApplicationBase(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     leave_type: Optional[LeaveTypeEnum] = None
     reason: Optional[str] = None
     start_date: Optional[date] = None

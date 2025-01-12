@@ -21,9 +21,9 @@ class UserFinancialInfo(Base):
     deductionTax = Column(Float, nullable=True)
     deductionOther = Column(Float, nullable=True)
     deductionTotal = Column(Float, nullable=True)
-    bankName = Column(String, nullable=False)
-    accountName = Column(String, nullable=False)
-    accountNumber = Column(String, nullable=False)
+    bankName = Column(String, nullable=True)
+    accountName = Column(String, nullable=True)
+    accountNumber = Column(String, nullable=True)
     iban = Column(String, nullable=True)
     
     # Relationships

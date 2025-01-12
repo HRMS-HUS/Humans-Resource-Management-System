@@ -9,7 +9,7 @@ class PaymentMethodEnum(str, Enum):
     Cash = "Cash"
 
 class PaymentBase(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     payment_method: Optional[PaymentMethodEnum] = None
     payment_month: Optional[int] = None
     payment_date: Optional[int] = None

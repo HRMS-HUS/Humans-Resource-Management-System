@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import date
 
 class JobBase(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     job_tittle: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
