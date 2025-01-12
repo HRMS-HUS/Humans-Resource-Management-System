@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...schemas import userPersonalInfo as schemas
 from ...services import userPersonalInfo as services
-from ...services import userPersonalInfo as services
+from ...services import department as dept_services
 from ...models import users as models
 from ...services import users
 from ...configs.database import get_db
@@ -139,3 +139,31 @@ async def get_all_personal_info(
     return await services.get_all_user_personal_info(
         db, skip=skip, limit=limit
     )
+
+
+@router.get("/admin/users/department/{department_id}", response_model=List[schemas.UserInfoResponse])
+@limiter.limit("10/minute")
+async def get_users_by_department(
+    request: Request,
+    department_id: str = Path(..., description="Department ID to get users from"),
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_current_admin),
+):
+    return await services.get_users_by_department_id(db, department_id)
+
+# @router.get("/manager/users/department", response_model=List[schemas.UserInfoResponse])
+# @limiter.limit("10/minute")
+# async def get_department_users_for_manager(
+#     request: Request,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: models.Users = Depends(jwt.get_current_user),
+# ):
+#     # Check if user is a manager
+#     dept_result = await dept_services.get_department_by_manager_id(db, current_user.user_id)
+#     if not dept_result:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="User is not a manager"
+#         )
+    
+#     return await services.get_users_for_manager(db, current_user.user_id)

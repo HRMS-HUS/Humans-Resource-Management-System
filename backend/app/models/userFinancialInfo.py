@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Float, Sequence
+from sqlalchemy.orm import relationship
 from ..configs.database import Base
 
 class UserFinancialInfo(Base):
@@ -24,3 +25,6 @@ class UserFinancialInfo(Base):
     accountName = Column(String, nullable=False)
     accountNumber = Column(String, nullable=False)
     iban = Column(String, nullable=True)
+    
+    # Relationships
+    user = relationship("Users", back_populates="financial_info")

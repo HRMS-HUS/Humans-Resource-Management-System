@@ -107,7 +107,7 @@ async def update_payment(
             query = (
                 update(models.Payment)
                 .where(models.Payment.payment_id == payment_id)
-                .values(payment.dict(exclude_unset=True))
+                .values(**payment.dict(exclude_unset=True))  # Added exclude_unset=True
             )
 
             result = await db.execute(query)

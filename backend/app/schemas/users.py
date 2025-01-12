@@ -4,16 +4,18 @@ from ..models import users
 
 class User(BaseModel):
     user_id: str
-    username: str
-    role: users.RoleEnum
-    status: users.StatusEnum
+    username: Optional[str] = None
+    role: Optional[users.RoleEnum] = None
+    status: Optional[users.StatusEnum] = None
 
 class UserCreate(BaseModel):
     username: str
     password: str
     role: Optional[users.RoleEnum] = users.RoleEnum.User  # Default to User role if not specified
 
-class UserUpdate(UserCreate):
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    password: Optional[str] = None
     role: Optional[users.RoleEnum] = None
     status: Optional[users.StatusEnum] = None
 

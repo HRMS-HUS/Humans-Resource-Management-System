@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, ForeignKey, Date, Enum,Sequence
 import enum
 from ..configs.database import Base
+from sqlalchemy.orm import relationship
 
 class StatusEnum(enum.Enum):
     Active = "Active"
@@ -15,3 +16,8 @@ class Department(Base):
     contact_email = Column(String, nullable=True)
     start_date = Column(Date, nullable=True)
     status = Column(Enum(StatusEnum), default=StatusEnum.Active, nullable=False)
+    
+    # Relationships
+    manager = relationship("Users", back_populates="managed_departments")
+    employees = relationship("UserPersonalInfo", back_populates="department")
+    announcements = relationship("DeptAnnouncement", back_populates="department")

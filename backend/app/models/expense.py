@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Float, Date, Sequence
+from sqlalchemy.orm import relationship
 from ..configs.database import Base
 
 class Expense(Base):
@@ -9,3 +10,6 @@ class Expense(Base):
     expense_item_store = Column(String, nullable=True)
     expense_date = Column(Date, nullable=True)
     amount = Column(Float, nullable=True)
+    
+    # Relationships
+    user = relationship("Users", back_populates="expenses")

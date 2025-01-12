@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Float, Integer, Enum, Sequence
+from sqlalchemy.orm import relationship
 from ..configs.database import Base
 import enum
 
@@ -16,4 +17,7 @@ class Payment(Base):
     payment_date = Column(Integer, nullable=True)
     payment_fine = Column(Float, nullable=True)
     payment_amount = Column(Float, nullable=True)
-    comments = Column(String, nullable=True) 
+    comments = Column(String, nullable=True)
+    
+    # Relationships
+    user = relationship("Users", back_populates="payments")

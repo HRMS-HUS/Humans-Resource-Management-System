@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 from fastapi import HTTPException, status
 from ..models import userPersonalInfo as models
+from ..models import department as models_department
 from ..schemas import userPersonalInfo as schemas
 from typing import List
 from ..utils.redis_lock import DistributedLock
@@ -132,7 +133,7 @@ async def update_user_personal_info(
         try:
             db_user = await get_user_personal_info_by_id(db, personal_info_id)
 
-            for key, value in user.dict().items():
+            for key, value in user.dict(exclude_unset=True).items():
                 setattr(db_user, key, value)
 
             await db.commit()
@@ -166,7 +167,7 @@ async def update_user_personal_info_no_department(
         try:
             db_user = await get_user_personal_info_by_id(db, personal_info_id)
 
-            for key, value in user.dict().items():
+            for key, value in user.dict(exclude_unset=True).items():
                 if value is not None:  # Only update non-None values
                     setattr(db_user, key, value)
 
@@ -266,6 +267,66 @@ async def get_all_user_personal_info(db: AsyncSession, skip: int = 0, limit: int
         return personal_infos if personal_infos else []
     except Exception as e:
         await logger.error("Get all user personal info failed", error=e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+async def get_users_by_department_id(db: AsyncSession, department_id: str):
+    try:
+        result = await db.execute(
+            select(models.UserPersonalInfo).filter(
+                models.UserPersonalInfo.department_id == department_id
+            )
+        )
+        users = result.scalars().all()
+
+        if not users:
+            await logger.warning("No users found in department", {"department_id": department_id})
+            return []
+            
+        await logger.info("Retrieved users from department", {
+            "department_id": department_id,
+            "count": len(users)
+        })
+        return users
+    except Exception as e:
+        await logger.error("Get users by department failed", error=e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+async def get_users_for_manager(db: AsyncSession, manager_id: str):
+    try:
+        # First get manager's department
+        dept_result = await db.execute(
+            select(models_department.Department).filter(
+                models_department.Department.manager_id == manager_id
+            )
+        )
+        department = dept_result.scalar_one_or_none()
+        
+        if not department:
+            await logger.warning("No department found for manager", {"manager_id": manager_id})
+            return []
+
+        # Then get all users in that department
+        result = await db.execute(
+            select(models.UserPersonalInfo).filter(
+                models.UserPersonalInfo.department_id == department.department_id
+            )
+        )
+        users = result.scalars().all()
+
+        await logger.info("Retrieved department users for manager", {
+            "manager_id": manager_id,
+            "department_id": department.department_id,
+            "count": len(users)
+        })
+        return users
+    except Exception as e:
+        await logger.error("Get users for manager failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"

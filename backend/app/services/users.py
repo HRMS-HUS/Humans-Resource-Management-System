@@ -47,28 +47,55 @@ async def get_user_by_id(db: AsyncSession, user_id: str):
 
 async def update_user(db: AsyncSession, user_id: str, user_update: schemas.UserUpdate):
     try:
+        # Check if user exists
         existing_user = await get_user_by_id(db, user_id)
-        
-        if user_update.username:
+        if not existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        # Initialize update data dictionary
+        update_data = {}
+
+        # Username validation and update
+        if user_update.username is not None:
+            # if len(user_update.username.strip()) < 3:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_400_BAD_REQUEST,
+            #         detail="Username must be at least 3 characters long"
+            #     )
+            
+            # Check if username already exists
             username_check = await db.execute(
                 select(models.Users)
                 .filter(models.Users.username == user_update.username)
                 .filter(models.Users.user_id != user_id)
             )
             if username_check.scalar_one_or_none():
-                await logger.warning("Username already exists", {"username": user_update.username})
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, 
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Username already exists"
                 )
-            
-            update_data = {"username": user_update.username}
-            
-            if user_update.role is not None:
-                update_data["role"] = user_update.role
-            if user_update.status is not None:
-                update_data["status"] = user_update.status
-                
+            update_data["username"] = user_update.username.strip()
+
+        # Password validation and update
+        if user_update.password is not None:
+            # if len(user_update.password) < 6:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_400_BAD_REQUEST,
+            #         detail="Password must be at least 6 characters long"
+            #     )
+            update_data["password"] = crypto.hash_password(user_update.password)
+
+        # Role and status update
+        if user_update.role is not None:
+            update_data["role"] = user_update.role
+        if user_update.status is not None:
+            update_data["status"] = user_update.status
+
+        # Only update if there are changes
+        if update_data:
             stmt = (
                 update(models.Users)
                 .where(models.Users.user_id == user_id)
@@ -76,14 +103,35 @@ async def update_user(db: AsyncSession, user_id: str, user_update: schemas.UserU
             )
             await db.execute(stmt)
             await db.commit()
+            
+            # Refresh user data
             await db.refresh(existing_user)
-            await logger.info("Updated user", {"user_id": user_id, "updates": update_data})
-        
+            
+            # Log the update, excluding password from logs
+            log_data = {k: v for k, v in update_data.items() if k != "password"}
+            await logger.info("Updated user", {
+                "user_id": user_id,
+                "updates": log_data
+            })
+
         return existing_user
-    except Exception as e:
-        await logger.error("Update user failed", {"user_id": user_id, "error": str(e)})
-        await db.rollback()
+        
+    except HTTPException as he:
+        await logger.warning("Update user validation failed", {
+            "user_id": user_id,
+            "error": he.detail
+        })
         raise
+    except Exception as e:
+        await logger.error("Update user failed", {
+            "user_id": user_id,
+            "error": str(e)
+        })
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update user"
+        )
 
 async def change_own_password(
     db: AsyncSession, 

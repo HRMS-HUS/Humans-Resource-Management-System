@@ -116,7 +116,7 @@ async def update_user_event(
             query = (
                 update(models.UserPersonalEvent)
                 .where(models.UserPersonalEvent.event_id == event_id)
-                .values(event.dict(exclude_unset=True))
+                .values(**event.dict(exclude_unset=True))  # Added exclude_unset=True
             )
 
             result = await db.execute(query)

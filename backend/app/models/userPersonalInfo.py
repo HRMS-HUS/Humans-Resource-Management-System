@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Date, Enum, Sequence
+from sqlalchemy.orm import relationship
 from ..configs.database import Base
 import enum
 
@@ -24,3 +25,7 @@ class UserPersonalInfo(Base):
     country = Column(String, nullable=True)
     department_id = Column(String, ForeignKey("department.department_id", ondelete="CASCADE"), nullable=True)
     photo_url = Column(String, nullable=True)
+    
+    # Relationships
+    user = relationship("Users", back_populates="personal_info")
+    department = relationship("Department", back_populates="employees")

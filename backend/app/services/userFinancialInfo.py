@@ -81,7 +81,9 @@ async def update_financial_info(
         try:
             db_financial = await get_financial_info_by_id(db, financial_info_id)
 
-            for key, value in financial.dict().items():
+            # Changed to use exclude_unset=True
+            update_data = financial.dict(exclude_unset=True)
+            for key, value in update_data.items():
                 setattr(db_financial, key, value)
 
             await db.commit()

@@ -69,16 +69,28 @@ async def get_all_dept_announcements(
 async def get_announcements_by_department_id(db: AsyncSession, department_id: str):
     try:
         result = await db.execute(
-            select(models.DeptAnnouncement).filter(
-                models.DeptAnnouncement.department_id == department_id
-            )
+            select(models.DeptAnnouncement)
+            .filter(models.DeptAnnouncement.department_id == department_id)
         )
         announcements = result.scalars().all()
-        await logger.info("Retrieved department announcements", {"department_id": department_id, "count": len(announcements)})
-        return announcements if announcements else []
+        
+        # Log the result but don't raise exception
+        if not announcements:
+            await logger.info("No announcements found for department", {"department_id": department_id})
+            return []
+            
+        await logger.info(
+            "Retrieved announcements for department", 
+            {"department_id": department_id, "count": len(announcements)}
+        )
+        return announcements
+
     except Exception as e:
-        await logger.error("Get announcements by department failed", error=e)
-        raise
+        await logger.error("Get department announcements failed", error=e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving announcements"
+        )
 
 async def update_dept_announcement(
     db: AsyncSession, 
@@ -89,7 +101,9 @@ async def update_dept_announcement(
         try:
             db_announcement = await get_dept_announcement_by_id(db, announcement_id)
             
-            for key, value in announcement.dict(exclude_unset=True).items():
+            # Changed to use exclude_unset=True
+            update_data = announcement.dict(exclude_unset=True)
+            for key, value in update_data.items():
                 setattr(db_announcement, key, value)
 
             await db.commit()

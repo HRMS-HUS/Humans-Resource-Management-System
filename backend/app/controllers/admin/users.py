@@ -20,7 +20,7 @@ router = APIRouter()
 async def update_user(
     request: Request,
     user_id: str,
-    user_update: schemas.UserUpdate = Query(...),
+    user_update: schemas.UserUpdate = Query(...),  # Remove Query, use as request body directly
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):

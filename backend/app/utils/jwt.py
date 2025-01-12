@@ -164,3 +164,12 @@ async def get_current_admin(db: AsyncSession = Depends(get_db), current_user: mo
     if current_user.role != models_user.RoleEnum.Admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     return current_user
+
+async def get_current_manager(
+    current_user: dict = Depends(get_active_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != models_user.RoleEnum.Manager and current_user.role != models_user.RoleEnum.Admin: 
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user

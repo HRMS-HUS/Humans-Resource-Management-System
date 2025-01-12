@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Date, Sequence
+from sqlalchemy.orm import relationship
 from ..configs.database import Base
 
 class Job(Base):
@@ -9,3 +10,6 @@ class Job(Base):
     job_tittle = Column(String, nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+    
+    # Relationships
+    user = relationship("Users", back_populates="jobs")

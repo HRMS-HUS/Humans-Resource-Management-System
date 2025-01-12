@@ -1,4 +1,6 @@
 from sqlalchemy import Column, String, DateTime, ForeignKey, Sequence
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from ..configs.database import Base
 from datetime import datetime, timezone, timedelta
 def utc_plus_7():
@@ -12,3 +14,6 @@ class DeptAnnouncement(Base):
     announcement_title = Column(String, nullable=False)
     announcement_description = Column(String, nullable=False)
     create_at = Column(DateTime(timezone=True), default=utc_plus_7)
+    
+    # Relationships
+    department = relationship("Department", back_populates="announcements")

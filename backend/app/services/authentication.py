@@ -90,7 +90,7 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
 
         await redis_client.setex(db_user.user_id, int(access_token_expires.total_seconds()), access_token)
         await logger.info("User logged in", {"username": form_data.username})
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {"access_token": access_token, "token_type": "bearer", "role": db_user.role}
     except Exception as e:
         await logger.error("Login failed", error=e)
         raise

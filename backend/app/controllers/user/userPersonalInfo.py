@@ -4,6 +4,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from ...schemas import userPersonalInfo as schemas
 from ...services import userPersonalInfo as services
+from ...services import department as dept_services
 from ...models import users as models
 from ...services import users
 from ...configs.database import get_db

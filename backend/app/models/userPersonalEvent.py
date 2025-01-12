@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Date, Sequence
+from sqlalchemy.orm import relationship
 from ..configs.database import Base
 
 class UserPersonalEvent(Base):
@@ -10,3 +11,6 @@ class UserPersonalEvent(Base):
     event_description = Column(String, nullable=False)
     event_start_date = Column(Date, nullable=False)
     event_end_date = Column(Date, nullable=False)
+    
+    # Relationships
+    user = relationship("Users", back_populates="events")
