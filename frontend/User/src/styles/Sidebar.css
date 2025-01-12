@@ -1,0 +1,111 @@
+.name-user {
+    color: #000;
+    text-align: center;
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    padding-bottom: 14px;
+  }
+  
+  .name-department {
+    color: #000;
+    text-align: center;
+    font-family: Inter;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+  }
+  
+  .avartar {
+    width: 100%;
+    bottom: 100%;
+  }
+  
+  .container {
+    display: flex;
+    /* flex-wrap: wrap; Đưa các phần tử xuống dòng nếu không đủ chỗ */
+    /* justify-content: center; */
+    /* align-items: center; */
+    width: 100vw; /* Chiều rộng luôn bằng màn hình */
+    height: 100vh; /* Chiều cao luôn bằng màn hình */
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  
+  /* Sidebar Styles */
+  .sidebar {
+    width: 212px;
+    height: 100vh;
+    background-color: #fff;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding-top: 0;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .profile {
+    width: 129px;
+    height: 188px;
+    padding: 7px 42px 0px 41px;
+    text-align: center;
+    border-bottom: 1px solid #bcb2b2;
+  }
+  
+  .profile img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
+  
+  .menu {
+    flex-grow: 1;
+    margin-top: 20px;
+  }
+  
+  .menu-item {
+    width: 212px;
+    height: 49px;
+    display: flex;
+    align-items: center;
+    color: #000;
+  }
+  
+  #icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+  
+  .menu-item:hover {
+    background: #dadada;
+  }
+  
+  .menu-item.active {
+    background: #dadada;
+  }
+/* Nút Log out */
+.logout {
+
+  margin-top: auto; /* Đẩy nút xuống dưới cùng của sidebar */
+  text-align: center;
+  padding: 10px 0;
+  background-color: #dbd9d9; /* Màu đỏ */
+
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  margin-bottom: 20px; 
+
+}
+
+.logout:hover {
+  background-color: black;
+  color: white; /* Đổi màu khi hover */
+}
