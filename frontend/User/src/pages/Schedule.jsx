@@ -4,52 +4,36 @@ import "../styles/Schedule.css";
 
 function Schedule() {
   const [scheduleData, setScheduleData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSchedule = async () => {
-      try {
-        const response = await axios.get('http://52.184.86.56:8000/api/personal_event', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        // Format date and time
-        const formattedSchedule = response.data.map(event => {
-          const formatDate = (dateString) => {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('vi-VN');
-          };
-
-          const formatTime = (dateString) => {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toLocaleTimeString('vi-VN', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            });
-          };
-
-          return {
-            id: event.event_id,
-            title: event.title,
-            startTime: formatTime(event.start_time),
-            date: formatDate(event.start_time),
-            deadline: event.deadline ? 
-              `${formatTime(event.deadline)} ${formatDate(event.deadline)}` : 
-              ''
-          };
-        });
-
-        setScheduleData(formattedSchedule);
-      } catch (error) {
-        console.error('Lỗi khi lấy thông tin lịch trình:', error);
-      }
+        try {
+            const employeeRes = await axios.get(`${API_URL}/employees/me`);
+            const response = await axios.get(
+                `${API_URL}/schedule/employee/${employeeRes.data.employee_id}`
+            );
+            
+            const formattedSchedule = response.data.map(event => ({
+                id: event.id,
+                title: event.title,
+                startTime: new Date(event.start_time).toLocaleTimeString('vi-VN'),
+                date: new Date(event.start_time).toLocaleDateString('vi-VN'),
+                deadline: event.deadline ? 
+                    new Date(event.deadline).toLocaleString('vi-VN') : null
+            }));
+            
+            setScheduleData(formattedSchedule);
+        } catch (error) {
+            console.error('Error fetching schedule:', error);
+            if (error.response?.status === 401) {
+                useAuthStore.getState().logout();
+            }
+        }
     };
 
     fetchSchedule();
-  }, []);
+}, []);
 
   return (
     <div className="rectangle-1">

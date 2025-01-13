@@ -10,26 +10,52 @@ function Dashboard() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      try {
-        const [personalInfoRes, departmentRes, jobsRes] = await Promise.all([
-          axios.get('http://52.184.86.56:8000/api/personal_info'),
-          axios.get('http://52.184.86.56:8000/api/department'),
-          axios.get('http://52.184.86.56:8000/api/job')
-        ]);
+        try {
+            const token = localStorage.getItem('token');
+            const config = {
+                headers: { Authorization: `Bearer ${token}` }
+            };
+            
+            // Get employee info
+            const employeeRes = await axios.get(`${API_URL}/employees/me`, config);
+            
+            // Get department info based on employee's department_id
+            const departmentRes = await axios.get(
+                `${API_URL}/departments/${employeeRes.data.department_id}`, 
+                config
+            );
+            
+            // Get attendance records 
+            const attendanceRes = await axios.get(
+                `${API_URL}/attendance/employee/${employeeRes.data.employee_id}`,
+                config
+            );
 
-        setPersonalInfo(personalInfoRes.data);
-        setDepartmentInfo(departmentRes.data);
-        setJobs(jobsRes.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error:', error);
-        setLoading(false);
-      }
+            setPersonalInfo({
+                full_name: employeeRes.data.full_name,
+                employee_id: employeeRes.data.employee_id,
+                position: employeeRes.data.position,
+                join_date: employeeRes.data.join_date,
+                remaining_leave_days: employeeRes.data.leave_days_remaining
+            });
+
+            setDepartmentInfo({
+                name: departmentRes.data.name,
+                manager_name: departmentRes.data.manager_name,
+                location: departmentRes.data.location,
+                employee_count: departmentRes.data.employee_count
+            });
+
+        } catch (error) {
+            console.error('Error:', error);
+            if (error.response?.status === 401) {
+                useAuthStore.getState().logout();
+            }
+        }
     };
 
     fetchDashboardData();
-  }, []);
-
+}, []);
   
 
   const inProgressJobs = jobs.filter(job => job.status === 'in_progress').length;

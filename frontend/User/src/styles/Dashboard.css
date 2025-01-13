@@ -77,3 +77,20 @@
   .department-grid .grid_right {
     margin-left: 376px;
   }
+
+/* dark mode */
+body.dark .dashboard .card:first-child{
+    background: #3e3434;
+}
+
+body.dark .dashboard .card:last-child{
+  background: #496357;
+}
+
+body.dark .card h3{
+  color: #fff;
+}
+
+body.dark .info-row span:first-child{
+  color: #fff;
+}

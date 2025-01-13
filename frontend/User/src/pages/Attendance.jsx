@@ -6,19 +6,31 @@ function Attendance() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchWorkingDays = async () => {
-      try {
-        const response = await axios.get('http://52.184.86.56:8000/api/working');
-        setWorkingDays(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Failed to fetch working days:', err);
-        setLoading(false);
-      }
+    const fetchAttendance = async () => {
+        try {
+            const employeeRes = await axios.get(`${API_URL}/employees/me`);
+            const response = await axios.get(
+                `${API_URL}/attendance/employee/${employeeRes.data.employee_id}`
+            );
+            
+            const formattedAttendance = response.data.map(record => ({
+                date: new Date(record.date).toLocaleDateString('vi-VN'),
+                check_in: record.check_in_time,
+                check_out: record.check_out_time,
+                status: record.status
+            }));
+            
+            setWorkingDays(formattedAttendance);
+        } catch (error) {
+            console.error('Error fetching attendance:', error);
+            if (error.response?.status === 401) {
+                useAuthStore.getState().logout();
+            }
+        }
     };
 
-    fetchWorkingDays();
-  }, []);
+    fetchAttendance();
+}, []);
 
   const getStatusClass = (status) => {
     switch (status?.toLowerCase()) {

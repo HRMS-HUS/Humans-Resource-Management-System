@@ -1,42 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import "../styles/Salary.css";
 
 function Salary() {
   const [salaryData, setSalaryData] = useState({
-    baseSalary: '0',
-    totalSalary: '0',
-    netSalary: '0',
+    baseSalary: "0",
+    totalSalary: "0",
+    netSalary: "0",
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSalaryData = async () => {
-      try {
-        const response = await axios.get('http://52.184.86.56:8000/api/financial_info', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        // Format the numbers with dots as thousand separators
-        const formatNumber = (num) => {
-          return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        };
-
-        setSalaryData({
-          baseSalary: formatNumber(response.data.base_salary || 0),
-          totalSalary: formatNumber(response.data.total_salary || 0),
-          netSalary: formatNumber(response.data.net_salary || 0),
-        });
-      } catch (error) {
-        console.error('Lỗi khi lấy thông tin lương:', error);
-        // Keep the default values in case of error
-      }
+    const fetchSalary = async () => {
+        try {
+            const employeeRes = await axios.get(`${API_URL}/employees/me`);
+            const response = await axios.get(
+                `${API_URL}/payroll/employee/${employeeRes.data.employee_id}`
+            );
+            
+            setSalaryData({
+                baseSalary: formatNumber(response.data.base_salary),
+                totalSalary: formatNumber(response.data.gross_salary),
+                netSalary: formatNumber(response.data.net_salary)
+            });
+        } catch (error) {
+            console.error('Error fetching salary:', error);
+            if (error.response?.status === 401) {
+                useAuthStore.getState().logout();
+            }
+        }
     };
 
-    fetchSalaryData();
-  }, []);
-
+    fetchSalary();
+}, []);
   return (
     <div className="rectangle-1">
       <h1 className="page-title">Lương</h1>

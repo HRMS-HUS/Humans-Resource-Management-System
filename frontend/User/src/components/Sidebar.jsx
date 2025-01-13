@@ -17,18 +17,23 @@ const Sidebar = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const personalInfoResponse = await axios.get('http://52.184.86.56:8000/api/personal_info', {
+        const token = localStorage.getItem('token');
+        const config = {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           }
-        });
-
-        const departmentResponse = await axios.get('http://52.184.86.56:8000/api/department', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
+        };
+  
+        const personalInfoResponse = await axios.get(
+          'http://52.184.86.56:8000/api/personal_info', 
+          config
+        );
+  
+        const departmentResponse = await axios.get(
+          'http://52.184.86.56:8000/api/department',
+          config
+        );
+  
         setUserProfile({
           name: personalInfoResponse.data.fullname || 'Tên người dùng',
           department: departmentResponse.data.name || 'Phòng ban',
@@ -36,6 +41,9 @@ const Sidebar = () => {
         });
       } catch (error) {
         console.error('Lỗi khi lấy thông tin cá nhân:', error);
+        if (error.response?.status === 401) {
+          useAuthStore.getState().logout();
+        }
         setUserProfile({
           name: 'Tên người dùng',
           department: 'Phòng ban',
@@ -43,7 +51,7 @@ const Sidebar = () => {
         });
       }
     };
-
+  
     fetchUserData();
   }, []);
 
