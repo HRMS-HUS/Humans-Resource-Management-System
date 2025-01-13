@@ -196,10 +196,10 @@ async def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Asyn
         user_info = result.first()
 
         if not user_info:
-            await logger.warning("Login attempt failed: Incorrect Username or Password", {"username": form_data.username})
+            await logger.warning("Login attempt failed: Incorrect Username or Password or Email not found", {"username": form_data.username})
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect Username or Password"
+                detail="Incorrect Username or Password or Email not found"
             )
         
         db_user, email_user = user_info

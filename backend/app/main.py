@@ -5,7 +5,7 @@ from .configs.database import init_db
 from .configs.cloudinary import init_cloudinary
 import os, redis
 from fastapi.middleware.cors import CORSMiddleware
-from .exceptions.validation_exceptions import UserValidationError, EventValidationError, FinancialValidationError
+from .providers.validation_exceptions import UserValidationError, EventValidationError, FinancialValidationError
 from .api.error_handlers import validation_exception_handler, event_validation_exception_handler, financial_validation_exception_handler
 from pydantic import ValidationError
 from slowapi import _rate_limit_exceeded_handler

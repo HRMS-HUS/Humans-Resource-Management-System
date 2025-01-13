@@ -1,5 +1,5 @@
 from datetime import date
-from ..exceptions.validation_exceptions import EventValidationError
+from ..providers.validation_exceptions import EventValidationError
 
 
 def validate_event_dates(start_date: date, end_date: date) -> bool:

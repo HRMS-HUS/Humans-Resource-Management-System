@@ -6,7 +6,8 @@ from ..schemas import daysWorking as schemas
 from typing import List
 from ..utils.redis_lock import DistributedLock
 from ..utils.logger import logger
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, time, timedelta
+import pytz
 
 class DatabaseOperationError(Exception):
     pass
@@ -180,12 +181,15 @@ async def create_attendance_record(
                     detail="Attendance already recorded for today"
                 )
 
-            # Use timezone-aware datetime
+            # Get current time with timezone
+            current_datetime = datetime.now(timezone.utc)
+            current_time = current_datetime.time().replace(tzinfo=timezone.utc)
+            
             working_data = {
                 "user_id": user_id,
                 "day": date.today(),
-                "login_time": datetime.now(timezone.utc),  # Make timezone-aware
-                "total_hours": 0
+                "login_time": current_time,
+                "total_hours": 0.0  # Explicitly set as float
             }
             
             db_working = models.DaysWorking(**working_data)
@@ -193,7 +197,7 @@ async def create_attendance_record(
             await db.commit()
             await logger.info("Created attendance record", {
                 "user_id": user_id,
-                "login_time": str(working_data["login_time"])
+                "login_time": str(current_time)
             })
             await db.refresh(db_working)
             return db_working
@@ -208,7 +212,6 @@ async def update_attendance_logout(
 ):
     async with DistributedLock(f"working:{user_id}"):
         try:
-            # Get today's attendance record
             result = await db.execute(
                 select(models.DaysWorking).filter(
                     models.DaysWorking.user_id == user_id,
@@ -223,20 +226,30 @@ async def update_attendance_logout(
                     detail="No attendance record found for today"
                 )
 
-            # Use timezone-aware datetime for logout
-            logout_time = datetime.now(timezone.utc)
+            # Get current time with timezone
+            current_datetime = datetime.now(timezone.utc)
+            current_time = current_datetime.time().replace(tzinfo=timezone.utc)
             
-            # Both datetimes are now timezone-aware, so subtraction will work
-            total_hours = (logout_time - record.login_time).total_seconds() / 3600
+            # Calculate total hours using timezone-aware times
+            login_datetime = datetime.combine(date.today(), record.login_time)
+            logout_datetime = datetime.combine(date.today(), current_time)
+            
+            # Ensure both times are timezone-aware
+            if login_datetime.tzinfo is None:
+                login_datetime = login_datetime.replace(tzinfo=timezone.utc)
+            if logout_datetime.tzinfo is None:
+                logout_datetime = logout_datetime.replace(tzinfo=timezone.utc)
+                
+            total_hours = (logout_datetime - login_datetime).total_seconds() / 3600
 
-            record.logout_time = logout_time
+            record.logout_time = current_time
             record.total_hours = round(total_hours, 2)
 
             await db.commit()
             await db.refresh(record)
             await logger.info("Updated attendance logout", {
                 "user_id": user_id,
-                "logout_time": str(logout_time),
+                "logout_time": str(current_time),
                 "total_hours": total_hours
             })
             return record

@@ -1,7 +1,7 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-from ..exceptions.validation_exceptions import UserValidationError, EventValidationError, FinancialValidationError
+from ..providers.validation_exceptions import UserValidationError, EventValidationError, FinancialValidationError
 
 async def validation_exception_handler(request: Request, exc: UserValidationError):
     return JSONResponse(

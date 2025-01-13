@@ -1,6 +1,6 @@
 from datetime import date
 import re
-from ..exceptions.validation_exceptions import UserValidationError
+from ..providers.validation_exceptions import UserValidationError
 
 def validate_phone(phone: str) -> bool:
     """Validate phone number format"""

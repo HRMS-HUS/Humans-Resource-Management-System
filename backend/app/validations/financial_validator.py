@@ -1,4 +1,4 @@
-from ..exceptions.validation_exceptions import FinancialValidationError
+from ..providers.validation_exceptions import FinancialValidationError
 import re
 
 def validate_salary(salary: float, field_name: str) -> bool:
