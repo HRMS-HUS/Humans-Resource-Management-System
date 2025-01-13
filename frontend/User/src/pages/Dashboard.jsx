@@ -56,6 +56,7 @@ function Dashboard() {
 
     fetchDashboardData();
 }, []);
+
   
 
   const inProgressJobs = jobs.filter(job => job.status === 'in_progress').length;

@@ -132,34 +132,4 @@ body.dark {
     background-color: #f5f5f5;
   }
   
-  /* Dark mode specific styles */
-body.dark .header {
-  border-bottom-color: var(--header-border-dark);
-}
-body.dark .breadcrumb {
-  color: var(--text-color-dark);
-}
-body.dark .search-container {
-  border-color: var(--header-border-dark);
-}
-
-body.dark .search-input {
-  background-color: var(--search-bg-dark);
-}
-
-body.dark .header-icon:hover {
-  background-color: var(--menu-hover-dark);
-}
-
-body.dark .notification-dropdown {
-  background-color: var(--card-bg-dark);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-}
-
-body.dark .notification-item {
-  border-bottom-color: var(--header-border-dark);
-}
-
-body.dark .notification-item.unread {
-  background-color: rgba(59, 130, 246, 0.2);
-}
+  

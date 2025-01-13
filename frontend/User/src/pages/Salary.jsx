@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import "../styles/Salary.css";
 
 function Salary() {
   const [salaryData, setSalaryData] = useState({
-    baseSalary: "0",
-    totalSalary: "0",
-    netSalary: "0",
+    baseSalary: '0',
+    totalSalary: '0',
+    netSalary: '0',
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSalary = async () => {
@@ -33,6 +32,7 @@ function Salary() {
 
     fetchSalary();
 }, []);
+
   return (
     <div className="rectangle-1">
       <h1 className="page-title">Lương</h1>

@@ -4,7 +4,6 @@ import "../styles/Schedule.css";
 
 function Schedule() {
   const [scheduleData, setScheduleData] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSchedule = async () => {

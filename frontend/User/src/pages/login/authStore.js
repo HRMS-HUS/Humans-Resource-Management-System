@@ -8,12 +8,12 @@ axios.defaults.withCredentials = true;
 
 // Helper to set default authorization header
 const setAuthHeader = (token) => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  };
+  if (token) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete axios.defaults.headers.common['Authorization'];
+  }
+};
 
 export const useAuthStore = create((set) => ({
     user: null,
@@ -27,33 +27,26 @@ export const useAuthStore = create((set) => ({
     login: async (username, password) => {
         set({ isLoading: true, error: null });
         try {
-            const formData = new FormData();
-            formData.append('username', username);
-            formData.append('password', password);
-            
             const response = await axios.post(
                 `${API_URL}/login`,
-                formData,
-                {
-                    headers: { 
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                }
+                qs.stringify({ username, password }),
+                { headers: { 'Content-Type': 'application/x-www-form-urlencoded', } }
             );
             
             const token = response.data.access_token;
             
+            // Store token in localStorage with expiration
             localStorage.setItem('token', token);
-            localStorage.setItem('tokenExpiration', new Date().getTime() + 60 * 60 * 1000); // 1 hour
+            localStorage.setItem('tokenExpiration', new Date().getTime() + 60 *60 * 1000); // 1 hours
             
+            // Set axios default header
             setAuthHeader(token);
+
+            // Initialize user session
             await useAuthStore.getState().initializeSession(token);
             
         } catch (error) {
-            set({ 
-                error: error.response?.data?.detail || "Error logging in", 
-                isLoading: false 
-            });
+            set({ error: error.response?.data?.message || "Error logging in", isLoading: false });
             throw error;
         }
     },
