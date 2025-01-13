@@ -17,10 +17,10 @@ services:
     networks:
       - app-network
 
-  web:
+  web_backend:
     build:
       context: backend
-      dockerfile: Dockerfile
+      dockerfile: backend.Dockerfile
     image: hrms-backend:latest
     ports:
       - "8000:8000"
@@ -38,6 +38,39 @@ services:
       - postgres
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  # frontend:
+  #   build:
+  #     context: frontend
+  #     dockerfile: frontend.Dockerfile
+  #   image: hrms-frontend:latest
+  #   ports:
+  #     - "3000:80"
+  #   volumes:
+  #     - ./frontend:/app
+  #   networks:
+  #     - app-network
+  #   depends_on:
+  #     - web
+
+
+  web_frontend:
+    build:
+      context: frontend
+      dockerfile: frontend.Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/admin_hr_management:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_HOST: "0.0.0.0"
+    networks:
+      - app-network
+    depends_on:
+      - web_backend
+    command: npm run dev -- --host 0.0.0.0
+    
 networks:
   app-network:
     driver: bridge

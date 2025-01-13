@@ -171,6 +171,8 @@ async def update_user_personal_info(
             await logger.info("Updated user personal info", {
                 "personal_info_id": personal_info_id
             })
+
+            #thêm việc kiểm tra email đã tồn tại chưa
             return db_user
         except HTTPException:
             await db.rollback()
