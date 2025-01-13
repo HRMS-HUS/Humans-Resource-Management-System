@@ -29,10 +29,36 @@ async def _validate_user_exists(db: AsyncSession, user_id: str):
             detail="Internal server error while validating user"
         )
 
+async def _validate_department_exists(db: AsyncSession, department_id: str):
+    try:
+        if department_id:  # Only check if department_id is provided
+            result = await db.execute(
+                select(models_department.Department).filter(
+                    models_department.Department.department_id == department_id
+                )
+            )
+            department = result.scalar_one_or_none()
+            if not department:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Department not found"
+                )
+            return department
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while validating department"
+        )
+
 async def create_user_info(user: schemas.UserInfoCreate, db: AsyncSession):
     async with DistributedLock(f"personal_info:user:{user.user_id}"):
         try:
             await _validate_user_exists(db, user.user_id)
+            if user.department_id:
+                await _validate_department_exists(db, user.department_id)
+            
             # Check if user already has personal info
             existing = await db.execute(
                 select(models.UserPersonalInfo).filter(
@@ -132,6 +158,10 @@ async def update_user_personal_info(
     async with DistributedLock(f"personal_info:{personal_info_id}"):
         try:
             db_user = await get_user_personal_info_by_id(db, personal_info_id)
+            
+            # Validate department if it's being updated
+            if user.department_id:
+                await _validate_department_exists(db, user.department_id)
 
             for key, value in user.dict(exclude_unset=True).items():
                 setattr(db_user, key, value)

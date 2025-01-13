@@ -39,11 +39,6 @@ async def update_personal_info(
 ):
     try:
         existing_info = await services.get_user_personal_info_by_id(db, personal_info_id)
-        if not existing_info:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Personal info not found"
-            )
         if existing_info.user_id != current_user.user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -69,12 +64,8 @@ async def update_profile_photo(
     current_user: models.Users = Depends(jwt.get_active_user),
 ):
     try:
+        #dùng get_info theo current_user.user_id để lấy personal_info_id
         existing_info = await services.get_user_personal_info_by_id(db, personal_info_id)
-        if not existing_info:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Personal info not found"
-            )
         if existing_info.user_id != current_user.user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -84,6 +75,7 @@ async def update_profile_photo(
         photo_url = await upload_photo(file)
         photo_data = schemas.UserInfoPhotoUpdate(photo_url=photo_url)
         
+        #services thêm 1 cái user_id thay vì personal_info_id
         updated_user = await services.update_user_personal_info_photo(db, personal_info_id, photo_data)
         return updated_user
         

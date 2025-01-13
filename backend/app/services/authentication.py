@@ -34,7 +34,7 @@ async def register(
     result = await db.execute(stmt)
     db_user = result.scalars().first()
 
-    if db_user:
+    if (db_user):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Username already register"
         )
@@ -76,6 +76,15 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
 
         db_user = user_info
 
+        # Check if user is admin - reject if true
+        if db_user.role == user_model.RoleEnum.Admin:
+            await logger.warning("Admin attempted to use regular login", {"username": form_data.username})
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Administrators must use 2FA login. Please use the admin login endpoint.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         if not crypto.verify_password(form_data.password, db_user.password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -93,18 +102,40 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
             )
 
         access_token_expires = jwt.timedelta(minutes=jwt.ACCESS_TOKEN_EXPIRE_MINUTES)
+        refresh_token_expires = jwt.timedelta(days=jwt.REFRESH_TOKEN_EXPIRE_DAYS)
+        
+        # Create access and refresh tokens
         access_token = await jwt.create_access_token(
-            data={"sub": db_user.user_id}, expires_delta=access_token_expires
+            data={"sub": db_user.user_id}, 
+            expires_delta=access_token_expires
+        )
+        refresh_token = await jwt.create_refresh_token(
+            data={"sub": db_user.user_id}
         )
 
+        # Store tokens in Redis
+        await redis_client.setex(
+            db_user.user_id, 
+            int(access_token_expires.total_seconds()), 
+            access_token
+        )
+        await redis_client.setex(
+            f"refresh_token:{db_user.user_id}",
+            int(refresh_token_expires.total_seconds()),
+            refresh_token
+        )
 
-        await redis_client.setex(db_user.user_id, int(access_token_expires.total_seconds()), access_token)
         await logger.info("User logged in", {"username": form_data.username})
         
         # Create attendance record
         await services.create_attendance_record(db_user.user_id, db)
         
-        return {"access_token": access_token, "token_type": "bearer", "role": db_user.role}
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "role": db_user.role
+        }
     except Exception as e:
         await logger.error("Login failed", error=e)
         raise
@@ -270,15 +301,36 @@ async def verify_otp(request: schemas.VerifyOTP = Query(...), db: AsyncSession =
         await redis_client.delete(user_info.user_id)
 
         access_token_expires = jwt.timedelta(minutes=jwt.ACCESS_TOKEN_EXPIRE_MINUTES)
+        refresh_token_expires = jwt.timedelta(days=jwt.REFRESH_TOKEN_EXPIRE_DAYS)
+        
+        # Create access and refresh tokens
         access_token = await jwt.create_access_token(
             data={"sub": user_info.user_id},
             expires_delta=access_token_expires
         )
+        refresh_token = await jwt.create_refresh_token(
+            data={"sub": user_info.user_id}
+        )
 
-        await redis_client.setex(user_info.user_id, int(access_token_expires.total_seconds()), access_token)
+        # Store tokens in Redis
+        await redis_client.setex(
+            user_info.user_id, 
+            int(access_token_expires.total_seconds()), 
+            access_token
+        )
+        await redis_client.setex(
+            f"refresh_token:{user_info.user_id}",
+            int(refresh_token_expires.total_seconds()),
+            refresh_token
+        )
+
         await logger.info("User logged in successfully", {"username": user_info.username})
 
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer"
+        }
     except Exception as e:
         await logger.error("Error during OTP verification", {"error": str(e)})
         raise HTTPException(

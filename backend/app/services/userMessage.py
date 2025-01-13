@@ -78,7 +78,7 @@ async def get_sent_messages(db: AsyncSession, user_id: str):
         await logger.error("Get sent messages failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail="Internal server error"
         )
 
 async def get_received_messages(db: AsyncSession, user_id: str):
@@ -95,7 +95,7 @@ async def get_received_messages(db: AsyncSession, user_id: str):
         await logger.error("Get received messages failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail="Internal server error"
         )
 
 async def update_message(
@@ -170,5 +170,5 @@ async def get_all_messages(
         await logger.error("Get all messages failed", error=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail="Internal server error"
         )

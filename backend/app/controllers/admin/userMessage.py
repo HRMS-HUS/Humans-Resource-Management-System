@@ -40,17 +40,8 @@ async def get_message(
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
-    """Get specific message by ID - Admin only endpoint"""
-    try:
-        message = await message_service.get_message_by_id(db, message_id)
-        return message
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+   message = await message_service.get_message_by_id(db, message_id)
+   return message
 
 @router.delete("/admin/messages/{message_id}")
 @limiter.limit("3/minute")
@@ -60,17 +51,8 @@ async def delete_message(
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
-    """Delete a message - Admin only endpoint"""
-    try:
-        result = await message_service.delete_message(db, message_id)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    result = await message_service.delete_message(db, message_id)
+    return result
 
 @router.get("/admin/messages/user/{user_id}", response_model=List[MessageResponse])
 @limiter.limit("10/minute")
@@ -80,15 +62,6 @@ async def get_user_messages(
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
-    """Get all messages for a specific user - Admin only endpoint"""
-    try:
-        sent = await message_service.get_sent_messages(db, user_id)
-        received = await message_service.get_received_messages(db, user_id)
-        return [*sent, *received]
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    sent = await message_service.get_sent_messages(db, user_id)
+    received = await message_service.get_received_messages(db, user_id)
+    return [*sent, *received]

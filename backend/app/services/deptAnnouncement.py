@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from fastapi import HTTPException, status
 from ..models import deptAnnouncement as models
+from ..models import department as models_department  # Add this import
 from ..schemas import deptAnnouncement as schemas
 from typing import List
 from ..utils.redis_lock import DistributedLock
@@ -10,12 +11,38 @@ from ..utils.logger import logger
 class DatabaseOperationError(Exception):
     pass
 
+async def _validate_department_exists(db: AsyncSession, department_id: str):
+    try:
+        if department_id:
+            result = await db.execute(
+                select(models_department.Department).filter(
+                    models_department.Department.department_id == department_id
+                )
+            )
+            department = result.scalar_one_or_none()
+            if not department:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Department not found"
+                )
+            return department
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while validating department"
+        )
+
 async def create_dept_announcement(
     announcement: schemas.DeptAnnouncementCreate, 
     db: AsyncSession
 ):
     async with DistributedLock(f"department:announcement:{announcement.department_id}"):
         try:
+            # Validate department exists
+            await _validate_department_exists(db, announcement.department_id)
+            
             db_announcement = models.DeptAnnouncement(**announcement.dict())
             db.add(db_announcement)
             await db.commit()
@@ -101,6 +128,10 @@ async def update_dept_announcement(
         try:
             db_announcement = await get_dept_announcement_by_id(db, announcement_id)
             
+            # Validate department if it's being updated
+            if announcement.department_id:
+                await _validate_department_exists(db, announcement.department_id)
+                
             # Changed to use exclude_unset=True
             update_data = announcement.dict(exclude_unset=True)
             for key, value in update_data.items():
