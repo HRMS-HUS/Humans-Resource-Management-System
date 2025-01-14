@@ -38,6 +38,7 @@
   
   /* Sidebar Styles */
   .sidebar {
+    position: fixed;
     width: 212px;
     height: 100vh;
     background-color: #fff;
@@ -109,4 +110,11 @@
 .logout:hover {
   background-color: black;
   color: white; /* Đổi màu khi hover */
+}
+
+
+.main-content {
+  margin-left: 212px; /* Tạo khoảng cách bằng chiều rộng của sidebar */
+  width: calc(100% - 212px); /* Chiều rộng chính sẽ giảm đi kích thước của sidebar */
+  padding: 20px;
 }

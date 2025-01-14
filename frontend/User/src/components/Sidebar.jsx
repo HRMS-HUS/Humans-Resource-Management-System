@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Grid, CheckSquare, Calendar, DollarSign, LogOut } from 'lucide-react';
+import { Grid, CheckSquare, Calendar, DollarSign, LogOut, CalendarX, Shell } from 'lucide-react';
 import axios from 'axios';
 import { useAuthStore } from '../pages/login/authStore';
 import '../styles/Sidebar.css';
@@ -25,7 +25,7 @@ const Sidebar = () => {
         };
   
         const personalInfoResponse = await axios.get(
-          'http://52.184.86.56:8000/api/me/user', 
+          'http://52.184.86.56:8000/api/me/personal_info', 
           config
         );
         const departmentResponse = await axios.get(
@@ -34,9 +34,9 @@ const Sidebar = () => {
         );
   
         setUserProfile({
-          name: personalInfoResponse.data.username || 'Tên người dùng',
-          department: departmentResponse.data.department_name || 'Phòng ban',
-          avatar_url: personalInfoResponse.data.photo_url || '/api/placeholder/64/64'
+          name: personalInfoResponse.data.fullname ,
+          department: departmentResponse.data.department_name ,
+          avatar_url: personalInfoResponse.data.photo_url
         });
       } catch (error) {
         console.error('Lỗi khi lấy thông tin cá nhân:', error);
@@ -46,7 +46,7 @@ const Sidebar = () => {
         setUserProfile({
           name: 'Tên người dùng',
           department: 'Phòng ban',
-          avatar_url: '/api/placeholder/64/64'
+          avatar_url: 'https://th.bing.com/th/id/OIP.4XXJ7fxuB4gkO5DVNHxMGwAAAA?w=154&h=160&c=7&r=0&o=5&dpr=1.4&pid=1.7'
         });
       }
     };
@@ -86,11 +86,11 @@ const Sidebar = () => {
           <div>Lương</div>
         </NavLink>
         <NavLink to="/holiday" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
-          <div id="icon"><Calendar size={20} /></div>
+          <div id="icon"><CalendarX size={20} /></div>
           <div>Ngày lễ</div>
         </NavLink>
         <NavLink to="/application" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
-          <div id="icon"><Calendar size={20} /></div>
+          <div id="icon"><Shell size={20} /></div>
           <div>Xin nghỉ</div>
         </NavLink>
       </div>

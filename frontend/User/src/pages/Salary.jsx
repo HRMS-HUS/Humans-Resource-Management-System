@@ -17,14 +17,14 @@ function Salary() {
                 headers: { Authorization: `Bearer ${token}` }
             };
             const response = await axios.get(
-                `${API_URL}/me/financial_info/`,
+                `http://52.184.86.56:8000/api/me/financial_info`,
                 config
             );
             
             setSalaryData({
-                baseSalary: formatNumber(response.data.salaryBasic),
-                totalSalary: formatNumber(response.data.salaryGross),
-                netSalary: formatNumber(response.data.salaryNet)
+                baseSalary: response.data.salaryBasic,
+                totalSalary: response.data.salaryGross,
+                netSalary: response.data.salaryNet
             });
         } catch (error) {
             console.error('Error fetching salary:', error);
@@ -46,7 +46,6 @@ function Salary() {
             <th>Lương cơ bản</th>
             <th>Lương tổng</th>
             <th>Thực nhận</th>
-            <th>Phạt</th>
           </tr>
         </thead>
         <tbody>
@@ -54,7 +53,7 @@ function Salary() {
             <td>{salaryData.baseSalary}</td>
             <td>{salaryData.totalSalary}</td>
             <td>{salaryData.netSalary}</td>
-            <td></td>
+
           </tr>
         </tbody>
       </table>

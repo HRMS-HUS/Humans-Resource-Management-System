@@ -17,26 +17,23 @@ function Dashboard() {
             };
             
             // Get employee info
-            const employeeRes = await axios.get(`${API_URL}/me/personal_info`, config);
+            const employeeRes = await axios.get(`http://52.184.86.56:8000/api/me/personal_info`,config);
             
             // Get department info based on employee's department_id
             const departmentRes = await axios.get(
-                `${API_URL}/departments`, 
+                `http://52.184.86.56:8000/api/me/department`, 
                 config
             );
             
-            // Get attendance records 
-            const attendanceRes = await axios.get(
-                `${API_URL}/attendance/employee/${employeeRes.data.user_id}`,
-                config
-            );
+            // // Get attendance records 
+            // const attendanceRes = await axios.get(
+            //     `${API_URL}/attendance/employee/${employeeRes.data.user_id}`,
+            //     config
+            // );
 
             setPersonalInfo({
-                full_name: employeeRes.data.full_name,
+                full_name: employeeRes.data.fullname,
                 employee_id: employeeRes.data.user_id,
-                position: employeeRes.data.position,
-                join_date: employeeRes.data.join_date,
-                remaining_leave_days: employeeRes.data.leave_days_remaining
             });
 
             setDepartmentInfo({

@@ -1,7 +1,7 @@
 import { Search, Sun, Moon, Bell } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import Badge from '@mui/material/Badge';
+import Badge from "@mui/material/Badge";
 import axios from "axios";
 import "../styles/Header.css";
 
@@ -10,6 +10,8 @@ function Header() {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]); // Lưu thông báo
+  const [unreadCount, setUnreadCount] = useState(0); // Số lượng thông báo chưa đọc
 
   const getPageName = (pathname) => {
     switch (pathname) {
@@ -42,6 +44,33 @@ function Header() {
     }
   }, [isDarkMode]);
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const config = {
+          headers: { Authorization: `Bearer ${token}` },
+        };
+
+        // Fetch thông báo từ server
+        const response = await axios.get(`${API_URL}/me/notifications`, config);
+
+        // Cập nhật danh sách thông báo và số lượng chưa đọc
+        setNotifications(response.data);
+        const unread = response.data.filter((notification) => !notification.read).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+
+    fetchNotifications();
+
+    // Tùy chọn: Lặp lại polling sau mỗi 30 giây
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="header">
       <div className="header-left">
@@ -50,18 +79,12 @@ function Header() {
         </div>
       </div>
       <div className="header-right">
-        {/* <div className="search-container">
-          <div className="search-icon">
-            <Search size={16} />
-          </div>
-          <input type="text" placeholder="Search" className="search-input" />
-        </div> */}
         <div className="header-icon" onClick={toggleDarkMode}>
           {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
         </div>
         <Badge
-          badgeContent={99}
-          variant="dot"
+          badgeContent={unreadCount}
+          color="primary"
           className="header-icon notification-icon"
           onClick={toggleNotifications}
         >
@@ -71,9 +94,20 @@ function Header() {
               showNotifications ? "show" : ""
             }`}
           >
-            <div className="notification-item">Thông báo 1</div>
-            <div className="notification-item">Thông báo 2</div>
-            <div className="notification-item">Thông báo 3</div>
+            {notifications.length > 0 ? (
+              notifications.map((notification, index) => (
+                <div
+                  key={index}
+                  className={`notification-item ${
+                    notification.read ? "" : "unread"
+                  }`}
+                >
+                  {notification.message}
+                </div>
+              ))
+            ) : (
+              <div className="notification-item">Không có thông báo</div>
+            )}
           </div>
         </Badge>
       </div>

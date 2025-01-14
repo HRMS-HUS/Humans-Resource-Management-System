@@ -13,7 +13,7 @@ body {
     width: 100vw;
     height: 1024px;
     user-select: none;
-    /* overflow: hidden;  */
+    overflow: auto; 
     overflow-x: hidden;
   }
 

@@ -8,6 +8,7 @@ const Application = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [editingApplication, setEditingApplication] = useState(null); // Lưu đơn đang được chỉnh sửa
 
   const {
     register,
@@ -37,33 +38,84 @@ const Application = () => {
     fetchApplications();
   }, []);
 
-  // Xử lý gửi đơn xin nghỉ
+  // Xử lý gửi hoặc cập nhật đơn xin nghỉ
   const onSubmit = async (data) => {
     setLoading(true);
     setError('');
     setSuccess('');
+
+    const token = localStorage.getItem('token');
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+
+    try {
+      if (editingApplication) {
+        // Cập nhật đơn xin nghỉ
+        await axios.put(
+          `http://52.184.86.56:8000/api/me/application/${editingApplication.application_id}`,
+          data,
+          config
+        );
+        setSuccess('Cập nhật đơn thành công.');
+        setApplications((prev) =>
+          prev.map((app) =>
+            app.application_id === editingApplication.application_id
+              ? { ...app, ...data }
+              : app
+          )
+        );
+      } else {
+        // Gửi đơn xin nghỉ mới
+        const response = await axios.post(
+          'http://52.184.86.56:8000/api/me/application',
+          data,
+          config
+        );
+        setSuccess('Đơn xin nghỉ của bạn đã được gửi thành công.');
+        setApplications((prev) => [...prev, response.data]);
+      }
+      reset();
+      setEditingApplication(null);
+    } catch (err) {
+      setError(editingApplication ? 'Cập nhật đơn thất bại.' : 'Gửi đơn thất bại.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Hàm xóa đơn xin nghỉ
+  const deleteApplication = async (id) => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
     try {
       const token = localStorage.getItem('token');
       const config = {
         headers: { Authorization: `Bearer ${token}` },
       };
-      // Gửi đơn xin nghỉ
-      const response = await axios.post('http://52.184.86.56:8000/api/me/application', data, config);
-      setSuccess('Đơn xin nghỉ của bạn đã được gửi thành công.');
-      setApplications((prev) => [...prev, response.data]);
-      reset();
+      await axios.delete(`http://52.184.86.56:8000/api/me/application/${id}`, config);
+      setApplications((prev) => prev.filter((app) => app.application_id !== id));
+      setSuccess('Xóa đơn thành công.');
     } catch (err) {
-      setError('Gửi đơn thất bại, vui lòng thử lại.');
+      setError('Xóa đơn thất bại.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Hàm thiết lập chỉnh sửa
+  const editApplication = (application) => {
+    setEditingApplication(application);
+    reset(application); // Điền dữ liệu vào form
   };
 
   return (
     <div className="rectangle-1">
       <h1 className="page-title">Xin nghỉ</h1>
 
-      {/* Form gửi đơn xin nghỉ */}
+      {/* Form gửi hoặc chỉnh sửa đơn xin nghỉ */}
       <form onSubmit={handleSubmit(onSubmit)} className="form-container">
         <div className="form-group">
           <label htmlFor="leave_type">Loại nghỉ phép</label>
@@ -110,29 +162,39 @@ const Application = () => {
         </div>
 
         <button type="submit" className="submit-button">
-          {loading ? 'Đang gửi...' : 'Gửi đơn'}
+          {loading ? 'Đang xử lý...' : editingApplication ? 'Cập nhật' : 'Gửi đơn'}
         </button>
       </form>
 
-      {/* Thông báo thành công hoặc lỗi */}
+      {/* Thông báo */}
       {success && <p className="success">{success}</p>}
       {error && <p className="error">{error}</p>}
-      
-      {/* Hiển thị danh sách đơn xin nghỉ */}
+
+      {/* Danh sách đơn xin nghỉ */}
       <div className="applications-list">
         <h2>Danh sách đơn xin nghỉ</h2>
         {loading ? (
           <p>Đang tải dữ liệu...</p>
-        ) : error ? (
-          <p className="error">{error}</p>
         ) : applications.length > 0 ? (
           <ul>
-            {applications.map((app, index) => (
-              <li key={index}>
+            {applications.map((app) => (
+              <li key={app.application_id}>
                 <p>Loại: {app.leave_type}</p>
                 <p>Lý do: {app.reason}</p>
                 <p>Từ: {app.start_date} - Đến: {app.end_date}</p>
                 <p>Trạng thái: {app.status}</p>
+                <button
+                  onClick={() => editApplication(app)}
+                  className="edit-button"
+                >
+                  Chỉnh sửa
+                </button>
+                <button
+                  onClick={() => deleteApplication(app.application_id)}
+                  className="delete-button"
+                >
+                  Xóa
+                </button>
               </li>
             ))}
           </ul>
@@ -140,8 +202,6 @@ const Application = () => {
           <p>Không có đơn xin nghỉ nào.</p>
         )}
       </div>
-
-      
     </div>
   );
 };
