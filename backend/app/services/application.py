@@ -25,8 +25,6 @@ async def _validate_user_exists(db: AsyncSession, user_id: str):
         # Re-raise HTTP exceptions directly
         raise http_exc
     except Exception as e:
-        # Log the actual error here if needed
-        print(f"Error validating user: {str(e)}")  # For debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error while validating user: {str(e)}"

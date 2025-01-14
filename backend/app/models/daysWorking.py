@@ -22,7 +22,7 @@ class DaysWorking(Base):
     __tablename__ = "days_working"
 
     working_id = Column(String, Sequence("working_id_seq"), primary_key=True, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     day = Column(Date, nullable=False, index=True)
     login_time = Column(TimezoneAwareTime(timezone=True), nullable=True)
     logout_time = Column(TimezoneAwareTime(timezone=True), nullable=True)

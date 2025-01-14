@@ -51,3 +51,30 @@ async def delete_holiday(
     current_user: dict = Depends(jwt.get_current_admin)
 ):
     return await services.delete_holiday(db, holiday_id)
+
+@router.get(
+    "/admin/holidays",
+    response_model=List[schemas.DaysHolidayResponse]
+)
+@limiter.limit("10/minute")
+async def get_all_holidays(
+    request: Request,
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(jwt.get_current_admin)
+):
+    return await services.get_all_holidays(db, skip, limit)
+
+@router.get(
+    "/admin/holiday/{holiday_id}",
+    response_model=schemas.DaysHolidayResponse
+)
+@limiter.limit("10/minute")
+async def get_holiday(
+    request: Request,
+    holiday_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(jwt.get_current_admin)
+):
+    return await services.get_holiday_by_id(db, holiday_id)

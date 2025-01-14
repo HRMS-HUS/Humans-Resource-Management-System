@@ -17,8 +17,8 @@ class Users(Base):
     __tablename__ = "users"
 
     user_id = Column(String, Sequence("user_id_seq"), primary_key=True, index=True)
-    username = Column(String, nullable=False, unique=True)
-    password = Column(String, nullable=False, unique=True)
+    username = Column(String, nullable=False, unique=True, index=True)
+    password = Column(String, nullable=False, unique=True, index=True)
     role = Column(Enum(RoleEnum), default=RoleEnum.User, nullable=False)
     status = Column(Enum(StatusEnum), default=StatusEnum.Active, nullable=False)
     

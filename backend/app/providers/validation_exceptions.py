@@ -19,3 +19,9 @@ class EventValidationError(BaseValidationError):
 class FinancialValidationError(BaseValidationError):
     pass
 
+class AuthenticationValidationError(BaseValidationError):
+    pass
+
+class PermissionValidationError(BaseValidationError):
+    pass
+

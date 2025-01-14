@@ -23,7 +23,7 @@ services:
   web:
     build: 
       context: .
-      dockerfile: Dockerfile
+      dockerfile: backend.Dockerfile
     image: hrms-backend:latest
     ports:
       - "8000:8000"

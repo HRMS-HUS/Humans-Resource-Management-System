@@ -52,12 +52,62 @@ async def _validate_department_exists(db: AsyncSession, department_id: str):
             detail="Internal server error while validating department"
         )
 
+async def _validate_email_unique(db: AsyncSession, email: str, exclude_user_id: str = None):
+    try:
+        query = select(models.UserPersonalInfo).filter(models.UserPersonalInfo.email == email)
+        if exclude_user_id:
+            query = query.filter(models.UserPersonalInfo.user_id != exclude_user_id)
+        
+        result = await db.execute(query)
+        existing_user = result.scalar_one_or_none()
+        
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already exists"
+            )
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while validating email"
+        )
+
+async def _validate_phone_unique(db: AsyncSession, phone: str, exclude_user_id: str = None):
+    try:
+        query = select(models.UserPersonalInfo).filter(models.UserPersonalInfo.phone == phone)
+        if exclude_user_id:
+            query = query.filter(models.UserPersonalInfo.user_id != exclude_user_id)
+        
+        result = await db.execute(query)
+        existing_user = result.scalar_one_or_none()
+        
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number already exists"
+            )
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while validating phone number"
+        )
+
 async def create_user_info(user: schemas.UserInfoCreate, db: AsyncSession):
     async with DistributedLock(f"personal_info:user:{user.user_id}"):
         try:
             await _validate_user_exists(db, user.user_id)
             if user.department_id:
                 await _validate_department_exists(db, user.department_id)
+            
+            # Validate email and phone uniqueness
+            if user.email:
+                await _validate_email_unique(db, user.email)
+            if user.phone:
+                await _validate_phone_unique(db, user.phone)
             
             # Check if user already has personal info
             existing = await db.execute(
@@ -163,6 +213,12 @@ async def update_user_personal_info(
             if user.department_id:
                 await _validate_department_exists(db, user.department_id)
 
+            # Validate email and phone uniqueness if they're being updated
+            if user.email is not None:
+                await _validate_email_unique(db, user.email, db_user.user_id)
+            if user.phone is not None:
+                await _validate_phone_unique(db, user.phone, db_user.user_id)
+
             for key, value in user.dict(exclude_unset=True).items():
                 setattr(db_user, key, value)
 
@@ -198,6 +254,12 @@ async def update_user_personal_info_no_department(
     async with DistributedLock(f"personal_info:{personal_info_id}"):
         try:
             db_user = await get_user_personal_info_by_id(db, personal_info_id)
+
+            # Validate email and phone uniqueness if they're being updated
+            if user.email is not None:
+                await _validate_email_unique(db, user.email, db_user.user_id)
+            if user.phone is not None:
+                await _validate_phone_unique(db, user.phone, db_user.user_id)
 
             for key, value in user.dict(exclude_unset=True).items():
                 if value is not None:  # Only update non-None values

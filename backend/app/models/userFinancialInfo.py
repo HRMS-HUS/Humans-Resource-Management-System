@@ -5,8 +5,8 @@ from ..configs.database import Base
 class UserFinancialInfo(Base):
     __tablename__ = "users_financial_info"
 
-    financial_info_id = Column(String, Sequence("personal_id_seq"), primary_key=True, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    financial_info_id = Column(String, Sequence("financial_id_seq"), primary_key=True, index=True, nullable=False)
+    user_id = Column(String, ForeignKey("users.user_id",onupdate="CASCADE", ondelete="CASCADE"), nullable=False, index=True)
     salaryBasic = Column(Float, nullable=False)
     salaryGross = Column(Float, nullable=False)
     salaryNet = Column(Float, nullable=False)

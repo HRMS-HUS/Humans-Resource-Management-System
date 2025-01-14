@@ -17,7 +17,7 @@ class Application(Base):
     __tablename__ = "application"
 
     application_id = Column(String, Sequence("application_id_seq"),primary_key=True, index=True,nullable=False)
-    user_id = Column(String, ForeignKey("users.user_id", onupdate="CASCADE", ondelete="CASCADE"),nullable=False)
+    user_id = Column(String, ForeignKey("users.user_id", onupdate="CASCADE", ondelete="CASCADE"),nullable=False, index=True)
     leave_type = Column(Enum(LeaveTypeEnum), nullable=True)
     reason = Column(String, nullable=True)
     start_date = Column(Date, nullable=True)
