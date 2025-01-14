@@ -1,7 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider, Navigate } from 'react-router-dom';
-import { CssVarsProvider } from '@mui/joy/styles';
 import App from './App.jsx';
 import Dashboard from './pages/dashboard/Dashboard';
 import Financial from './pages/financial/Financial';
@@ -19,6 +18,8 @@ import { useAuthStore } from './pages/login/authStore.js';
 import Login from './pages/login/Login.jsx';
 import ForgotPassword from './pages/login/ForgotPassword.jsx';
 import ResetPassword from './pages/login/ResetPassword.jsx';
+import Application from './pages/application/Application.jsx';
+import Verify2fa from './pages/login/Verify2fa.jsx';
 
 const RedirectAuthenticatedUser = ({ children }) => {
   const { isAuthenticated } = useAuthStore()
@@ -44,6 +45,11 @@ const router = createBrowserRouter(
           <Login />
         </RedirectAuthenticatedUser>
       } />
+      <Route path="/verify-otp" element={
+        <RedirectAuthenticatedUser>
+          <Verify2fa />
+        </RedirectAuthenticatedUser>
+      } />
       <Route path="/forgot-password" element={
         <RedirectAuthenticatedUser>
           <ForgotPassword />
@@ -63,6 +69,7 @@ const router = createBrowserRouter(
         <Route path="form" element={<Form />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="faq" element={<FAQ />} />
+        <Route path="application" element={<Application />} />
         <Route path="bar" element={<BarChart />} />
         <Route path="pie" element={<PieChart />} />
         <Route path="line" element={<LineChart />} />
@@ -74,8 +81,6 @@ const router = createBrowserRouter(
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <CssVarsProvider>
-      <RouterProvider router={router} />
-    </CssVarsProvider>
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
