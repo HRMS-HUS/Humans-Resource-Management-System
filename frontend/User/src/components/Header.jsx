@@ -1,8 +1,9 @@
-import { Search, Sun, Moon, Bell } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import axios from 'axios'
-import '../styles/Header.css';
+import { Search, Sun, Moon, Bell } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import Badge from '@mui/material/Badge';
+import axios from "axios";
+import "../styles/Header.css";
 
 function Header() {
   const location = useLocation();
@@ -12,16 +13,16 @@ function Header() {
 
   const getPageName = (pathname) => {
     switch (pathname) {
-      case '/':
-        return 'Tổng quan';
-      case '/attendance':
-        return 'Chấm công';
-      case '/schedule':
-        return 'Lịch trình';
-      case '/salary':
-        return 'Lương';
+      case "/":
+        return "Tổng quan";
+      case "/attendance":
+        return "Chấm công";
+      case "/schedule":
+        return "Lịch trình";
+      case "/salary":
+        return "Lương";
       default:
-        return 'Tổng quan';
+        return "Tổng quan";
     }
   };
 
@@ -35,9 +36,9 @@ function Header() {
 
   useEffect(() => {
     if (isDarkMode) {
-      document.body.classList.add('dark');
+      document.body.classList.add("dark");
     } else {
-      document.body.classList.remove('dark');
+      document.body.classList.remove("dark");
     }
   }, [isDarkMode]);
 
@@ -49,30 +50,32 @@ function Header() {
         </div>
       </div>
       <div className="header-right">
-        <div className="search-container">
+        {/* <div className="search-container">
           <div className="search-icon">
             <Search size={16} />
           </div>
-          <input
-            type="text"
-            placeholder="Search"
-            className="search-input"
-          />
-        </div>
+          <input type="text" placeholder="Search" className="search-input" />
+        </div> */}
         <div className="header-icon" onClick={toggleDarkMode}>
           {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
         </div>
-        <div
+        <Badge
+          badgeContent={99}
+          variant="dot"
           className="header-icon notification-icon"
           onClick={toggleNotifications}
         >
           <Bell size={20} />
-          <div className={`notification-dropdown ${showNotifications ? 'show' : ''}`}>
+          <div
+            className={`notification-dropdown ${
+              showNotifications ? "show" : ""
+            }`}
+          >
             <div className="notification-item">Thông báo 1</div>
             <div className="notification-item">Thông báo 2</div>
             <div className="notification-item">Thông báo 3</div>
           </div>
-        </div>
+        </Badge>
       </div>
     </div>
   );

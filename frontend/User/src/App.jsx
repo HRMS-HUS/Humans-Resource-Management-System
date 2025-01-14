@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import Attendance from './pages/Attendance';
 import Schedule from './pages/Schedule';
 import Salary from './pages/Salary';
+import Holiday from './pages/Holiday';
+import Application from './pages/Application';
 import { useAuthStore } from './pages/login/authStore.js';
 import Login from './pages/login/Login.jsx';
 import ForgotPassword from './pages/login/ForgotPassword.jsx';
@@ -99,6 +101,8 @@ function App() {
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/salary" element={<Salary />} />
+          <Route path="/holiday" element={<Holiday />} />
+          <Route path="/application" element={<Application />} />
         </Route>
       </Routes>
     </ThemeProvider>

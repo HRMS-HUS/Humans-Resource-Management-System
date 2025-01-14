@@ -8,7 +8,7 @@ function Attendance() {
   useEffect(() => {
     const fetchAttendance = async () => {
         try {
-            const employeeRes = await axios.get(`${API_URL}/employees/me`);
+            const employeeRes = await axios.get(`${API_URL}/me`);
             const response = await axios.get(
                 `${API_URL}/attendance/employee/${employeeRes.data.employee_id}`
             );

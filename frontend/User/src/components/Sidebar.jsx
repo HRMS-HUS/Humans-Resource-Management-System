@@ -25,18 +25,17 @@ const Sidebar = () => {
         };
   
         const personalInfoResponse = await axios.get(
-          'http://52.184.86.56:8000/api/personal_info', 
+          'http://52.184.86.56:8000/api/me/user', 
           config
         );
-  
         const departmentResponse = await axios.get(
-          'http://52.184.86.56:8000/api/department',
+          'http://52.184.86.56:8000/api/me/department',
           config
         );
   
         setUserProfile({
-          name: personalInfoResponse.data.fullname || 'Tên người dùng',
-          department: departmentResponse.data.name || 'Phòng ban',
+          name: personalInfoResponse.data.username || 'Tên người dùng',
+          department: departmentResponse.data.department_name || 'Phòng ban',
           avatar_url: personalInfoResponse.data.photo_url || '/api/placeholder/64/64'
         });
       } catch (error) {
@@ -85,6 +84,14 @@ const Sidebar = () => {
         <NavLink to="/salary" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
           <div id="icon"><DollarSign size={20} /></div>
           <div>Lương</div>
+        </NavLink>
+        <NavLink to="/holiday" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
+          <div id="icon"><Calendar size={20} /></div>
+          <div>Ngày lễ</div>
+        </NavLink>
+        <NavLink to="/application" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
+          <div id="icon"><Calendar size={20} /></div>
+          <div>Xin nghỉ</div>
         </NavLink>
       </div>
       <div 

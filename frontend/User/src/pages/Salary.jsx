@@ -12,15 +12,19 @@ function Salary() {
   useEffect(() => {
     const fetchSalary = async () => {
         try {
-            const employeeRes = await axios.get(`${API_URL}/employees/me`);
+            const token = localStorage.getItem('token');
+            const config = {
+                headers: { Authorization: `Bearer ${token}` }
+            };
             const response = await axios.get(
-                `${API_URL}/payroll/employee/${employeeRes.data.employee_id}`
+                `${API_URL}/me/financial_info/`,
+                config
             );
             
             setSalaryData({
-                baseSalary: formatNumber(response.data.base_salary),
-                totalSalary: formatNumber(response.data.gross_salary),
-                netSalary: formatNumber(response.data.net_salary)
+                baseSalary: formatNumber(response.data.salaryBasic),
+                totalSalary: formatNumber(response.data.salaryGross),
+                netSalary: formatNumber(response.data.salaryNet)
             });
         } catch (error) {
             console.error('Error fetching salary:', error);
@@ -42,6 +46,7 @@ function Salary() {
             <th>Lương cơ bản</th>
             <th>Lương tổng</th>
             <th>Thực nhận</th>
+            <th>Phạt</th>
           </tr>
         </thead>
         <tbody>
@@ -49,6 +54,7 @@ function Salary() {
             <td>{salaryData.baseSalary}</td>
             <td>{salaryData.totalSalary}</td>
             <td>{salaryData.netSalary}</td>
+            <td></td>
           </tr>
         </tbody>
       </table>

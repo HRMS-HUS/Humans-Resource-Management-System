@@ -17,34 +17,33 @@ function Dashboard() {
             };
             
             // Get employee info
-            const employeeRes = await axios.get(`${API_URL}/employees/me`, config);
+            const employeeRes = await axios.get(`${API_URL}/me/personal_info`, config);
             
             // Get department info based on employee's department_id
             const departmentRes = await axios.get(
-                `${API_URL}/departments/${employeeRes.data.department_id}`, 
+                `${API_URL}/departments`, 
                 config
             );
             
             // Get attendance records 
             const attendanceRes = await axios.get(
-                `${API_URL}/attendance/employee/${employeeRes.data.employee_id}`,
+                `${API_URL}/attendance/employee/${employeeRes.data.user_id}`,
                 config
             );
 
             setPersonalInfo({
                 full_name: employeeRes.data.full_name,
-                employee_id: employeeRes.data.employee_id,
+                employee_id: employeeRes.data.user_id,
                 position: employeeRes.data.position,
                 join_date: employeeRes.data.join_date,
                 remaining_leave_days: employeeRes.data.leave_days_remaining
             });
 
             setDepartmentInfo({
-                name: departmentRes.data.name,
-                manager_name: departmentRes.data.manager_name,
+                name: departmentRes.data.department_name,
+                manager_id: departmentRes.data.manager_id,
                 location: departmentRes.data.location,
-                employee_count: departmentRes.data.employee_count
-            });
+                mail: departmentRes.data.contact_email            });
 
         } catch (error) {
             console.error('Error:', error);
@@ -82,7 +81,7 @@ function Dashboard() {
           </div>
           <div className="info-row">
             <span>Chức vụ : </span>
-            <span>{personalInfo?.position || 'N/A'}</span>
+            <span>Nhân viên</span>
           </div>
         </div>
 
@@ -120,18 +119,18 @@ function Dashboard() {
               <span>{departmentInfo?.name || 'N/A'}</span>
             </div>
             <div className="info-row">
-              <span>Số lượng nhân viên : </span>
-              <span>{departmentInfo?.employee_count || '0'}</span>
+              <span>Vị trí : </span>
+              <span>{departmentInfo?.location || 'N/A'}</span>
             </div>
           </div>
           <div className="grid_right">
             <div className="info-row">
               <span>Trưởng phòng : </span>
-              <span>{departmentInfo?.manager_name || 'N/A'}</span>
+              <span>{departmentInfo?.manager_id || 'N/A'}</span>
             </div>
             <div className="info-row">
-              <span>Vị trí : </span>
-              <span>{departmentInfo?.location || 'N/A'}</span>
+              <span>Địa chỉ mail : </span>
+              <span>{departmentInfo?.mail || 'N/A'}</span>
             </div>
           </div>
         </div>

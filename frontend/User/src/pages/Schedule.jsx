@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import "../styles/Schedule.css";
 
 function Schedule() {
@@ -7,28 +7,30 @@ function Schedule() {
 
   useEffect(() => {
     const fetchSchedule = async () => {
-        try {
-            const employeeRes = await axios.get(`${API_URL}/employees/me`);
-            const response = await axios.get(
-                `${API_URL}/schedule/employee/${employeeRes.data.employee_id}`
-            );
-            
-            const formattedSchedule = response.data.map(event => ({
-                id: event.id,
-                title: event.title,
-                startTime: new Date(event.start_time).toLocaleTimeString('vi-VN'),
-                date: new Date(event.start_time).toLocaleDateString('vi-VN'),
-                deadline: event.deadline ? 
-                    new Date(event.deadline).toLocaleString('vi-VN') : null
-            }));
-            
-            setScheduleData(formattedSchedule);
-        } catch (error) {
-            console.error('Error fetching schedule:', error);
-            if (error.response?.status === 401) {
-                useAuthStore.getState().logout();
-            }
+      try {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: { Authorization: `Bearer ${token}` }
+        };
+        const response = await axios.get(`${API_URL}/me/personal_event`, config);
+
+        const formattedSchedule = response.data.map((event) => ({
+          id: event.event_id,
+          title: event.event_title,
+          startTime: new Date(event.event_start_date).toLocaleTimeString("vi-VN"),
+          date: new Date(event.event_start_date).toLocaleDateString("vi-VN"),
+          deadline: event.end_date
+            ? new Date(event.event_end_date).toLocaleString("vi-VN")
+            : null,
+        }));
+
+        setScheduleData(formattedSchedule);
+      } catch (error) {
+        console.error("Error fetching schedule:", error);
+        if (error.response?.status === 401) {
+          useAuthStore.getState().logout();
         }
+      }
     };
 
     fetchSchedule();
@@ -42,9 +44,8 @@ function Schedule() {
           <tr>
             <th>Id</th>
             <th>Tên công việc</th>
-            <th>Giờ bắt đầu</th>
-            <th>Ngày</th>
-            <th>Hạn công việc</th>
+            <th>Ngày bắt đầu</th>
+            <th>Ngày kết thúc</th>
           </tr>
         </thead>
         <tbody>
@@ -52,7 +53,6 @@ function Schedule() {
             <tr key={event.id}>
               <td>{event.id}</td>
               <td>{event.title}</td>
-              <td>{event.startTime}</td>
               <td>{event.date}</td>
               <td>{event.deadline}</td>
             </tr>

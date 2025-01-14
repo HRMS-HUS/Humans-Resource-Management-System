@@ -12,8 +12,9 @@ body {
       height: 100%; */
     width: 100vw;
     height: 1024px;
-    
-    overflow: hidden; 
+    user-select: none;
+    /* overflow: hidden;  */
+    overflow-x: hidden;
   }
 
   /* Global dark mode styles */

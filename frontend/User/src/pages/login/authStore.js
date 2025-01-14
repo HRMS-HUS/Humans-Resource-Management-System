@@ -37,7 +37,7 @@ export const useAuthStore = create((set) => ({
             
             // Store token in localStorage with expiration
             localStorage.setItem('token', token);
-            localStorage.setItem('tokenExpiration', new Date().getTime() + 60 *60 * 1000); // 1 hours
+            localStorage.setItem('tokenExpiration', new Date().getTime() + 8 * 60 * 60 * 1000); // 8 hours
             
             // Set axios default header
             setAuthHeader(token);
