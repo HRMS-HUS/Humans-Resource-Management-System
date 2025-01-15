@@ -27,6 +27,7 @@ import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import { useAuthStore } from '../login/authStore';
 
 function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
@@ -58,11 +59,16 @@ const Information = () => {
     const [rows, setRows] = useState([]);
     const [rowModesModel, setRowModesModel] = useState({});
     const [loading, setLoading] = useState(null);
+    const { token } = useAuthStore()
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     const fetchDepartmentInfo = async (departmentId) => {
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/departments/${departmentId}`);
+            const response = await axios.get(`http://52.184.86.56:8000/api/admin/department/${departmentId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             return response.data.department_name;
         } catch (error) {
             console.error("Error fetching department info:", error);
@@ -73,7 +79,11 @@ const Information = () => {
     const fetchInformation = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/personal_info');
+            const response = await axios.get('http://52.184.86.56:8000/api/admin/personal_info', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             const dataWithId = await Promise.all(response.data.map(async (item) => {
                 const departmentName = await fetchDepartmentInfo(item.department_id);
                 return {
@@ -114,7 +124,11 @@ const Information = () => {
         const personal_info_id = personal_infor_delete.personal_info_id;
 
         try {
-            const response = await axios.delete(`http://127.0.0.1:8000/api/personal_info/${personal_info_id}`);
+            const response = await axios.delete(`http://52.184.86.56:8000/api/admin/personal_info/${personal_info_id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             if (response.status === 200) {
                 setRows(rows.filter((row) => row.id !== id));
                 setSnackbar({ open: true, message: 'User information deleted successfully!', severity: 'success' });
@@ -150,19 +164,24 @@ const Information = () => {
             const formattedStartDate = newRow.date_of_birth ? dayjs(newRow.date_of_birth).format('YYYY-MM-DD') : null;
 
             if (newRow.isNew) {
-                const response = await axios.post('http://127.0.0.1:8000/api/personal_info', {
-                    user_id: newRow.user_id,
-                    fullname: newRow.fullname,
-                    citizen_card: newRow.citizen_card,
-                    department_id: newRow.department_id,
-                    date_of_birth: formattedStartDate,
-                    sex: newRow.sex,
-                    phone: newRow.phone,
-                    email: newRow.email,
-                    marital_status: newRow.marital_status,
-                    address: newRow.address,
-                    city: newRow.city,
-                    country: newRow.country,
+                const response = await axios.post('http://52.184.86.56:8000/api/admin/personal_info', null, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    params: {
+                        user_id: newRow.user_id,
+                        fullname: newRow.fullname,
+                        citizen_card: newRow.citizen_card,
+                        department_id: newRow.department_id,
+                        date_of_birth: formattedStartDate,
+                        sex: newRow.sex,
+                        phone: newRow.phone,
+                        email: newRow.email,
+                        marital_status: newRow.marital_status,
+                        address: newRow.address,
+                        city: newRow.city,
+                        country: newRow.country,
+                    }
                 });
                 updatedRow.user_id = response.data.user_id;
                 setRows(prevRows => [...prevRows.filter(row => row.id !== updatedRow.id), updatedRow]);
@@ -170,19 +189,24 @@ const Information = () => {
                 fetchInformation();
                 return updatedRow;
             } else {
-                const response = await axios.put(`http://127.0.0.1:8000/api/personal_info/${newRow.personal_info_id}`, {
-                    user_id: newRow.user_id,
-                    fullname: newRow.fullname,
-                    citizen_card: newRow.citizen_card,
-                    department_id: newRow.department,
-                    date_of_birth: formattedStartDate,
-                    sex: newRow.sex,
-                    phone: newRow.phone,
-                    email: newRow.email,
-                    marital_status: newRow.marital_status,
-                    address: newRow.address,
-                    city: newRow.city,
-                    country: newRow.country,
+                const response = await axios.put(`http://52.184.86.56:8000/api/admin/personal_info/${newRow.personal_info_id}`, null, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    params: {
+                        user_id: newRow.user_id,
+                        fullname: newRow.fullname,
+                        citizen_card: newRow.citizen_card,
+                        department_id: newRow.department_id,
+                        date_of_birth: formattedStartDate,
+                        sex: newRow.sex,
+                        phone: newRow.phone,
+                        email: newRow.email,
+                        marital_status: newRow.marital_status,
+                        address: newRow.address,
+                        city: newRow.city,
+                        country: newRow.country,
+                    }
                 });
                 setSnackbar({ open: true, message: 'User information updated successfully!', severity: 'success' });
                 fetchInformation();
@@ -195,15 +219,13 @@ const Information = () => {
         }
     };
 
-    const handleRowModesModelChange = (newRowModesModel) => {
-        setRowModesModel(newRowModesModel);
-    };
+    const handleRowModesModelChange = (newRowModesModel) => { setRowModesModel(newRowModesModel); };
 
     const columns = [
         { field: "user_id", headerName: "ID", width: 80, align: "center", headerAlign: "center", editable: true },
         { field: "fullname", headerName: "Full Name", cellClassName: "name-column--cell", width: 180, editable: true },
         { field: "citizen_card", headerName: "Citizen ID Number", width: 160, align: "center", headerAlign: "center", editable: true },
-        { field: "department_id", headerName: "Department ID", width: 130, align: "center", headerAlign: "center", editable: true, type: 'singleSelect', valueOptions: ["SD001", "CS002", "HD003", "DD004", "RaD005", "MK006", "HR007", "Fn008", "Ds009", "Lg010", "CS011"].sort((a, b) => parseInt(a.slice(-3)) - parseInt(b.slice(-3))) },
+        { field: "department_id", headerName: "Department ID", width: 130, align: "center", headerAlign: "center", editable: true },
         {
             field: "department_name", headerName: "Department Name", width: 210, align: "center", headerAlign: "center", editable: false,
             renderCell: (params) => {
@@ -287,7 +309,7 @@ const Information = () => {
         { field: "address", headerName: "Address", width: 300, editable: true },
         { field: "city", headerName: "City", width: 150, editable: true },
         {
-            field: "country", headerName: "Country", width: 150, editable: true, type: 'singleSelect', valueOptions: world_countries.map(country => country.label).sort(),
+            field: "country", headerName: "Nationality", width: 150, editable: true, type: 'singleSelect', valueOptions: world_countries.map(country => country.label).sort(),
             renderCell: ({ row: { country } }) => {
                 const Country = world_countries.find(item => item.label === country)
                 if (!Country) { return null }
