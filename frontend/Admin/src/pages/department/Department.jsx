@@ -23,6 +23,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import { useAuthStore } from '../login/authStore';
 
 function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
@@ -31,11 +32,11 @@ function EditToolbar(props) {
         const id = randomId();
         setRows((oldRows) => [
             ...oldRows,
-            { id, department_id: '', department_name: '', manager_id: '', location: '', contact_email: '', email: '', start_date: new Date(), status: 'Active', isNew: true }
+            { id, department_name: '', manager_id: '', location: '', contact_email: '', email: '', start_date: new Date(), status: 'Active', isNew: true }
         ]);
         setRowModesModel((oldModel) => ({
             ...oldModel,
-            [id]: { mode: GridRowModes.Edit, fieldToFocus: 'department_id' },
+            [id]: { mode: GridRowModes.Edit, fieldToFocus: 'department_name' },
         }));
     };
 
@@ -54,11 +55,16 @@ const Department = () => {
     const [rowModesModel, setRowModesModel] = useState({});
     const [loading, setLoading] = useState(false);
     const [personalInfo, setPersonalInfo] = useState([])
+    const { token } = useAuthStore()
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     const fetchManagerInfo = async (managerId) => {
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/users/${managerId}`);
+            const response = await axios.get(`http://52.184.86.56:8000/api/admin/users/${managerId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             return response.data.username;
         } catch (error) {
             console.error("Error fetching manager info:", error);
@@ -68,7 +74,11 @@ const Department = () => {
 
     const fetchPersonalInfo = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/personal_info');
+            const response = await axios.get('http://52.184.86.56:8000/api/admin/personal_info', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             setPersonalInfo(response.data)
             const departmentCounts = response.data.reduce((acc, item) => {
                 const key = item.department_id;
@@ -87,7 +97,11 @@ const Department = () => {
         try {
 
             const [departmentsResponse, departmentCounts] = await Promise.all([
-                axios.get('http://127.0.0.1:8000/api/departments'),
+                axios.get('http://52.184.86.56:8000/api/admin/department', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }),
                 fetchPersonalInfo(),
             ]);
 
@@ -138,7 +152,11 @@ const Department = () => {
         const department_id = departmentToDelete.department_id;
 
         try {
-            const response = await axios.delete(`http://127.0.0.1:8000/api/departments/${department_id}`);
+            const response = await axios.delete(`http://52.184.86.56:8000/api/admin/department/${department_id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             if (response.status === 200) {
                 setRows(rows.filter((row) => row.id !== id));
                 setSnackbar({ open: true, message: 'Department deleted successfully!', severity: 'success' });
@@ -172,14 +190,18 @@ const Department = () => {
             const formattedStartDate = newRow.start_date ? dayjs(newRow.start_date).format('YYYY-MM-DD') : null;
 
             if (newRow.isNew) {
-                const response = await axios.post('http://127.0.0.1:8000/api/departments', {
-                    department_id: newRow.department_id,
-                    department_name: newRow.department_name,
-                    manager_id: newRow.manager_id,
-                    location: newRow.location,
-                    contact_email: newRow.contact_email,
-                    start_date: formattedStartDate,
-                    status: newRow.status,
+                const response = await axios.post('http://52.184.86.56:8000/api/admin/department', null, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    params: {
+                        department_name: newRow.department_name,
+                        manager_id: newRow.manager_id,
+                        location: newRow.location,
+                        contact_email: newRow.contact_email,
+                        start_date: formattedStartDate,
+                        status: newRow.status,
+                    }
                 });
                 updatedRow.department_id = response.data.department_id;
                 setRows(prevRows => [...prevRows.filter(row => row.id !== updatedRow.id), updatedRow]);
@@ -187,13 +209,18 @@ const Department = () => {
                 fetchDepartment();
                 return updatedRow;
             } else {
-                const response = await axios.put(`http://127.0.0.1:8000/api/departments/${newRow.department_id}`, {
-                    department_name: newRow.department_name,
-                    manager_id: newRow.manager_id,
-                    location: newRow.location,
-                    contact_email: newRow.contact_email,
-                    start_date: formattedStartDate,
-                    status: newRow.status,
+                const response = await axios.put(`http://52.184.86.56:8000/api/admin/department/${newRow.department_id}`, null, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    params: {
+                        department_name: newRow.department_name,
+                        manager_id: newRow.manager_id,
+                        location: newRow.location,
+                        contact_email: newRow.contact_email,
+                        start_date: formattedStartDate,
+                        status: newRow.status,
+                    }
                 });
 
                 setRows(rows.map((row) => (row.department_id === newRow.department_id ? updatedRow : row)));
@@ -238,7 +265,7 @@ const Department = () => {
         { field: "manager_id", headerName: "Manager ID", width: 100, align: "center", headerAlign: "center", editable: true },
         { field: "manager_name", headerName: "Manager Name", width: 180, editable: false, align: "center", headerAlign: "center" },
         {
-            field: "quantity", headerName: "Number of Employees", type: 'number', width: 170, headerAlign: "center",
+            field: "quantity", headerName: "Number of Employees", type: 'number', width: 180, headerAlign: "center",
             renderCell: (params) => {
                 const percentage = (params.value / personalInfo.length) * 100
                 return (
