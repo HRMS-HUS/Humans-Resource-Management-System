@@ -18,5 +18,7 @@ redis_client = Redis(
     decode_responses=True
 )
 
-# redis_client = redis.StrictRedis(host="localhost", port=6379, db=0, decode_responses=True)
-
+# async def init_redis():
+#     # Set memory limit and policy after connection
+#     await redis_client.config_set('maxmemory', '1073741824')  # 1 GB
+#     await redis_client.config_set('maxmemory-policy', 'allkeys-lru')

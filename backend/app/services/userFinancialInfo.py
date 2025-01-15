@@ -1,6 +1,6 @@
 # services/userFinancialInfo.py
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete, update, Integer
 from fastapi import HTTPException, status
 from ..models import userFinancialInfo as models
 from ..schemas import userFinancialInfo as schemas
@@ -143,7 +143,10 @@ async def get_all_financial_info(
 ) -> List[models.UserFinancialInfo]:
     try:
         result = await db.execute(
-            select(models.UserFinancialInfo).offset(skip).limit(limit)
+            select(models.UserFinancialInfo)
+            .order_by(models.UserFinancialInfo.user_id.cast(Integer))
+            .offset(skip)
+            .limit(limit)
         )
         financial_infos = result.scalars().all()
         await logger.info("Retrieved all financial info", {"count": len(financial_infos)})

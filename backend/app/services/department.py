@@ -207,11 +207,32 @@ async def get_user_department(db: AsyncSession, user_id: int):
         department = result.scalar_one_or_none()
         
         if department:
+            # Get manager information
+            manager_info = await db.execute(
+                select(models_user_info.UserPersonalInfo).filter(
+                    models_user_info.UserPersonalInfo.user_id == department.manager_id
+                )
+            )
+            manager = manager_info.scalar_one_or_none()
+            
+            # Create response object with manager info
+            response = {
+                "department_id": department.department_id,
+                "name": department.department_name,
+                "description": department.description if hasattr(department, 'description') else None,
+                "manager_id": department.manager_id,
+                "manager": {
+                    "user_id": manager.user_id,
+                    "fullname": manager.fullname
+                } if manager else None
+            }
+            
             await logger.info("Retrieved user's department", {"user_id": user_id})
+            return response
         else:
             await logger.warning("No department found for user", {"user_id": user_id})
         
-        return department
+        return None
     except Exception as e:
         await logger.error("Get user department failed", error=e)
         raise HTTPException(

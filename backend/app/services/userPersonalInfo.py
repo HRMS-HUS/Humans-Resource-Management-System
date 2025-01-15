@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete, update, cast, Integer
 from fastapi import HTTPException, status
 from ..models import userPersonalInfo as models
 from ..models import department as models_department
@@ -352,7 +352,10 @@ async def delete_user_personal_info(db: AsyncSession, personal_info_id: str):
 async def get_all_user_personal_info(db: AsyncSession, skip: int = 0, limit: int = 100):
     try:
         result = await db.execute(
-            select(models.UserPersonalInfo).offset(skip).limit(limit)
+            select(models.UserPersonalInfo)
+            .order_by(cast(models.UserPersonalInfo.user_id, Integer))
+            .offset(skip)
+            .limit(limit)
         )
         personal_infos = result.scalars().all()
         await logger.info("Retrieved all user personal info", {

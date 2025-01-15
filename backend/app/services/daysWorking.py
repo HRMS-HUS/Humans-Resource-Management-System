@@ -175,11 +175,11 @@ async def create_attendance_record(
                     models.DaysWorking.day == date.today()
                 )
             )
-            if existing.scalar_one_or_none():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Attendance already recorded for today"
-                )
+            # if existing.scalar_one_or_none():
+            #     raise HTTPException(
+            #         status_code=status.HTTP_400_BAD_REQUEST,
+            #         detail="Attendance already recorded for today"
+            #     )
 
             # Get current time with timezone
             current_datetime = datetime.now(timezone.utc)
@@ -260,25 +260,34 @@ async def update_attendance_logout(
 
 async def get_working_day_by_user_id(db: AsyncSession, user_id: str, skip: int = 0, limit: int = 100):
     try:
-        result = await db.execute(
-            select(models.DaysWorking)
-            .filter(models.DaysWorking.user_id == user_id)
-            .offset(skip)
-            .limit(limit)
-            .order_by(models.DaysWorking.day.desc())
+        # Add query to check if user has any working days
+        count_query = select(models.DaysWorking).filter(
+            models.DaysWorking.user_id == user_id
         )
+        count_result = await db.execute(count_query)
+        if not count_result.scalars().first():
+            await logger.warning("No working days found for user", {"user_id": user_id})
+            return []
+
+        # Get working days with pagination
+        query = select(models.DaysWorking).filter(
+            models.DaysWorking.user_id == user_id
+        ).offset(skip).limit(limit).order_by(models.DaysWorking.day.desc())
+        
+        result = await db.execute(query)
         working_days = result.scalars().all()
         
-        await logger.info("Retrieved working days for user", {
-            "user_id": user_id,
-            "count": len(working_days),
-            "skip": skip,
-            "limit": limit
-        })
-        return working_days if working_days else []
+        if working_days:
+            await logger.info("Retrieved working days for user", {
+                "user_id": user_id,
+                "count": len(working_days)
+            })
+            return list(working_days)  # Convert to list explicitly
+        return []
+        
     except Exception as e:
-        await logger.error("Get working days by user failed", error=e)
+        await logger.error("Get working days by user failed", {"error": str(e)})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail=f"Failed to get working days: {str(e)}"
         )

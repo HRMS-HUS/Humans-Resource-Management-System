@@ -28,3 +28,17 @@ class DepartmentResponse(DepartmentBase):
 
     class Config:
         orm_mode = True
+
+class DepartmentManagerInfo(BaseModel):
+    user_id: str
+    fullname: Optional[str]
+    
+class DepartmentResponseWithManager(BaseModel):
+    department_id: str
+    name: str
+    description: Optional[str] = None
+    manager_id: str
+    manager: Optional[DepartmentManagerInfo] = None
+
+    class Config:
+        orm_mode = True

@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.get("/me/financial_info", response_model=schemas.UserFinancialInfoResponse)
 @limiter.limit("10/minute")
-async def get_current_user_personal_info(
+async def get_current_user_financial_info(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user),

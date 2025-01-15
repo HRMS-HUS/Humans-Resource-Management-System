@@ -15,20 +15,6 @@ limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 @router.get(
-    "/me/working/{working_id}",
-    response_model=schemas.DaysWorkingResponse
-)
-@limiter.limit("10/minute")
-async def get_working_day(
-    request: Request,
-    working_id: str = Path(...),
-    db: AsyncSession = Depends(get_db),
-    current_user: models.Users = Depends(jwt.get_active_user)
-):
-    return await services.get_working_day_by_id(db, working_id)
-
-
-@router.get(
     "/me/working/history",
     response_model=List[schemas.DaysWorkingResponse]
 )
@@ -40,7 +26,37 @@ async def get_my_working_days(
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
 ):
-    return await services.get_working_day_by_user_id(db, current_user.user_id, skip, limit)
+    try:
+        working_days = await services.get_working_day_by_user_id(
+            db=db,
+            user_id=current_user.user_id,
+            skip=skip,
+            limit=limit
+        )
+        if not working_days:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No working days found"
+            )
+        return working_days
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+@router.get(
+    "/me/working/{working_id}",
+    response_model=schemas.DaysWorkingResponse
+)
+@limiter.limit("10/minute")
+async def get_working_day(
+    request: Request,
+    working_id: str = Path(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: models.Users = Depends(jwt.get_active_user)
+):
+    return await services.get_working_day_by_id(db, working_id)
 
 # @router.get(
 #     "/me/attendance",
