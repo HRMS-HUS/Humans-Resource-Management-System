@@ -10,6 +10,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import Header from '../../components/Header';
 import axios from 'axios';
+import { useAuthStore } from '../login/authStore';
 
 function RatingInputValue(props) {
     const { item, applyValue, focusElementRef } = props;
@@ -71,10 +72,15 @@ const Financial = () => {
     const [rowModesModel, setRowModesModel] = useState({});
     const [loading, setLoading] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const { token } = useAuthStore()
 
     const fetchUserInfo = async (userId) => {
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/personal_info/user/${userId}`);
+            const response = await axios.get(`http://52.184.86.56:8000/api/admin/personal_info/user/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             return response.data.fullname;
         } catch (error) {
             console.error("Error fetching user info:", error);
@@ -85,7 +91,11 @@ const Financial = () => {
     const fetchFinancialInformation = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/financial_info');
+            const response = await axios.get('http://52.184.86.56:8000/api/admin/financial_info', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             const dataWithId = await Promise.all(response.data.map(async (item) => {
                 const user_name = await fetchUserInfo(item.user_id);
                 return {
@@ -126,7 +136,11 @@ const Financial = () => {
         const financial_info_id = financial_info_delete.financial_info_id;
 
         try {
-            const response = await axios.delete(`http://127.0.0.1:8000/api/financial_info/${financial_info_id}`);
+            const response = await axios.delete(`http://52.184.86.56:8000/api/financial_info/${financial_info_id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             if (response.status === 200) {
                 setRows(rows.filter((row) => row.id !== id));
                 setSnackbar({ open: true, message: 'Financial information deleted successfully!', severity: 'success' });
@@ -158,56 +172,77 @@ const Financial = () => {
     const processRowUpdate = async (newRow) => {
         const updatedRow = { ...newRow, isNew: false };
 
+        const allowanceTotal = newRow.allowanceHouseRent + newRow.allowanceMedical + newRow.allowanceSpecial +
+            newRow.allowanceFuel + newRow.allowancePhoneBill + newRow.allowanceOther;
+        const deductionTotal = newRow.deductionProvidentFund + newRow.deductionTax + newRow.deductionOther;
+        const salaryNet = newRow.salaryGross + allowanceTotal - deductionTotal;
+
+        updatedRow.allowanceTotal = allowanceTotal;
+        updatedRow.deductionTotal = deductionTotal;
+        updatedRow.salaryNet = salaryNet;
+
         try {
             if (newRow.isNew) {
-                const response = await axios.post('http://127.0.0.1:8000/api/financial_info', {
-                    user_id: newRow.user_id,
-                    salaryBasic: newRow.salaryBasic,
-                    salaryGross: newRow.salaryGross,
-                    salaryNet: newRow.salaryNet,
-                    allowanceHouseRent: newRow.allowanceHouseRent,
-                    allowanceMedical: newRow.allowanceMedical,
-                    allowanceSpecial: newRow.allowanceSpecial,
-                    allowanceFuel: newRow.allowanceFuel,
-                    allowancePhoneBill: newRow.allowancePhoneBill,
-                    allowanceOther: newRow.allowanceOther,
-                    allowanceTotal: newRow.allowanceTotal,
-                    deductionProvidentFund: newRow.deductionProvidentFund,
-                    deductionTax: newRow.deductionTax,
-                    deductionOther: newRow.deductionOther,
-                    deductionTotal: newRow.deductionTotal,
-                    bankName: newRow.bankName,
-                    accountName: newRow.accountName,
-                    accountNumber: newRow.accountNumber,
-                    iban: newRow.iban
+                const response = await axios.post('http://52.184.86.56:8000/api/admin/financial_info', null, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    params: {
+                        user_id: newRow.user_id,
+                        salaryBasic: newRow.salaryBasic,
+                        salaryGross: newRow.salaryGross,
+                        salaryNet: salaryNet,
+                        allowanceHouseRent: newRow.allowanceHouseRent,
+                        allowanceMedical: newRow.allowanceMedical,
+                        allowanceSpecial: newRow.allowanceSpecial,
+                        allowanceFuel: newRow.allowanceFuel,
+                        allowancePhoneBill: newRow.allowancePhoneBill,
+                        allowanceOther: newRow.allowanceOther,
+                        allowanceTotal: allowanceTotal,
+                        deductionProvidentFund: newRow.deductionProvidentFund,
+                        deductionTax: newRow.deductionTax,
+                        deductionOther: newRow.deductionOther,
+                        deductionTotal: deductionTotal,
+                        bankName: newRow.bankName,
+                        accountName: newRow.accountName,
+                        accountNumber: newRow.accountNumber,
+                        iban: newRow.iban
+                    }
                 });
+
                 updatedRow.user_id = response.data.user_id;
                 setRows(prevRows => [...prevRows.filter(row => row.id !== updatedRow.id), updatedRow]);
                 setSnackbar({ open: true, message: 'Financial information created successfully!', severity: 'success' });
                 fetchFinancialInformation();
                 return updatedRow;
             } else {
-                const response = await axios.put(`http://127.0.0.1:8000/api/financial_info/${newRow.financial_info_id}`, {
-                    user_id: newRow.user_id,
-                    salaryBasic: newRow.salaryBasic,
-                    salaryGross: newRow.salaryGross,
-                    salaryNet: newRow.salaryNet,
-                    allowanceHouseRent: newRow.allowanceHouseRent,
-                    allowanceMedical: newRow.allowanceMedical,
-                    allowanceSpecial: newRow.allowanceSpecial,
-                    allowanceFuel: newRow.allowanceFuel,
-                    allowancePhoneBill: newRow.allowancePhoneBill,
-                    allowanceOther: newRow.allowanceOther,
-                    allowanceTotal: newRow.allowanceTotal,
-                    deductionProvidentFund: newRow.deductionProvidentFund,
-                    deductionTax: newRow.deductionTax,
-                    deductionOther: newRow.deductionOther,
-                    deductionTotal: newRow.deductionTotal,
-                    bankName: newRow.bankName,
-                    accountName: newRow.accountName,
-                    accountNumber: newRow.accountNumber,
-                    iban: newRow.iban
+                const response = await axios.put(`http://52.184.86.56:8000/api/admin/financial_info/${newRow.financial_info_id}`, null, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    params: {
+                        user_id: newRow.user_id,
+                        salaryBasic: newRow.salaryBasic,
+                        salaryGross: newRow.salaryGross,
+                        salaryNet: salaryNet,
+                        allowanceHouseRent: newRow.allowanceHouseRent,
+                        allowanceMedical: newRow.allowanceMedical,
+                        allowanceSpecial: newRow.allowanceSpecial,
+                        allowanceFuel: newRow.allowanceFuel,
+                        allowancePhoneBill: newRow.allowancePhoneBill,
+                        allowanceOther: newRow.allowanceOther,
+                        allowanceTotal: allowanceTotal,
+                        deductionProvidentFund: newRow.deductionProvidentFund,
+                        deductionTax: newRow.deductionTax,
+                        deductionOther: newRow.deductionOther,
+                        deductionTotal: deductionTotal,
+                        bankName: newRow.bankName,
+                        accountName: newRow.accountName,
+                        accountNumber: newRow.accountNumber,
+                        iban: newRow.iban
+                    }
                 });
+
                 setSnackbar({ open: true, message: 'User information updated successfully!', severity: 'success' });
                 fetchFinancialInformation();
                 return updatedRow;
@@ -218,6 +253,7 @@ const Financial = () => {
             throw error;
         }
     };
+
 
     const handleRowModesModelChange = (newRowModesModel) => {
         setRowModesModel(newRowModesModel);
