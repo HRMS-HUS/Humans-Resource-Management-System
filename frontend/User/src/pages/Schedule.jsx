@@ -1,103 +1,110 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction"; // Plugin hỗ trợ sự kiện click
 import "../styles/Schedule.css";
 
 function Schedule() {
-  const [scheduleData, setScheduleData] = useState([]);
-  const [searchDate, setSearchDate] = useState(""); // Lưu trữ ngày tìm kiếm
-  const [filteredData, setFilteredData] = useState([]); // Dữ liệu sau khi lọc
+  const [events, setEvents] = useState([]); // Dữ liệu sự kiện
   const [formData, setFormData] = useState({
     id: null,
     title: "",
-    startDate: "",
-    endDate: "",
-  }); // Dữ liệu form tạo hoặc chỉnh sửa
-  const [isEditing, setIsEditing] = useState(false); // Trạng thái chỉnh sửa
-  const [showForm, setShowForm] = useState(false); // Hiển thị form
+    description: "",
+    start: "",
+    end: "",
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [searchDate, setSearchDate] = useState(""); // New state for search input
 
   useEffect(() => {
-    const fetchSchedule = async () => {
+    const fetchEvents = async () => {
       try {
         const token = localStorage.getItem("token");
         const config = {
           headers: { Authorization: `Bearer ${token}` },
         };
         const response = await axios.get(
-          `http://52.184.86.56:8000/api/me/personal_event`,
+          "http://52.184.86.56:8000/api/me/personal_event",
           config
         );
 
-        const formattedSchedule = response.data.map((event) => ({
+        const formattedEvents = response.data.map((event) => ({
           id: event.event_id,
-          des: event.event_description,
           title: event.event_title,
-          startDate: new Date(event.event_start_date)
-            .toISOString()
-            .slice(0, 10),
-          endDate: event.event_end_date
-            ? new Date(event.event_end_date).toISOString().slice(0, 10)
+          description: event.event_description,
+          start: new Date(event.event_start_date).toISOString(),
+          end: event.event_end_date
+            ? new Date(event.event_end_date).toISOString()
             : null,
         }));
 
-        setScheduleData(formattedSchedule);
-        setFilteredData(formattedSchedule); // Set dữ liệu ban đầu
+        setEvents(formattedEvents);
       } catch (error) {
-        console.error("Error fetching schedule:", error);
-        if (error.response?.status === 401) {
-          useAuthStore.getState().logout();
-        }
+        console.error("Error fetching events:", error);
       }
     };
 
-    fetchSchedule();
+    fetchEvents();
   }, []);
 
-  // Hàm xử lý tìm kiếm theo ngày
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchDate(searchValue);
-
-    if (searchValue) {
-      // Lọc dữ liệu theo ngày bắt đầu hoặc kết thúc
-      const filtered = scheduleData.filter((event) => {
-        return (
-          event.startDate.includes(searchValue) ||
-          (event.endDate && event.endDate.includes(searchValue))
-        );
-      });
-      setFilteredData(filtered);
-    } else {
-      setFilteredData(scheduleData); // Nếu không nhập gì, hiển thị tất cả
-    }
-  };
-
-  // Hàm xử lý khi nhấn nút "Edit"
-  const handleEdit = (event) => {
-    setFormData({
-      id: event.id,
-      des: event.event_description,
-      title: event.title,
-      startDate: event.startDate,
-      endDate: event.endDate || "",
-    });
-    setIsEditing(true);
-    setShowForm(true);
-  };
-
-  // Hàm xử lý khi nhấn nút "Create"
-  const handleCreate = () => {
+  const handleDateClick = (dateInfo) => {
     setFormData({
       id: null,
       title: "",
-      des: "",
-      startDate: "",
-      endDate: "",
+      description: "",
+      start: dateInfo.dateStr,
+      end: "",
     });
     setIsEditing(false);
     setShowForm(true);
   };
 
-  // Hàm xử lý gửi form
+  const handleEdit = (event) => {
+    setFormData({
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      start: event.start.slice(0, 10),
+      end: event.end ? event.end.slice(0, 10) : "",
+    });
+    setIsEditing(true);
+    setShowForm(true);
+  };
+
+  const handleEventClick = (clickInfo) => {
+    const event = events.find((e) => e.id === clickInfo.event.id);
+    setFormData({
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      start: event.start.slice(0, 10),
+      end: event.end ? event.end.slice(0, 10) : "",
+    });
+    setIsEditing(true); // Không cho phép chỉnh sửa
+    setShowForm(true); // Hiển thị form chỉ để xem
+  };
+
+  const deleteEvent = async (eventId) => {
+    const token = localStorage.getItem("token");
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+
+    try {
+      await axios.delete(
+        `http://52.184.86.56:8000/api/me/personal_event/${eventId}`,
+        config
+      );
+
+      // Remove the event from the state after successful deletion
+      setEvents((prev) => prev.filter((event) => event.id !== eventId));
+    } catch (error) {
+      console.error("Error deleting event:", error);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -106,145 +113,189 @@ function Schedule() {
     };
 
     try {
+      const payload = {
+        event_title: formData.title,
+        event_description: formData.description,
+        event_start_date: formData.start,
+        event_end_date: formData.end || null,
+      };
+
       if (isEditing) {
-        // Cập nhật lịch trình
-        await axios.put(
-          `http://52.184.86.56:8000/api/me/personal_event/${formData.id}`,
-          {
-            event_title: formData.title,
-            event_description: formData.des,
-            event_start_date: formData.startDate,
-            event_end_date: formData.endDate,
-          },
-          config
-        );
-        setScheduleData((prev) =>
-          prev.map((event) =>
-            event.id === formData.id
-              ? {
-                  ...event,
-                  des: formData.des,
-                  title: formData.title,
-                  startDate: formData.startDate,
-                  endDate: formData.endDate,
-                }
-              : event
-          )
-        );
+        // Đã loại bỏ PUT và không cần xử lý chỉnh sửa
       } else {
-        // Tạo lịch trình mới
         const response = await axios.post(
-          `http://52.184.86.56:8000/api/me/personal_event`,
-          {
-            event_title: formData.title,
-            event_description: formData.des,
-            event_start_date: formData.startDate,
-            event_end_date: formData.endDate,
-          },
-          config
+          "http://52.184.86.56:8000/api/me/personal_event",
+          null,
+          { ...config, params: payload }
         );
-        setScheduleData((prev) => [...prev, response.data]);
+
+        const newEvent = {
+          id: response.data.event_id,
+          title: formData.title,
+          description: formData.description,
+          start: formData.start,
+          end: formData.end,
+        };
+
+        setEvents((prev) => [...prev, newEvent]);
       }
+
       setShowForm(false);
     } catch (error) {
-      console.error("Error saving schedule:", error);
+      console.error("Error saving event:", error);
     }
   };
+  const handleRowClick = (event) => {
+    setFormData({
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      start: event.start.slice(0, 10),
+      end: event.end ? event.end.slice(0, 10) : "",
+    });
+    setIsEditing(true); // Cho phép xem chi tiết (nếu cần chỉnh sửa sau)
+    setShowForm(true); // Hiển thị form
+  };
+
+  const handleSearch = (e) => {
+    setSearchDate(e.target.value);
+  };
+
+  const filteredEvents = searchDate
+    ? events.filter(
+        (event) =>
+          event.start.startsWith(searchDate) ||
+          event.end?.startsWith(searchDate)
+      )
+    : events;
 
   return (
-    <div className="rectangle-1">
-      <h1 className="page-title">Lịch trình</h1>
+    <div className="rectangle1">
+      <div className="schedule-container">
+        <h1>Lịch trình</h1>
 
-      {/* Input tìm kiếm và nút tạo lịch trình */}
-      <div className="search-create-container">
-        <div>
-          <label htmlFor="label">Tìm theo ngày</label>
-          <input
-            type="date"
-            value={searchDate}
-            onChange={handleSearch}
-            className="search-input-shedule"
-            placeholder="Tìm theo ngày"
-          />
-        </div>
-        <button onClick={handleCreate} className="create-button">
-          Tạo lịch trình
-        </button>
-      </div>
+        <FullCalendar
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          events={events}
+          dateClick={handleDateClick}
+          eventClick={handleEventClick}
+          height="auto"
+          dayCellContent={(dayCell) => (
+            <div>{dayCell.date.getDate()}</div> // Đảm bảo nội dung ngày không bị giãn
+          )}
+        />
+        {/* Bảng danh sách lịch trình */}
+        <div className="schedule-list">
+          <h2>Danh sách lịch trình</h2>
+          {/* Search section */}
+          <div className="search-create-container">
+            <div>
+              <label htmlFor="label">Tìm theo ngày</label>
+              <input
+                type="date"
+                value={searchDate}
+                onChange={handleSearch}
+                className="search-input-shedule"
+                placeholder="Tìm theo ngày"
+              />
+            </div>
+          </div>
 
-      {/* Bảng danh sách lịch trình */}
-      <table className="table">
-        <thead>
-          <tr>
-            
-            <th>Tên công việc</th>
-            <th>Mô tả</th>
-            <th>Ngày bắt đầu</th>
-            <th>Ngày kết thúc</th>
-            <th>Edit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredData.map((event) => (
-            <tr key={event.id}>
-              
-              <td>{event.title}</td>
-              <td>{event.des}</td>
-              <td>{event.startDate}</td>
-              <td>{event.endDate}</td>
-              <td>
-                <button
-                  onClick={() => handleEdit(event)}
-                  className="edit-button"
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Tên công việc</th>
+                <th>Mô tả</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày kết thúc</th>
+                <th>Xóa lịch</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEvents.map((event) => (
+                <tr
+                  key={event.id}
+                  onClick={() => handleRowClick(event)} // Thêm sự kiện click
+                  className="clickable-row"
                 >
-                  Chỉnh sửa
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Form tạo hoặc chỉnh sửa */}
-      {showForm && (
-        <form onSubmit={handleSubmit} className="schedule-form">
-          <div className="form-group">
-            <label>Tên công việc</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Ngày bắt đầu</label>
-            <input
-              type="date"
-              value={formData.startDate}
-              onChange={(e) =>
-                setFormData({ ...formData, startDate: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Ngày kết thúc</label>
-            <input
-              type="date"
-              value={formData.endDate}
-              onChange={(e) =>
-                setFormData({ ...formData, endDate: e.target.value })
-              }
-            />
-          </div>
-          <button type="submit" className="submit-button">
-            {isEditing ? "Cập nhật" : "Tạo mới"}
-          </button>
-        </form>
-      )}
+                  <td>{event.title}</td>
+                  <td>{event.description}</td>
+                  <td>{new Date(event.start).toLocaleDateString()}</td>
+                  <td>
+                    {event.end ? new Date(event.end).toLocaleDateString() : "-"}
+                  </td>
+                  <td>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Ngăn sự kiện click dòng
+                        deleteEvent(event.id);
+                      }}
+                      className="edit-button"
+                    >
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {showForm && (
+          <form onSubmit={handleSubmit} className="schedule-form">
+            <div>
+              <label>Tiêu đề</label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <label>Mô tả</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <label>Ngày bắt đầu</label>
+              <input
+                type="date"
+                value={formData.start}
+                onChange={(e) =>
+                  setFormData({ ...formData, start: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <label>Ngày kết thúc</label>
+              <input
+                type="date"
+                value={formData.end}
+                onChange={(e) =>
+                  setFormData({ ...formData, end: e.target.value })
+                }
+              />
+            </div>
+            {!isEditing && <button type="submit">Tạo mới</button>}
+            <button
+              type="button"
+              className="close-button"
+              onClick={() => setShowForm(false)}
+            >
+              Đóng
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

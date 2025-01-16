@@ -1,202 +1,241 @@
 /* Container chính */
 .rectangle-1 {
-    width: 1183px;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-    margin-left: 24px;
-    border-radius: 20px;
-    padding-bottom: 34px;
-    background-color: #fff; /* Màu nền trắng cho container */
-  }
-  
-  /* Tiêu đề trang */
-  .page-title {
-    color: #000;
-    text-align: center;
-    font-family: Inter, sans-serif;
-    font-size: 30px;
-    font-style: normal;
-    font-weight: 700;
-    line-height: normal;
-    width: 167px;
-    padding-top: 31px;
-    padding-left: 20px;
-    margin-bottom: 20px;
-  }
-  
-  /* Form container */
-  .form-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-  
-  /* Các trường form */
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  label {
-    font-size: 14px;
-    font-weight: 500;
-    color: #555;
-    margin-left: 50px;
-  }
-  
-  input,
-  select,
-  textarea {
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-    width: 90%;
-    margin-left: 50px;
-  }
-  
-  textarea {
-    resize: vertical;
-    min-height: 100px;
-  }
-  
-  /* Các thông báo lỗi */
-  .error {
-    font-size: 12px;
-    color: #ff4d4f;
-  }
-  
-  /* Nút submit */
-  .submit-button {
-    padding: 12px 20px;
-    background-color: #4caf50;
-    color: #fff;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    width: 95%;
-    margin: auto;
-  }
-  
-  .submit-button:hover {
-    background-color: #45a049;
-  }
-  
-  .submit-button:disabled {
-    background-color: #a5d6a7;
-    cursor: not-allowed;
-  }
-  
-  /* Danh sách đơn xin nghỉ */
-  .applications-list {
-    margin-top: 30px;
-    margin-left: 50px;
-  }
-  
-  .applications-list h2 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 10px;
-  }
-  
-  .applications-list ul {
-    list-style-type: none;
-    padding: 0;
-    width: 95%;
-  }
-  
-  .applications-list li {
-    padding: 10px;
-    border: 1px solid #ddd;
-    margin-bottom: 10px;
-    border-radius: 5px;
-  }
-  
-  .applications-list li p {
-    font-size: 14px;
-    color: #555;
-  }
-  
-  /* Thông báo thành công và lỗi */
-  .success,
-  .error {
-    text-align: center;
-    font-size: 16px;
-    font-weight: 600;
-    margin-top: 20px;
-  }
-  
-  .success {
-    color: #4caf50;
-  }
-  
-  .error {
-    color: #ff4d4f;
-  }
-  
- /* Dark Mode: Cải tiến cho chế độ tối */
+  width: 1183px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  margin-left: 24px;
+  border-radius: 20px;
+  padding-bottom: 34px;
+  background-color: #fff; /* Màu nền trắng cho container */
+}
+
+/* Tiêu đề trang */
+.page-title {
+  color: #000;
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  width: 167px;
+  padding-top: 31px;
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+
+/* Form container */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+/* Các trường form */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  margin-left: 50px;
+}
+
+input,
+select,
+textarea {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  width: 90%;
+  margin-left: 50px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Các thông báo lỗi */
+.error {
+  font-size: 12px;
+  color: #ff4d4f;
+}
+
+/* Nút submit */
+.submit-button {
+  padding: 12px 20px;
+  background-color: #4caf50;
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 15%;
+  margin: auto;
+}
+
+.submit-button:hover {
+  background-color: #45a049;
+}
+
+.submit-button:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+/* Nút cancel */
+.cancel-button {
+  padding: 12px 20px;
+  background-color: #f44336;
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 15%;
+  margin: auto;
+}
+
+.cancel-button:hover {
+  background-color: #d32f2f;
+}
+
+.cancel-button:disabled {
+  background-color: #ef9a9a;
+  cursor: not-allowed;
+}
+
+/* Danh sách đơn xin nghỉ */
+.applications-list {
+  margin-top: 30px;
+  margin-left: 50px;
+}
+
+.applications-list h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.applications-list ul {
+  list-style-type: none;
+  padding: 0;
+  width: 95%;
+}
+
+.applications-list li {
+  padding: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.applications-list li p {
+  font-size: 14px;
+  color: #555;
+}
+
+/* Thông báo thành công và lỗi */
+.success,
+.error {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 20px;
+}
+
+.success {
+  color: #4caf50;
+}
+
+.error {
+  color: #ff4d4f;
+}
+
+/* Dark Mode: Cải tiến cho chế độ tối */
 body.dark .rectangle-1 {
-    background-color: #333;
-  }
-  
-  body.dark .submit-button {
-    background-color: #009688;
-  }
-  
-  body.dark .submit-button:hover {
-    background-color: #00796b;
-  }
-  
-  body.dark .applications-list li {
-    background-color: #444;
-    color: #fff; /* Màu chữ trắng khi ở dark mode */
-  }
-  
-  body.dark .applications-list li p {
-    color: #fff; /* Đảm bảo rằng màu chữ trong các mục danh sách là trắng */
-  }
-  
-  body.dark .error {
-    color: #ffb3b3;
-  }
-  
-  body.dark .success {
-    color: #66bb6a;
-  }
-  
-  /* Đảm bảo các thẻ label có màu chữ trắng trong chế độ tối */
-  body.dark label {
-    color: #fff; /* Màu chữ trắng cho các thẻ label */
-  }
-  
-  /* Các trường input, textarea, select trong chế độ tối */
-  body.dark input,
-  body.dark select,
-  body.dark textarea {
-    background-color: #555; /* Nền tối cho các input, select, textarea */
-    color: #fff; /* Màu chữ trắng */
-    border: 1px solid #888; /* Biên sáng để phân biệt */
-  }
-  
-  /* Các lỗi trong chế độ tối */
-  body.dark .error {
-    color: #ffb3b3;
-  }
-  
-  /* Nút submit trong chế độ tối */
-  body.dark .submit-button {
-    background-color: #009688;
-  }
-  
-  body.dark .submit-button:hover {
-    background-color: #00796b;
-  }
-  
+  background-color: #333;
+}
+
+body.dark .submit-button {
+  background-color: #009688;
+}
+
+body.dark .submit-button:hover {
+  background-color: #00796b;
+}
+
+body.dark .cancel-button {
+  background-color: #e53935;
+}
+
+body.dark .cancel-button:hover {
+  background-color: #c62828;
+}
+
+body.dark .applications-list li {
+  background-color: #444;
+  color: #fff; /* Màu chữ trắng khi ở dark mode */
+}
+
+body.dark .applications-list li p {
+  color: #fff; /* Đảm bảo rằng màu chữ trong các mục danh sách là trắng */
+}
+
+body.dark .error {
+  color: #ffb3b3;
+}
+
+body.dark .success {
+  color: #66bb6a;
+}
+
+/* Đảm bảo các thẻ label có màu chữ trắng trong chế độ tối */
+body.dark label {
+  color: #fff; /* Màu chữ trắng cho các thẻ label */
+}
+
+/* Các trường input, textarea, select trong chế độ tối */
+body.dark input,
+body.dark select,
+body.dark textarea {
+  background-color: #555; /* Nền tối cho các input, select, textarea */
+  color: #fff; /* Màu chữ trắng */
+  border: 1px solid #888; /* Biên sáng để phân biệt */
+}
+
+/* Các lỗi trong chế độ tối */
+body.dark .error {
+  color: #ffb3b3;
+}
+
+/* Nút submit trong chế độ tối */
+body.dark .submit-button {
+  background-color: #009688;
+}
+
+body.dark .submit-button:hover {
+  background-color: #00796b;
+}
+
+/* Nút cancel trong chế độ tối */
+body.dark .cancel-button {
+  background-color: #e53935;
+}
+
+body.dark .cancel-button:hover {
+  background-color: #c62828;
+}

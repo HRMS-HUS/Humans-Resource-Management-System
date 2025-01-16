@@ -10,8 +10,9 @@ function Header() {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([]); // Lưu thông báo
-  const [unreadCount, setUnreadCount] = useState(0); // Số lượng thông báo chưa đọc
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [approvalMessage, setApprovalMessage] = useState(""); // Trạng thái duyệt đơn nghỉ
 
   const getPageName = (pathname) => {
     switch (pathname) {
@@ -44,18 +45,29 @@ function Header() {
     }
   }, [isDarkMode]);
 
+  // Fetch dữ liệu chuông và thông báo
   useEffect(() => {
-    const fetchNotifications = async () => {
+    const fetchNotificationsAndApproval = async () => {
       try {
         const token = localStorage.getItem("token");
-        const config = {
-          headers: { Authorization: `Bearer ${token}` },
-        };
+        const config = { headers: { Authorization: `Bearer ${token}` } };
 
-        // Fetch thông báo từ server
-        const response = await axios.get(`${API_URL}/me/notifications`, config);
+        // Fetch trạng thái đơn nghỉ
+        const approvalResponse = await axios.get(
+          `http://52.184.86.56:8000/api/me/approval-status`,
+          config
+        );
+        setApprovalMessage(
+          approvalResponse.data.approved
+            ? "Đơn xin nghỉ của bạn đã được duyệt!"
+            : "Đơn xin nghỉ của bạn đang chờ duyệt."
+        );
 
-        // Cập nhật danh sách thông báo và số lượng chưa đọc
+        // Fetch thông báo
+        const response = await axios.get(
+          `http://52.184.86.56:8000/api/me/notifications`,
+          config
+        );
         setNotifications(response.data);
         const unread = response.data.filter((notification) => !notification.read).length;
         setUnreadCount(unread);
@@ -64,11 +76,7 @@ function Header() {
       }
     };
 
-    fetchNotifications();
-
-    // Tùy chọn: Lặp lại polling sau mỗi 30 giây
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    fetchNotificationsAndApproval();
   }, []);
 
   return (
@@ -79,6 +87,9 @@ function Header() {
         </div>
       </div>
       <div className="header-right">
+        <div className="marquee-container">
+          <div className="marquee">Chào mừng đến với Hệ thống Quản lý Nhân sự</div>
+        </div>
         <div className="header-icon" onClick={toggleDarkMode}>
           {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
         </div>
@@ -94,6 +105,7 @@ function Header() {
               showNotifications ? "show" : ""
             }`}
           >
+            <div className="notification-item">{approvalMessage}</div>
             {notifications.length > 0 ? (
               notifications.map((notification, index) => (
                 <div

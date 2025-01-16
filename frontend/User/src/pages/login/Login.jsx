@@ -22,7 +22,7 @@ const Login = () => {
     }
 
     return (
-        <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', margin: 0, backgroundImage: 'url("https://images4.alphacoders.com/211/thumb-1920-211006.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', }}>
+        <main style={{ display: 'flex', width:'100vw',justifyContent: 'center', alignItems: 'center', height: '100vh', margin: 0, backgroundImage: 'url("https://images4.alphacoders.com/211/thumb-1920-211006.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', }}>
             <Sheet sx={{ width: 370, mx: 'auto', my: 4, py: 3, px: 2, display: 'flex', flexDirection: 'column', gap: 2, borderRadius: 'sm', boxShadow: 'md', background: 'transparent', backgroundColor: 'rgba(128, 128, 128, 0.6)' }} variant="outlined">
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '28vh', textAlign: 'center', }}>
                     <img src={'https://cdnlogo.com/logos/n/71/nvidia.svg'} style={{ width: 120, height: 120 }} />
