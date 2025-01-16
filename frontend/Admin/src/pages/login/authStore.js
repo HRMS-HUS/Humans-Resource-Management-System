@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import axios from 'axios';
 import qs from 'qs';
 
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = "http://52.184.86.56:8000/api";
 
 axios.defaults.withCredentials = true;
 
@@ -14,32 +14,23 @@ export const useAuthStore = create((set) => ({
     isCheckingAuth: true,
     message: null,
     token: null,
+    username: null,
+    email: null,
 
     login: async (username, password) => {
         set({ isLoading: true, error: null });
         try {
-            
             const response = await axios.post(
-                `${API_URL}/login`,
+                `${API_URL}/login/admin`,
                 qs.stringify({ username, password }),
                 { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
             );
-            
-            set({ 
-                token: response.data.access_token, 
-                isAuthenticated: true, 
-                isLoading: false, 
-                error: null, 
-                user: response.data.user
-            });
 
-            const socket = new WebSocket("ws://127.0.0.1:8000/ws/" + username);
-            socket.onopen = () => {
-                console.log(`User ${username} is active`);
-            };
-            socket.onerror = (err) => {
-                console.error("WebSocket error:", err);
-            };
+            set({
+                isLoading: false,
+                error: null,
+                username: username
+            });
 
         } catch (error) {
             set({ error: error.response?.data?.message || "Error logging in", isLoading: false });
@@ -47,33 +38,62 @@ export const useAuthStore = create((set) => ({
         }
     },
 
-    logout: async () => {
+    verify2fa: async (username, otp) => {
         set({ isLoading: true, error: null });
         try {
-            const socket = useAuthStore.getState().socket;
-            if (socket) {
-                socket.close();
-            }
+            const response = await axios.post(
+                `${API_URL}/verify-otp`,
+                null,
+                { params: { username: username, otp_code: otp } }
+            );
+
             set({
-                user: null,
-                isAuthenticated: false,
-                token: null,
-                message: "Logged out successfully",
+                isAuthenticated: true,
                 isLoading: false,
+                error: null,
+                username: null,
+                token: response.data.access_token
             });
+
         } catch (error) {
-            set({ isLoading: false, error: "Error logging out" });
+            set({
+                isLoading: false,
+                error: error.response?.data?.message || "Error verifying OTP",
+            });
             throw error;
         }
-    },    
+    },
 
-    forgotPassword: async (username) => {
+    logout: async (token) => {
+        set({ isLoading: true, error: null });
+        try {
+            await axios.post(
+                `${API_URL}/logout/admin`,
+                null,
+                { headers: { Authorization: `Bearer ${token}`, }, }
+            );
+            set({
+                isAuthenticated: false,
+                user: null,
+                token: null,
+                isLoading: false
+            });
+        } catch (error) {
+            set({
+                error: error.response?.data?.message || "Error during logout",
+                isLoading: false,
+            });
+            throw error;
+        }
+    },
+
+    forgotPassword: async (email) => {
         set({ isLoading: true, error: null });
         try {
             const response = await axios.post(`${API_URL}/forgot-password`, null, {
-                params: { username },
+                params: { email },
             });
-            set({ message: response.data.message, isLoading: false });
+            set({ message: response.data.message, isLoading: false, email: email });
         } catch (error) {
             set({
                 isLoading: false,
@@ -83,18 +103,18 @@ export const useAuthStore = create((set) => ({
         }
     },
 
-    resetPassword: async (username, otpCode, newPassword, confirmPassword) => {
+    resetPassword: async (email, otpCode, newPassword, confirmPassword) => {
         set({ isLoading: true, error: null })
         try {
             const response = await axios.post(`${API_URL}/reset-password`, null, {
                 params: {
-                    username: username,
+                    email: email,
                     otp_code: otpCode,
                     new_password: newPassword,
                     confirm_password: confirmPassword
                 }
             });
-            set({ message: response.data.message, isLoading: false })
+            set({ message: response.data.message, isLoading: false, email: null })
         } catch (error) {
             set({
                 isLoading: false,
