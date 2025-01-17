@@ -32,7 +32,7 @@ const Application = () => {
         );
         setApplications(response.data);
       } catch (err) {
-        setError("Không thể tải dữ liệu, vui lòng thử lại sau.");
+        setError("Unable to load data, please try again later.");
       } finally {
         setLoading(false);
       }
@@ -52,21 +52,22 @@ const Application = () => {
       headers: { Authorization: `Bearer ${token}` },
     };
 
-    try {
-      const sanitizedData = {
-        user_id: "current_user_id", // Thay thế bằng user_id thực tế
-        leave_type: data.leave_type || "",
-        reason: data.reason || "",
-        start_date: data.start_date || "",
-        end_date: data.end_date || "",
-        status: "Pending", // Mặc định là "Pending" nếu không gửi
-      };
+    const sanitizedData = {
+      user_id: "current_user_id", // Thay thế bằng user_id thực tế
+      leave_type: data.leave_type || "",
+      reason: data.reason || "",
+      start_date: data.start_date || "",
+      end_date: data.end_date || "",
+      status: "Pending", // Mặc định là "Pending" nếu không gửi
+    };
 
+    try {
       if (editingApplication) {
-        // Cập nhật đơn đang chỉnh sửa
+        // Cập nhật đơn đang chỉnh sửa, sử dụng params
+        const queryParams = new URLSearchParams(sanitizedData).toString();
         const response = await axios.put(
-          `http://52.184.86.56:8000/api/me/application/${editingApplication.application_id}`,
-          sanitizedData,
+          `http://52.184.86.56:8000/api/me/application/${editingApplication.application_id}?${queryParams}`,
+          null, // Không cần body vì dữ liệu nằm trong query
           config
         );
 
@@ -79,9 +80,9 @@ const Application = () => {
           )
         );
 
-        setSuccess("Đơn xin nghỉ của bạn đã được cập nhật thành công.");
+        setSuccess("Your leave application has been successfully updated.");
       } else {
-        // Tạo đơn mới
+        // Tạo đơn mới, sử dụng params
         const queryParams = new URLSearchParams(sanitizedData).toString();
         const response = await axios.post(
           `http://52.184.86.56:8000/api/me/application?${queryParams}`,
@@ -89,7 +90,7 @@ const Application = () => {
           config
         );
 
-        setSuccess("Đơn xin nghỉ của bạn đã được gửi thành công.");
+        setSuccess("Your leave application has been submitted successfully.");
         setApplications((prev) => [...prev, response.data]);
       }
 
@@ -97,7 +98,7 @@ const Application = () => {
       setEditingApplication(null);
     } catch (err) {
       setError(
-        editingApplication ? "Cập nhật đơn thất bại." : "Gửi đơn thất bại."
+        editingApplication ? "Update the application failed." : "Submit a failed application."
       );
     } finally {
       setLoading(false);
@@ -128,9 +129,9 @@ const Application = () => {
       setApplications((prev) =>
         prev.filter((app) => app.application_id !== id)
       );
-      setSuccess("Xóa đơn thành công.");
+      setSuccess("Remove successfully.");
     } catch (err) {
-      setError("Xóa đơn thất bại.");
+      setError("Remove Error.");
     } finally {
       setLoading(false);
     }
@@ -144,23 +145,23 @@ const Application = () => {
 
   return (
     <div className="rectangle-1">
-      <h1 className="page-title">Xin nghỉ</h1>
+      <h1 className="page-title">Application</h1>
 
       {/* Form gửi hoặc chỉnh sửa đơn xin nghỉ */}
       <form onSubmit={handleSubmit(onSubmit)} className="form-container">
         <div className="form-group">
-          <label htmlFor="leave_type">Loại nghỉ phép</label>
+          <label htmlFor="leave_type">Leave type</label>
           <select
             id="leave_type"
             {...register("leave_type", {
-              required: "Loại nghỉ phép là bắt buộc",
+              required: "Leave type is mandatory",
             })}
           >
-            <option value="">Chọn loại nghỉ phép</option>
-            <option value="Normal">Nghỉ thường</option>
-            <option value="Student">Nghỉ học</option>
-            <option value="Illness">Nghỉ ốm</option>
-            <option value="Marriage">Nghỉ cưới</option>
+            <option value="">Available values</option>
+            <option value="Normal">Normal</option>
+            <option value="Student">Student</option>
+            <option value="Illness">Illness</option>
+            <option value="Marriage">Marriage</option>
           </select>
           {errors.leave_type && (
             <p className="error">{errors.leave_type.message}</p>
@@ -168,21 +169,21 @@ const Application = () => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="reason">Lý do</label>
+          <label htmlFor="reason">Reason</label>
           <textarea
             id="reason"
-            {...register("reason", { required: "Lý do là bắt buộc" })}
+            {...register("reason", { required: "Reason is mandatory" })}
           ></textarea>
           {errors.reason && <p className="error">{errors.reason.message}</p>}
         </div>
 
         <div className="form-group">
-          <label htmlFor="start_date">Ngày bắt đầu</label>
+          <label htmlFor="start_date">Start date</label>
           <input
             type="date"
             id="start_date"
             {...register("start_date", {
-              required: "Ngày bắt đầu là bắt buộc",
+              required: "The start date is mandatory",
             })}
           />
           {errors.start_date && (
@@ -191,11 +192,11 @@ const Application = () => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="end_date">Ngày kết thúc</label>
+          <label htmlFor="end_date">End date</label>
           <input
             type="date"
             id="end_date"
-            {...register("end_date", { required: "Ngày kết thúc là bắt buộc" })}
+            {...register("end_date", { required: "The end date is mandatory" })}
           />
           {errors.end_date && (
             <p className="error">{errors.end_date.message}</p>
@@ -204,16 +205,16 @@ const Application = () => {
 
         <button type="submit" className="submit-button">
           {loading
-            ? "Đang xử lý..."
+            ? "Loading..."
             : editingApplication
-            ? "Cập nhật"
-            : "Gửi đơn"}
+            ? "Edit"
+            : "Send"}
         </button>
 
         {/* Button hủy chỉnh sửa */}
         {editingApplication && (
           <button type="button" onClick={cancelEdit} className="cancel-button">
-            Hủy chỉnh sửa
+            Cancle
           </button>
         )}
       </form>
@@ -224,36 +225,34 @@ const Application = () => {
 
       {/* Danh sách đơn xin nghỉ */}
       <div className="applications-list">
-        <h2>Danh sách đơn xin nghỉ</h2>
-        {loading ? (
-          <p>Đang tải dữ liệu...</p>
-        ) : applications.length > 0 ? (
+        <h2>Application list</h2>
+          {applications.length > 0 ? (
           <ul>
             {applications.map((app) => (
               <li key={app.application_id}>
-                <p>Loại: {app.leave_type}</p>
-                <p>Lý do: {app.reason}</p>
+                <p>Leave type: {app.leave_type}</p>
+                <p>Reason: {app.reason}</p>
                 <p>
-                  Từ: {app.start_date} - Đến: {app.end_date}
+                  From: {app.start_date} - To: {app.end_date}
                 </p>
-                <p>Trạng thái: {app.status}</p>
+                <p>Status: {app.status}</p>
                 <button
                   onClick={() => editApplication(app)}
                   className="edit-button"
                 >
-                  Chỉnh sửa
+                  Edit
                 </button>
                 <button
                   onClick={() => deleteApplication(app.application_id)}
                   className="delete-button"
                 >
-                  Xóa
+                  Remove
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <p>Không có đơn xin nghỉ nào.</p>
+          <p>No application</p>
         )}
       </div>
     </div>

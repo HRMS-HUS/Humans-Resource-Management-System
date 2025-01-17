@@ -18,7 +18,7 @@ function Dashboard() {
     pendingApplications: 0,
     approvedApplications: 0,
   });
-  const [position, setPosition] = useState("Nhân viên");
+  const [position, setPosition] = useState("Employee");
   const [workingDays, setWorkingDays] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,154 +30,155 @@ function Dashboard() {
           headers: { Authorization: `Bearer ${token}` },
         };
 
-        const employeeRes = await axios.get(
-          `http://52.184.86.56:8000/api/me/personal_info`,
-          config
-        );
-        const departmentRes = await axios.get(
-          `http://52.184.86.56:8000/api/me/department`,
-          config
-        );
-        const scheduleRes = await axios.get(
-          `http://52.184.86.56:8000/api/me/personal_event`,
-          config
-        );
-        const applicationRes = await axios.get(
-          `http://52.184.86.56:8000/api/me/application`,
-          config
-        );
+        // Sử dụng Promise.allSettled để xử lý tất cả các request độc lập
+        const [employeeRes, departmentRes, scheduleRes, applicationRes, attendanceRes] = 
+          await Promise.allSettled([
+            axios.get(`http://52.184.86.56:8000/api/me/personal_info`, config),
+            axios.get(`http://52.184.86.56:8000/api/me/department`, config),
+            axios.get(`http://52.184.86.56:8000/api/me/personal_event`, config),
+            axios.get(`http://52.184.86.56:8000/api/me/application`, config),
+            axios.get(`http://52.184.86.56:8000/api/me/working/history`, config)
+          ]);
 
-        // Xử lý dữ liệu Schedule
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Đặt giờ phút giây về 0 để so sánh chính xác ngày
-        const pendingTasks = scheduleRes.data.filter((event) => {
-          const startDate = new Date(event.event_start_date);
-          startDate.setHours(0, 0, 0, 0); // Đặt giờ phút giây về 0
-          return startDate >= today; // Bao gồm cả ngày hôm nay
-        }).length;
+        // Xử lý thông tin cá nhân
+        if (employeeRes.status === 'fulfilled') {
+          setPersonalInfo({
+            full_name: employeeRes.value.data.fullname,
+            employee_id: employeeRes.value.data.user_id,
+          });
+        }
 
-        // Xử lý dữ liệu Application
-        const pendingApplications = applicationRes.data.filter(
-          (app) => app.status === "Pending"
-        ).length;
-        const approvedApplications = applicationRes.data.filter(
-          (app) => app.status === "Approved"
-        ).length;
+        // Xử lý thông tin phòng ban
+        if (departmentRes.status === 'fulfilled') {
+          setDepartmentInfo({
+            name: departmentRes.value.data.name,
+            manager: departmentRes.value.data.manager.fullname,
+            location: departmentRes.value.data.location,
+            mail: departmentRes.value.data.contact_email,
+          });
 
-        setPersonalInfo({
-          full_name: employeeRes.data.fullname,
-          employee_id: employeeRes.data.user_id,
-        });
+          // Xác định chức vụ sau khi có cả thông tin nhân viên và phòng ban
+          if (employeeRes.status === 'fulfilled') {
+            setPosition(
+              employeeRes.value.data.fullname === departmentRes.value.data.manager.fullname
+                ? "Manager"
+                : "Employee"
+            );
+          }
+        }
 
-        setDepartmentInfo({
-          name: departmentRes.data.name,
-          manager: departmentRes.data.manager.fullname, // Lấy tên từ object manager
-          location: departmentRes.data.location,
-          mail: departmentRes.data.contact_email,
-        });
+        // Xử lý thông tin lịch
+        if (scheduleRes.status === 'fulfilled') {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          const events = scheduleRes.value.data || [];
+          const pendingTasks = events.filter((event) => {
+            const startDate = new Date(event.event_start_date);
+            startDate.setHours(0, 0, 0, 0);
+            return startDate >= today;
+          }).length;
 
-        setScheduleInfo({
-          pendingTasks,
-        });
+          setScheduleInfo({
+            pendingTasks: pendingTasks
+          });
+        }
 
-        setApplicationInfo({
-          pendingApplications,
-          approvedApplications,
-        });
+        // Xử lý thông tin đơn
+        if (applicationRes.status === 'fulfilled') {
+          const applications = applicationRes.value.data || [];
+          setApplicationInfo({
+            pendingApplications: applications.filter(app => app.status === "Pending").length,
+            approvedApplications: applications.filter(app => app.status === "Approved").length,
+          });
+        }
 
-        // Xử lý dữ liệu Attendance
-        const attendanceRes = await axios.get(
-          `http://52.184.86.56:8000/api/me/working/history`,
-          config
-        );
-        const formattedAttendance = attendanceRes.data.map((record) => ({
-          day: record.day,
-        }));
+        // Xử lý thông tin chấm công
+        if (attendanceRes.status === 'fulfilled') {
+          const attendance = attendanceRes.value.data || [];
+          const uniqueDays = new Set(attendance.map(record => record.day));
+          setWorkingDays(uniqueDays.size);
+        }
 
-        // Tính số ngày đi làm (lấy ngày duy nhất)
-        const uniqueDays = new Set(formattedAttendance.map((item) => item.day));
-        const totalWorkingDays = uniqueDays.size;
-
-        setWorkingDays(totalWorkingDays);
-
-        // Xác định chức vụ
-        setPosition(employeeRes.data.fullname === departmentRes.data.manager.fullname ? "Trưởng phòng" : "Nhân viên");
       } catch (error) {
         console.error("Error:", error);
         if (error.response?.status === 401) {
           useAuthStore.getState().logout();
         }
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchDashboardData();
   }, []);
 
+
   return (
     <div className="rectangle-1">
-      <h1 className="page-title">Tổng quan</h1>
+      <h1 className="page-title">Overview</h1>
       <div className="dashboard">
         <div className="card">
-          <h3>Thông tin cá nhân</h3>
+          <h3>Personal Infomation</h3>
           <div className="info-row">
-            <span>Họ và tên : </span>
+            <span>Full name : </span>
             <span>{personalInfo?.full_name || "N/A"}</span>
           </div>
           <div className="info-row">
-            <span>Mã nhân viên : </span>
+            <span>User id : </span>
             <span>{personalInfo?.employee_id || "N/A"}</span>
           </div>
           <div className="info-row">
-            <span>Phòng ban : </span>
+            <span>Department : </span>
             <span>{departmentInfo?.name || "N/A"}</span>
           </div>
           <div className="info-row">
-            <span>Chức vụ : </span>
+            <span>Position : </span>
             <span>{position}</span>
           </div>
         </div>
 
         <div className="card">
-          <h3>Thống kê</h3>
+          <h3>Statistics</h3>
           <div className="info-row">
-            <span>Đơn xin nghỉ chờ duyệt : </span>
-            <span>{applicationInfo.pendingApplications || "0"}</span>
+            <span>Application for leave pending approval: </span>
+            <span>{applicationInfo.pendingApplications}</span>
           </div>
           <div className="info-row">
-            <span>Đơn xin nghỉ đã duyệt : </span>
-            <span>{applicationInfo.approvedApplications || "0"}</span>
+            <span>Approved leave application: </span>
+            <span>{applicationInfo.approvedApplications}</span>
           </div>
           <div className="info-row">
-            <span>Công việc cần làm : </span>
-            <span>{scheduleInfo.pendingTasks || "0"}</span>
+            <span>Mission: </span>
+            <span>{scheduleInfo.pendingTasks}</span>
           </div>
           <div className="info-row">
-            <span>Số ngày đi làm : </span>
-            <span>{workingDays || "0"}</span>
+            <span>Working days: </span>
+            <span>{workingDays || 0}</span>
           </div>
         </div>
       </div>
 
       <div className="department-info">
-        <h3>Thông tin phòng ban</h3>
+        <h3>Department Information</h3>
         <div className="department-grid">
           <div className="grid_left">
             <div className="info-row">
-              <span>Tên phòng : </span>
+              <span>Department name : </span>
               <span>{departmentInfo?.name || "N/A"}</span>
             </div>
             <div className="info-row">
-              <span>Vị trí : </span>
+              <span>Location : </span>
               <span>{departmentInfo?.location || "N/A"}</span>
             </div>
           </div>
           <div className="grid_right">
             <div className="info-row">
-              <span>Trưởng phòng : </span>
+              <span>Manager : </span>
               <span>{departmentInfo?.manager || "N/A"}</span>
             </div>
             <div className="info-row">
-              <span>Địa chỉ mail : </span>
+              <span>Email : </span>
               <span>{departmentInfo?.mail || "N/A"}</span>
             </div>
           </div>

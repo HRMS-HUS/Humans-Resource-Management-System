@@ -8,6 +8,7 @@ import Salary from './pages/Salary';
 import Holiday from './pages/Holiday';
 import Application from './pages/Application';
 import UserInfo from './pages/UserInfo.jsx';
+import ChangePassword from './pages/ChangePass.jsx';
 import { useAuthStore } from './pages/login/authStore.js';
 import Login from './pages/login/Login.jsx';
 import ForgotPassword from './pages/login/ForgotPassword.jsx';
@@ -105,6 +106,7 @@ function App() {
           <Route path="/holiday" element={<Holiday />} />
           <Route path="/application" element={<Application />} />
           <Route path="/user-info" element={<UserInfo />} />
+          <Route path="/change-password" element={<ChangePassword />} />
         </Route>
       </Routes>
     </ThemeProvider>

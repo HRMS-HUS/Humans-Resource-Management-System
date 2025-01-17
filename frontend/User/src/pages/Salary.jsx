@@ -44,14 +44,14 @@ function Salary() {
 
   return (
     <div className="rectangle-1">
-      <h1 className="page-title">Lương</h1>
+      <h1 className="page-title">Salary</h1>
       <table className="table">
         <thead>
           <tr>
-            <th>Lương cơ bản</th>
-            <th>Tổng phụ cấp</th>
-            <th>Lương tổng</th>
-            <th>Thực nhận</th>
+            <th>Salary basic</th>
+            <th>Allowance</th>
+            <th>Salary gross</th>
+            <th>Salary net</th>
           </tr>
         </thead>
         <tbody>

@@ -23,7 +23,7 @@ const Sidebar = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('Token không tồn tại. Người dùng cần đăng nhập lại.');
+          console.error('The token does not exist. The user needs to log in again.');
           logout();
           return navigate('/login');
         }
@@ -40,15 +40,15 @@ const Sidebar = () => {
         ]);
 
         setUserProfile({
-          name: personalInfoResponse.data.fullname || 'Không có tên',
-          id: personalInfoResponse.data.user_id || 'Không có ID',
-          department: departmentResponse.data.name || 'Không rõ phòng ban',
+          name: personalInfoResponse.data.fullname || 'No name',
+          id: personalInfoResponse.data.user_id || 'No ID',
+          department: departmentResponse.data.name || 'No department',
           avatar_url:
             personalInfoResponse.data.photo_url ||
             'https://th.bing.com/th/id/OIP.4XXJ7fxuB4gkO5DVNHxMGwAAAA?w=154&h=160&c=7&r=0&o=5&dpr=1.4&pid=1.7',
         });
       } catch (error) {
-        console.error('Lỗi khi lấy thông tin người dùng:', error.message);
+        console.error('Error retrieving user information:', error.message);
         if (error.response?.status === 401) {
           logout();
           localStorage.removeItem('token');
@@ -60,10 +60,29 @@ const Sidebar = () => {
     fetchUserData();
   }, [logout, navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token'); // Xóa token khỏi localStorage
-    logout(); // Đăng xuất người dùng
-    navigate('/login'); // Chuyển hướng đến trang đăng nhập
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No tokens found. Cancel the logout.');
+        return;
+      }
+  
+      // Gửi thời gian đăng xuất lên API
+      const logoutTime = new Date().toISOString();
+      await axios.post(
+        'http://52.184.86.56:8000/api/logout/me',
+        { logout_time: logoutTime },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      // Xóa token và đăng xuất
+      localStorage.removeItem('token');
+      logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error sending logout data:', error);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -72,7 +91,7 @@ const Sidebar = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      alert('Vui lòng chọn tệp trước khi tải lên.');
+      alert('Please select the file before uploading.');
       return;
     }
   
@@ -86,12 +105,25 @@ const Sidebar = () => {
   
       // Tạo FormData
       const formData = new FormData();
-      formData.append('photo', compressedFile);
+      formData.append('file', compressedFile); // Changed from 'photo' to 'file' based on API docs
   
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Không tìm thấy token. Hủy tải ảnh.');
-        return;
+        throw new Error('No tokens found. Unload the photo.');
+      }
+  
+      // Đầu tiên, lấy personal_info_id
+      const personalInfoResponse = await axios.get(
+        'http://52.184.86.56:8000/api/me/personal_info',
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      const personalInfoId = personalInfoResponse.data.user_id;
+      
+      if (!personalInfoId) {
+        throw new Error('Không tìm thấy personal_info_id');
       }
   
       // Cấu hình headers
@@ -102,9 +134,9 @@ const Sidebar = () => {
         },
       };
   
-      // Gửi yêu cầu API
+      // Gửi yêu cầu API với endpoint đúng
       const response = await axios.put(
-        `http://52.184.86.56:8000/api/me/${userProfile.id}/photo`,
+        `http://52.184.86.56:8000/api/me/personal_info/${personalInfoId}/photo`,
         formData,
         config
       );
@@ -115,14 +147,24 @@ const Sidebar = () => {
         avatar_url: response.data.photo_url,
       }));
   
-      alert('Ảnh đã được tải lên thành công!');
+      alert('The photo has been uploaded successfully!');
       setIsModalOpen(false);
     } catch (error) {
-      console.error('Lỗi khi tải lên ảnh:', error);
+      console.error('Error uploading photos:', error);
+      
+      let errorMessage = 'An error occurred when uploading photos.';
+      
       if (error.response) {
-        console.error('Phản hồi từ server:', error.response.data);
+        if (error.response.status === 404) {
+          errorMessage = 'No user information found.';
+        } else if (error.response.status === 401) {
+          errorMessage = 'The login session has expired. Please log in again.';
+          logout();
+          navigate('/login');
+        }
       }
-      alert('Có lỗi xảy ra khi tải lên ảnh.');
+      
+      alert(errorMessage);
     }
   };
   
@@ -142,43 +184,49 @@ const Sidebar = () => {
           <div id="icon">
             <Grid size={20} />
           </div>
-          <div>Tổng quan</div>
+          <div>Overview</div>
         </NavLink>
         <NavLink to="/attendance" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
           <div id="icon">
             <CheckSquare size={20} />
           </div>
-          <div>Lịch sử đăng nhập</div>
+          <div>Login history</div>
         </NavLink>
         <NavLink to="/schedule" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
           <div id="icon">
             <Calendar size={20} />
           </div>
-          <div>Lịch trình</div>
+          <div>Itinerary</div>
         </NavLink>
         <NavLink to="/salary" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
           <div id="icon">
             <DollarSign size={20} />
           </div>
-          <div>Lương</div>
+          <div>Salary</div>
         </NavLink>
         <NavLink to="/holiday" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
           <div id="icon">
             <CalendarX size={20} />
           </div>
-          <div>Ngày lễ</div>
+          <div>Holidays</div>
         </NavLink>
         <NavLink to="/application" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
           <div id="icon">
             <Shell size={20} />
           </div>
-          <div>Xin nghỉ</div>
+          <div>Application</div>
         </NavLink>
         <NavLink to="/user-info" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
           <div id="icon">
             <CircleUser size={20} />
           </div>
-          <div>Thông tin cá nhân</div>
+          <div>Personal Information</div>
+        </NavLink>
+        <NavLink to="/change-password" className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
+          <div id="icon">
+            <CircleUser size={20} />
+          </div>
+          <div>Change Password</div>
         </NavLink>
       </div>
 
@@ -194,7 +242,7 @@ const Sidebar = () => {
         }}
       >
         <LogOut size={20} />
-        <span>Đăng xuất</span>
+        <span>Log out</span>
       </div>
 
       {isModalOpen && (
@@ -202,8 +250,8 @@ const Sidebar = () => {
           <div className="modal-content">
             <img className="modal-avatar" src={userProfile.avatar_url} alt="Phóng to Avatar" />
             <input className="input-file" type="file" onChange={handleFileChange} />
-            <button onClick={handleUpload}>Tải ảnh lên</button>
-            <button onClick={() => setIsModalOpen(false)}>Đóng</button>
+            <button onClick={handleUpload}>Upload avatar</button>
+            <button onClick={() => setIsModalOpen(false)}>Cancle</button>
           </div>
         </div>
       )}

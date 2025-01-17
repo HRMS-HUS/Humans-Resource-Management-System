@@ -130,7 +130,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999; /* Đảm bảo modal luôn nằm trên cùng */
 }
 
 .modal-content {
@@ -141,7 +141,10 @@
   width: 90%;
   max-width: 400px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 10000; /* Modal nội dung cũng cần z-index cao */
 }
+
 
 .modal-avatar {
   max-width: 100%;

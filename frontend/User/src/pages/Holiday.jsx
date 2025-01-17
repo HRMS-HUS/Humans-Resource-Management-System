@@ -50,10 +50,10 @@ function Holiday() {
 
   return (
     <div className="rectangle-1">
-      <h1 className="page-title">Ngày lễ</h1>
+      <h1 className="page-title">Holiday</h1>
 
       <div className="search-create-container-holiday">
-        <label htmlFor="label">Tìm theo ngày</label>
+        <label htmlFor="label">Search by date</label>
         <input
           type="date"
           value={searchDate}
@@ -66,9 +66,9 @@ function Holiday() {
       <table className="table">
         <thead>
           <tr>
-            <th className="serial-column">STT</th>
-            <th>Tên</th>
-            <th>Ngày</th>
+            <th className="serial-column">ID</th>
+            <th>Name</th>
+            <th>Date</th>
           </tr>
         </thead>
         <tbody>

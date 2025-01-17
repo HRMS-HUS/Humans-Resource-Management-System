@@ -43,7 +43,7 @@ function Attendance() {
   }, []);
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Không có';
+    if (!dateString) return 'Invalid';
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', {
       day: '2-digit',
@@ -53,7 +53,7 @@ function Attendance() {
   };
 
   const formatTime = (timeString) => {
-    if (!timeString) return 'Không có';
+    if (!timeString) return 'Invalid';
     const [timePart] = timeString.split('+'); // Loại bỏ múi giờ (+00:00)
     const time = new Date(`1970-01-01T${timePart}`);
     return new Intl.DateTimeFormat('vi-VN', {
@@ -66,14 +66,14 @@ function Attendance() {
 
   return (
     <div className="rectangle-1">
-      <h1 className="page-title">Lịch sử</h1>
+      <h1 className="page-title">History</h1>
       <table className="table">
         <thead>
           <tr>
-            <th>Ngày</th>
-            <th>Giờ vào</th>
-            <th>Giờ ra</th>
-            <th>Số giờ làm việc</th>
+            <th>Date</th>
+            <th>Login time</th>
+            <th>Logout time</th>
+            <th>Hours worked</th>
           </tr>
         </thead>
         <tbody>

@@ -48,6 +48,8 @@ const Login = () => {
                             '&:active': { transform: 'scale(0.98)', },
                             marginTop: '12px',
                             height: '48px',
+                            width: '270px',
+                            // marginLeft: '-200px',
                         }}
                     >
                         Log in

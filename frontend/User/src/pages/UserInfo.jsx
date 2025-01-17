@@ -39,19 +39,6 @@ function UserInfo() {
     fetchUserData();
   }, []);
 
-  const fieldLabels = {
-    user_id: "Mã nhân viên",
-    fullname: "Họ và tên",
-    citizen_card: "Căn cước công dân",
-    date_of_birth: "Ngày sinh",
-    sex: "Giới tính",
-    phone: "Số điện thoại",
-    email: "Email",
-    marital_status: "Tình trạng hôn nhân",
-    address: "Địa chỉ",
-    city: "Thành phố",
-    country: "Quốc gia",
-  };
 
   const handleEditClick = () => {
     setIsEditMode(true);
@@ -89,35 +76,41 @@ function UserInfo() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!userInfo) return <div>Không tìm thấy thông tin người dùng.</div>;
+  if (!userInfo) return <div></div>;
 
   return (
     <div className="rectangle1">
       <div className="user-info-container">
-        <h1>Thông tin cá nhân</h1>
+        <h1>Personal info</h1>
         <div className="user-info-card">
           <div className="user-details">
-            {Object.entries(userInfo).map(([key, value]) => (
-              key !== "photo_url" && (
-                <div className="info-row" key={key}>
-                  <strong>{fieldLabels[key] || key.replace(/_/g, " ")}:</strong> <span>{value}</span>
-                </div>
-              )
-            ))}
+            {Object.entries(userInfo).map(
+              ([key, value]) =>
+                key !== "photo_url" && (
+                  <div className="info-row" key={key}>
+                    <strong>
+                      {key || key.replace(/_/g, " ")}:
+                    </strong>{" "}
+                    <span>{value}</span>
+                  </div>
+                )
+            )}
+            
           </div>
         </div>
         <button className="edit-button" onClick={handleEditClick}>
-          Chỉnh sửa thông tin cá nhân
+          Edit
         </button>
 
         {isEditMode && (
           <div className="edit-form-container">
-            <h2>Chỉnh sửa thông tin</h2>
+            <h2>Edit info</h2>
             <form onSubmit={handleFormSubmit}>
               {Object.keys(editFormData).map((field) => (
                 <React.Fragment key={field}>
-                  <label htmlFor={field}>{fieldLabels[field] || field.replace(/_/g, " ")}</label>
+                  <label htmlFor={field}>
+                    {field || field.replace(/_/g, " ")}
+                  </label>
                   <input
                     type={field === "date_of_birth" ? "date" : "text"}
                     name={field}
@@ -127,7 +120,14 @@ function UserInfo() {
                   />
                 </React.Fragment>
               ))}
-              <button type="submit">Lưu thay đổi</button>
+              <button type="submit">Submit</button>
+              <button
+                type="button"
+                className="cancel"
+                onClick={() => setIsEditMode(false)}
+              >
+                Cancle
+              </button>
             </form>
           </div>
         )}

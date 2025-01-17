@@ -172,7 +172,7 @@ function Schedule() {
   return (
     <div className="rectangle1">
       <div className="schedule-container">
-        <h1>Lịch trình</h1>
+        <h1>Schedule</h1>
 
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
@@ -187,17 +187,17 @@ function Schedule() {
         />
         {/* Bảng danh sách lịch trình */}
         <div className="schedule-list">
-          <h2>Danh sách lịch trình</h2>
+          <h2>Schedule list</h2>
           {/* Search section */}
           <div className="search-create-container">
             <div>
-              <label htmlFor="label">Tìm theo ngày</label>
+              <label htmlFor="label">Search by date</label>
               <input
                 type="date"
                 value={searchDate}
                 onChange={handleSearch}
                 className="search-input-shedule"
-                placeholder="Tìm theo ngày"
+                placeholder="Search by date"
               />
             </div>
           </div>
@@ -205,11 +205,11 @@ function Schedule() {
           <table className="table">
             <thead>
               <tr>
-                <th>Tên công việc</th>
-                <th>Mô tả</th>
-                <th>Ngày bắt đầu</th>
-                <th>Ngày kết thúc</th>
-                <th>Xóa lịch</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Start date</th>
+                <th>End date</th>
+                <th>Remove</th>
               </tr>
             </thead>
             <tbody>
@@ -233,7 +233,7 @@ function Schedule() {
                       }}
                       className="edit-button"
                     >
-                      Xóa
+                      Remove
                     </button>
                   </td>
                 </tr>
@@ -244,7 +244,7 @@ function Schedule() {
         {showForm && (
           <form onSubmit={handleSubmit} className="schedule-form">
             <div>
-              <label>Tiêu đề</label>
+              <label>Title</label>
               <input
                 type="text"
                 value={formData.title}
@@ -255,7 +255,7 @@ function Schedule() {
               />
             </div>
             <div>
-              <label>Mô tả</label>
+              <label>Description</label>
               <textarea
                 value={formData.description}
                 onChange={(e) =>
@@ -265,7 +265,7 @@ function Schedule() {
               />
             </div>
             <div>
-              <label>Ngày bắt đầu</label>
+              <label>Start date</label>
               <input
                 type="date"
                 value={formData.start}
@@ -276,7 +276,7 @@ function Schedule() {
               />
             </div>
             <div>
-              <label>Ngày kết thúc</label>
+              <label>End date</label>
               <input
                 type="date"
                 value={formData.end}
@@ -285,13 +285,13 @@ function Schedule() {
                 }
               />
             </div>
-            {!isEditing && <button type="submit">Tạo mới</button>}
+            {!isEditing && <button type="submit-button">Create</button>}
             <button
               type="button"
               className="close-button"
               onClick={() => setShowForm(false)}
             >
-              Đóng
+              Close
             </button>
           </form>
         )}
