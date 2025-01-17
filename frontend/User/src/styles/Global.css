@@ -1,0 +1,195 @@
+* {
+    /* margin: 0;
+    padding: 0;
+    box-sizing: border-box; */
+    user-select: none;
+    font-family: Inter;
+}
+
+body {
+    background-color: #f0f2f5;
+    /* width: 100%;
+      height: 100%; */
+    width: 100vh;
+    height: 1024px;
+    user-select: none;
+    overflow: auto; 
+    overflow-x: hidden;
+  }
+
+  /* Global dark mode styles */
+:root {
+  /* Light theme variables */
+  --background-light: #f0f2f5;
+  --text-light: #000;
+  --card-bg-light: #fff;
+  --header-border-light: rgba(0, 0, 0, 0.1);
+  --search-bg-light: #f9fafb;
+  --table-header-light: #f0f2f5;
+  --table-row-even-light: #f9f9fa;
+  --table-row-hover-light: #f0f0f5;
+  --sidebar-shadow-light: rgba(0, 0, 0, 0.1);
+  --menu-hover-light: #dadada;
+
+  /* Dark theme variables */
+  --background-dark: #1a1a1a;
+  --text-dark: #ffffff;
+  --card-bg-dark: #2d2d2d;
+  --header-border-dark: rgba(255, 255, 255, 0.1);
+  --search-bg-dark: #3d3d3d;
+  --table-header-dark: #2d2d2d;
+  --table-row-even-dark: #333333;
+  --table-row-hover-dark: #404040;
+  --sidebar-shadow-dark: rgba(0, 0, 0, 0.3);
+  --menu-hover-dark: #404040;
+}
+
+/* Base styles */
+body {
+  background-color: var(--background-light);
+  color: var(--text-light);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+
+/* Dark mode styles */
+body.dark {
+  background-color: var(--background-dark);
+  color: var(--text-dark);
+}
+
+/* Sidebar dark mode */
+body.dark .sidebar {
+  background-color: var(--card-bg-dark);
+  box-shadow: 2px 0 5px var(--sidebar-shadow-dark);
+}
+
+body.dark .menu-item {
+  color: var(--text-dark);
+}
+
+body.dark .menu-item:hover,
+body.dark .menu-item.active {
+  background: var(--menu-hover-dark);
+}
+
+/* Header dark mode */
+body.dark .header {
+  border-bottom-color: var(--header-border-dark);
+}
+
+body.dark .search-input {
+  background-color: var(--search-bg-dark);
+  color: var(--text-dark);
+}
+
+body.dark .header-icon svg {
+  color: var(--text-dark);
+}
+
+/* Card dark mode */
+body.dark .card,
+body.dark .department-info {
+  background-color: var(--card-bg-dark);
+}
+
+/* Table dark mode */
+body.dark .table {
+  background-color: var(--card-bg-dark);
+}
+
+body.dark .table thead {
+  background-color: var(--table-header-dark);
+  color: var(--text-dark);
+}
+
+body.dark .table tbody tr:nth-child(even) {
+  background-color: var(--table-row-even-dark);
+}
+
+body.dark .table tbody tr:nth-child(odd) {
+  background-color: var(--card-bg-dark);
+}
+
+body.dark .table tbody tr:hover {
+  background-color: var(--table-row-hover-dark);
+}
+
+/* Status indicators in dark mode */
+body.dark .status.on-time {
+  background-color: #1b4332;
+  color: #90ee90;
+}
+
+body.dark .status.late {
+  background-color: #471b1b;
+  color: #ff9999;
+}
+
+/* Notification dropdown dark mode */
+body.dark .notification-dropdown {
+  background-color: var(--card-bg-dark);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+body.dark .notification-item {
+  color: var(--text-dark);
+  border-bottom-color: var(--header-border-dark);
+}
+
+body.dark .notification-item:hover {
+  background-color: var(--menu-hover-dark);
+}
+
+/* Logout button dark mode */
+body.dark .logout {
+  background-color: var(--menu-hover-dark);
+  color: var(--text-dark);
+}
+
+body.dark .logout:hover {
+  background-color: #dc2626;
+}
+
+body.dark .breadcrumb {
+  color: var(--text-dark);
+}
+
+body.dark .page-title {
+  color: var(--text-dark);
+}
+
+body.dark .dashboard .card:first-child{
+  background: #35434b;
+}
+
+body.dark .dashboard .card:last-child{
+  background: #4b5950;
+}
+
+body.dark .card h3{
+  color: #ffffff;
+}
+
+body.dark .info-row span:first-child{
+  color: #000;
+}
+
+body.dark .info-row span:last-child{
+  color: #fff;
+}
+
+body.dark .department-info{
+  background-color: #565555;
+}
+
+body.dark .name-user{
+  color: #fff;
+}
+
+body.dark .name-department{
+  color: #fff;
+}
+
+/* thêm để tùy chỉnh phù hợp với màn hình */
+

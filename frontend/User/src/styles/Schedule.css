@@ -1,0 +1,371 @@
+/* Outer Wrapper */
+.rectangle1 {
+  width: 90%;
+  margin: 20px auto;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Table Styles */
+.table {
+  width: 90%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  box-shadow: none;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.table thead {
+  background-color: #f0f2f5;
+  color: #000;
+  font-weight: bold;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: #f9f9fa;
+}
+
+.table tbody tr:nth-child(odd) {
+  background-color: #f9f9fa;
+}
+
+.table tbody tr:hover {
+  background-color: #f0f0f5;
+}
+
+/* Button Create */
+.create-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+}
+
+.create-button:hover {
+  background-color: #0056b3;
+}
+
+/* Form Styles */
+.schedule-form {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  width: 40%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 1000;
+}
+
+.schedule-form .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-form label {
+  margin-bottom: 5px;
+  margin-left: auto;
+  font-weight: bold;
+  color: #333;
+}
+
+.schedule-form input[type="text"],
+.schedule-form input[type="date"],
+.schedule-form textarea {
+  width: 100%;
+  margin: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.schedule-form input:focus,
+.schedule-form textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.schedule-form textarea {
+  resize: none;
+  height: 100px;
+}
+
+/* Submit Button */
+.schedule-form .submit-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.schedule-form .submit-button:hover {
+  background-color: #0056b3;
+}
+
+.schedule-form .submit-button:active {
+  background-color: #003d80;
+}
+
+/* Close Button Styles */
+.close-button {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  align-self: center; /* Đặt nút ở giữa */
+}
+
+.close-button:hover {
+  background-color: #d9363e;
+}
+
+.close-button:active {
+  background-color: #b71c1c;
+}
+
+/* Adjust the calendar container */
+#calendar-container {
+  margin: 20px auto;
+  width: 90%;
+}
+
+.fc {
+  --fc-list-item-height: 30px;
+}
+
+.fc .fc-daygrid-body {
+  height: 385px;
+  overflow: hidden;
+}
+/* Hover effect for table cells in calendar */
+.fc .fc-daygrid-day:hover {
+  background-color: rgba(0, 123, 255, 0.2); /* Màu nền nhẹ khi hover */
+  cursor: pointer; /* Đổi con trỏ thành dạng pointer */
+  transition: background-color 0.3s ease; /* Thêm hiệu ứng chuyển màu */
+}
+
+/* Dark Mode */
+body.dark .rectangle1 {
+  background-color: #1e1e2f;
+  color: #ffffff;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+body.dark .table thead {
+  background-color: #2b2b3a;
+  color: #ffffff;
+}
+
+body.dark .table tbody tr:nth-child(even),
+body.dark .table tbody tr:nth-child(odd) {
+  background-color: #2b2b3a;
+}
+
+body.dark .table tbody tr:hover {
+  background-color: #383848;
+}
+
+body.dark .schedule-form {
+  background-color: #2b2b3a;
+  border: 1px solid #444;
+  color: #ffffff;
+}
+
+body.dark .schedule-form input[type="text"],
+body.dark .schedule-form input[type="date"],
+body.dark .schedule-form textarea {
+  background-color: #1e1e2f;
+  color: #ffffff;
+  border: 1px solid #444;
+}
+
+body.dark .schedule-form input:focus,
+body.dark .schedule-form textarea:focus {
+  border-color: #007bff;
+}
+
+body.dark .create-button {
+  background-color: #444;
+  color: #fff;
+}
+
+body.dark .create-button:hover {
+  background-color: #555;
+}
+
+body.dark .fc .fc-daygrid-body {
+  background-color: #1e1e2f;
+}
+
+body.dark .fc .fc-daygrid-day {
+  color: #ffffff;
+}
+
+body.dark .fc .fc-daygrid-day.fc-day-today {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+/* Dark mode for form inputs */
+body.dark .schedule-form input[type="text"],
+body.dark .schedule-form input[type="date"],
+body.dark .schedule-form textarea {
+  background-color: #1e1e2f;
+  color: #ffffff; /* Ensure text is white for dark mode */
+  border: 1px solid #444; /* Adjust border for dark mode */
+}
+
+body.dark .schedule-form input:focus,
+body.dark .schedule-form textarea:focus {
+  border-color: #007bff; /* Highlight the border in focus */
+}
+
+body.dark .schedule-form .submit-button {
+  background-color: #444; /* Submit button color */
+}
+
+body.dark .schedule-form .submit-button:hover {
+  background-color: #555;
+}
+
+/* Existing CSS remains the same */
+
+/* Updated dark mode styles for calendar headers */
+body.dark .fc .fc-col-header-cell {
+  background-color: #2b2b3a;
+}
+
+body.dark .fc .fc-col-header-cell-cushion {
+  color: #ffffff; /* Force black color for weekday text in dark mode */
+  font-weight: bold;
+}
+
+/* Ensure header background doesn't interfere with text visibility */
+body.dark .fc .fc-col-header {
+  background-color: #2b2b3a;
+  border-color: #444;
+}
+
+/* Additional contrast for better readability */
+body.dark .fc .fc-col-header-cell {
+  border-color: #444;
+}
+
+
+
+
+/* Schedule List Styles */
+.schedule-list {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.schedule-list h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.5em;
+}
+
+/* Edit Button Styles */
+.edit-button {
+  padding: 6px 12px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.edit-button:hover {
+  background-color: #45a049;
+}
+
+/* Dark Mode Styles for Schedule List */
+body.dark .schedule-list {
+  background-color: #2b2b3a;
+}
+
+body.dark .schedule-list h2 {
+  color: #ffffff;
+}
+
+body.dark .edit-button {
+  background-color: #45a049;
+}
+
+body.dark .edit-button:hover {
+  background-color: #3d8b40;
+}
+
+.search-create-container {
+  display: flex;
+  /* justify-content: space-between; */
+  align-items: center;
+  margin: 20px 0;
+  margin-right: 60px;
+  margin-left: 10px
+}
+
+.search-create-container .search-input-shedule {
+  margin-left: 20px;
+  border-radius: 5px;
+  padding-left: 10px;
+  border: 1px solid #ccc;
+  width: 109.04px;
+  height: 18.965px;
+}
+
+.clickable-row {
+  cursor: pointer; /* Hiển thị con trỏ dạng pointer */
+  transition: background-color 0.2s ease-in-out; /* Hiệu ứng chuyển màu khi hover */
+}
+
+.clickable-row:hover {
+  background-color: #f0f0f0; /* Màu nền thay đổi khi hover */
+}
+
+.search-input-shedule:hover {
+  border-color: #ccc; /* Thay đổi màu viền khi hover */
+  background-color: #fff;color: #333;
+  transition: background-color 0.2s, border-color 0.2s; /* Thêm hiệu ứng mượt mà */
+  cursor: pointer;
+}

@@ -1,0 +1,173 @@
+
+.name-user {
+    color: #000;
+    text-align: center;
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    padding-bottom: 14px;
+  }
+  
+  .name-department {
+    color: #000;
+    text-align: center;
+    font-family: Inter;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+  }
+  
+  .avartar {
+    width: 100%;
+    bottom: 100%;
+  }
+  
+  .container {
+    display: flex;
+    /* flex-wrap: wrap; Đưa các phần tử xuống dòng nếu không đủ chỗ */
+    /* justify-content: center; */
+    /* align-items: center; */
+    width: 100vw; /* Chiều rộng luôn bằng màn hình */
+    height: 100vh; /* Chiều cao luôn bằng màn hình */
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  
+  /* Sidebar Styles */
+  .sidebar {
+    position: fixed;
+    width: 212px;
+    height: 100vh;
+    background-color: #fff;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding-top: 0;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .profile {
+    width: 129px;
+    height: 188px;
+    padding: 7px 42px 0px 41px;
+    text-align: center;
+    border-bottom: 1px solid #bcb2b2;
+  }
+  
+  .profile img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
+  
+  .menu {
+    flex-grow: 1;
+    margin-top: 20px;
+  }
+  
+  .menu-item {
+    width: 212px;
+    height: 49px;
+    display: flex;
+    align-items: center;
+    color: #000;
+  }
+  
+  #icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+  
+  .menu-item:hover {
+    background: #dadada;
+  }
+  
+  .menu-item.active {
+    background: #dadada;
+  }
+/* Nút Log out */
+.logout {
+
+  margin-top: auto; /* Đẩy nút xuống dưới cùng của sidebar */
+  text-align: center;
+  padding: 10px 0;
+  background-color: #dbd9d9; /* Màu đỏ */
+
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  margin-bottom: 20px; 
+
+}
+
+.logout:hover {
+  background-color: black;
+  color: white; /* Đổi màu khi hover */
+}
+
+
+.main-content {
+  margin-left: 212px; /* Tạo khoảng cách bằng chiều rộng của sidebar */
+  width: calc(100% - 212px); /* Chiều rộng chính sẽ giảm đi kích thước của sidebar */
+  padding: 20px;
+}
+
+/* cập nhật ảnh */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Đảm bảo modal luôn nằm trên cùng */
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 10000; /* Modal nội dung cũng cần z-index cao */
+}
+
+
+.modal-avatar {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+button {
+  margin: 5px;
+  padding: 10px 15px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.input-file {
+  width: 90%;
+  margin: auto;
+  text-align: center;
+}

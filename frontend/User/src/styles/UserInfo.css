@@ -1,0 +1,161 @@
+.user-info-container {
+    margin: 20px;
+  }
+  
+  .user-info-card {
+    display: flex;
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .user-photo {
+    margin-right: 20px;
+  }
+  
+  .user-details {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .info-row {
+    margin-bottom: 10px;
+  }
+  
+  .info-row strong {
+    font-weight: bold;
+  }
+  
+  .info-row span {
+    margin-left: 10px;
+  }
+  
+  /* Modal ảnh */
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+  }
+  
+  .user-info-container {
+    margin: 20px;
+  }
+  
+  .edit-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .edit-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .edit-form-container {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+  }
+  
+  .form-row {
+    margin-bottom: 15px;
+  }
+  
+  .form-row label {
+    font-weight: bold;
+  }
+  
+  .form-row input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  button[type='submit'] {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-left: 50px;
+  }
+  
+  button[type='submit']:hover {
+    background-color: #218838;
+  }
+
+  .cancel {
+    background-color: #ff4d4d; /* Màu đỏ */
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    /* font-size: 16px; */
+    transition: background-color 0.3s ease;
+  }
+  
+  .cancel:hover {
+    background-color: #cc0000; /* Màu đỏ đậm hơn khi hover */
+  }
+  
+  
+  /* Dark mode styles */
+body.dark .user-info-container {
+  
+  color: white;
+}
+
+body.dark .user-info-card {
+  background-color: #444;
+  color: white;
+}
+
+body.dark .info-row strong {
+  color: white; /* Chuyển màu tiêu đề thành trắng */
+}
+
+body.dark .edit-form-container {
+  background-color: #444;
+  color: white;
+}
+
+body.dark label {
+  color: white; /* Đảm bảo label (tiêu đề) có màu trắng */
+}
+
+body.dark input {
+  background-color: #555;
+  color: white;
+  border: 1px solid #777;
+}
+
+body.dark input::placeholder {
+  color: #ccc;
+}
+
+body.dark button[type='submit'] {
+  background-color: #007bff;
+  color: white;
+}
+
+body.dark button[type='submit']:hover {
+  background-color: #0056b3;
+}
