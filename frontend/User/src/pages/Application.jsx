@@ -8,7 +8,8 @@ const Application = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [editingApplication, setEditingApplication] = useState(null); // Lưu đơn đang được chỉnh sửa
+  const [editingApplication, setEditingApplication] = useState(null);
+  const [userId, setUserId] = useState(null); // Lưu user_id
 
   const {
     register,
@@ -17,7 +18,25 @@ const Application = () => {
     reset,
   } = useForm();
 
-  // Lấy danh sách các đơn xin nghỉ
+  // Lấy user_id khi component được tải
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const config = {
+          headers: { Authorization: `Bearer ${token}` },
+        };
+        const response = await axios.get("http://52.184.86.56:8000/api/me/personal_info", config);
+        setUserId(response.data.user_id);
+      } catch (err) {
+        setError("Unable to fetch user information.");
+      }
+    };
+
+    fetchUserId();
+  }, []);
+
+  // Lấy danh sách đơn xin nghỉ
   useEffect(() => {
     const fetchApplications = async () => {
       setLoading(true);
@@ -26,10 +45,7 @@ const Application = () => {
         const config = {
           headers: { Authorization: `Bearer ${token}` },
         };
-        const response = await axios.get(
-          "http://52.184.86.56:8000/api/me/application",
-          config
-        );
+        const response = await axios.get("http://52.184.86.56:8000/api/me/application", config);
         setApplications(response.data);
       } catch (err) {
         setError("Unable to load data, please try again later.");
@@ -53,40 +69,34 @@ const Application = () => {
     };
 
     const sanitizedData = {
-      user_id: "current_user_id", // Thay thế bằng user_id thực tế
+      user_id: userId, // Sử dụng user_id thực tế
       leave_type: data.leave_type || "",
       reason: data.reason || "",
       start_date: data.start_date || "",
       end_date: data.end_date || "",
-      status: "Pending", // Mặc định là "Pending" nếu không gửi
+      status: "Pending",
     };
 
     try {
       if (editingApplication) {
-        // Cập nhật đơn đang chỉnh sửa, sử dụng params
-        const queryParams = new URLSearchParams(sanitizedData).toString();
+        // Cập nhật đơn đang chỉnh sửa
         const response = await axios.put(
-          `http://52.184.86.56:8000/api/me/application/${editingApplication.application_id}?${queryParams}`,
-          null, // Không cần body vì dữ liệu nằm trong query
+          `http://52.184.86.56:8000/api/me/application/${editingApplication.application_id}`,
+          sanitizedData,
           config
         );
 
-        // Cập nhật danh sách đơn
         setApplications((prev) =>
           prev.map((app) =>
-            app.application_id === editingApplication.application_id
-              ? response.data
-              : app
+            app.application_id === editingApplication.application_id ? response.data : app
           )
         );
-
         setSuccess("Your leave application has been successfully updated.");
       } else {
-        // Tạo đơn mới, sử dụng params
-        const queryParams = new URLSearchParams(sanitizedData).toString();
+        // Tạo đơn mới
         const response = await axios.post(
-          `http://52.184.86.56:8000/api/me/application?${queryParams}`,
-          null, // Không cần body vì dữ liệu nằm trong query
+          "http://52.184.86.56:8000/api/me/application",
+          sanitizedData,
           config
         );
 
@@ -97,9 +107,7 @@ const Application = () => {
       reset();
       setEditingApplication(null);
     } catch (err) {
-      setError(
-        editingApplication ? "Update the application failed." : "Submit a failed application."
-      );
+      setError(editingApplication ? "Update the application failed." : "Submit a failed application.");
     } finally {
       setLoading(false);
     }
@@ -122,13 +130,8 @@ const Application = () => {
       const config = {
         headers: { Authorization: `Bearer ${token}` },
       };
-      await axios.delete(
-        `http://52.184.86.56:8000/api/me/application/${id}`,
-        config
-      );
-      setApplications((prev) =>
-        prev.filter((app) => app.application_id !== id)
-      );
+      await axios.delete(`http://52.184.86.56:8000/api/me/application/${id}`, config);
+      setApplications((prev) => prev.filter((app) => app.application_id !== id));
       setSuccess("Remove successfully.");
     } catch (err) {
       setError("Remove Error.");
@@ -140,7 +143,7 @@ const Application = () => {
   // Hàm thiết lập chỉnh sửa
   const editApplication = (application) => {
     setEditingApplication(application);
-    reset(application); // Điền dữ liệu vào form
+    reset(application);
   };
 
   return (
@@ -151,103 +154,60 @@ const Application = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="form-container">
         <div className="form-group">
           <label htmlFor="leave_type">Leave type</label>
-          <select
-            id="leave_type"
-            {...register("leave_type", {
-              required: "Leave type is mandatory",
-            })}
-          >
+          <select id="leave_type" {...register("leave_type", { required: "Leave type is mandatory" })}>
             <option value="">Available values</option>
             <option value="Normal">Normal</option>
             <option value="Student">Student</option>
             <option value="Illness">Illness</option>
             <option value="Marriage">Marriage</option>
           </select>
-          {errors.leave_type && (
-            <p className="error">{errors.leave_type.message}</p>
-          )}
+          {errors.leave_type && <p className="error">{errors.leave_type.message}</p>}
         </div>
 
         <div className="form-group">
           <label htmlFor="reason">Reason</label>
-          <textarea
-            id="reason"
-            {...register("reason", { required: "Reason is mandatory" })}
-          ></textarea>
+          <textarea id="reason" {...register("reason", { required: "Reason is mandatory" })}></textarea>
           {errors.reason && <p className="error">{errors.reason.message}</p>}
         </div>
 
         <div className="form-group">
           <label htmlFor="start_date">Start date</label>
-          <input
-            type="date"
-            id="start_date"
-            {...register("start_date", {
-              required: "The start date is mandatory",
-            })}
-          />
-          {errors.start_date && (
-            <p className="error">{errors.start_date.message}</p>
-          )}
+          <input type="date" id="start_date" {...register("start_date", { required: "The start date is mandatory" })} />
+          {errors.start_date && <p className="error">{errors.start_date.message}</p>}
         </div>
 
         <div className="form-group">
           <label htmlFor="end_date">End date</label>
-          <input
-            type="date"
-            id="end_date"
-            {...register("end_date", { required: "The end date is mandatory" })}
-          />
-          {errors.end_date && (
-            <p className="error">{errors.end_date.message}</p>
-          )}
+          <input type="date" id="end_date" {...register("end_date", { required: "The end date is mandatory" })} />
+          {errors.end_date && <p className="error">{errors.end_date.message}</p>}
         </div>
 
         <button type="submit" className="submit-button">
-          {loading
-            ? "Loading..."
-            : editingApplication
-            ? "Edit"
-            : "Send"}
+          {loading ? "Loading..." : editingApplication ? "Edit" : "Send"}
         </button>
 
-        {/* Button hủy chỉnh sửa */}
         {editingApplication && (
           <button type="button" onClick={cancelEdit} className="cancel-button">
-            Cancle
+            Cancel
           </button>
         )}
       </form>
 
-      {/* Thông báo */}
       {success && <p className="success">{success}</p>}
       {error && <p className="error">{error}</p>}
 
-      {/* Danh sách đơn xin nghỉ */}
       <div className="applications-list">
         <h2>Application list</h2>
-          {applications.length > 0 ? (
+        {applications.length > 0 ? (
           <ul>
             {applications.map((app) => (
               <li key={app.application_id}>
                 <p>Leave type: {app.leave_type}</p>
                 <p>Reason: {app.reason}</p>
-                <p>
-                  From: {app.start_date} - To: {app.end_date}
-                </p>
+                <p>From: {app.start_date} - To: {app.end_date}</p>
                 <p>Status: {app.status}</p>
-                <button
-                  onClick={() => editApplication(app)}
-                  className="edit-button"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteApplication(app.application_id)}
-                  className="delete-button"
-                >
-                  Remove
-                </button>
+                <button onClick={() => editApplication(app)} className="edit-button">Edit</button>
+                <button onClick={() => deleteApplication(app.application_id)} className="delete-button">Remove</button>
               </li>
             ))}
           </ul>

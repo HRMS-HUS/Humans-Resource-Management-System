@@ -5,7 +5,7 @@
   padding: 20px;
 }
 
-.form-wrapper {
+.rectangle-container .form-wrapper {
   background: white;
   border-radius: 12px;
   padding: 32px;
@@ -14,7 +14,7 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.header-password {
+.rectangle-container .header-password {
   margin-bottom: 32px;
   display: flex;
   align-items: center;
@@ -22,13 +22,14 @@
   border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
 }
 
-.header-password .icon {
+.rectangle-container .header-password .icon {
   color: #4f46e5;
   width: 24px;
   height: 24px;
+  margin-right: 8px;
 }
 
-.form-fields {
+.rectangle-container .form-fields {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -36,25 +37,25 @@
   margin-left: -50px;
 }
 
-.input-container {
+.rectangle-container .input-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.label-text {
+.rectangle-container .label-text {
   font-size: 14px;
   font-weight: 500;
   color: #374151;
 }
 
-.input-field-wrapper {
+.rectangle-container .input-field-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.input-field {
+.rectangle-container .input-field {
   width: 100%;
   padding: 10px 16px;
   border: 1px solid #d1d5db;
@@ -63,17 +64,17 @@
   transition: all 0.2s;
 }
 
-.input-field:focus {
+.rectangle-container .input-field:focus {
   outline: none;
   border-color: #4f46e5;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
-.input-field.error {
+.rectangle-container .input-field.error {
   border-color: #ef4444;
 }
 
-.eye-button {
+.rectangle-container .eye-button {
   position: absolute;
   right: 12px;
   background: none;
@@ -83,18 +84,18 @@
   color: #6b7280;
 }
 
-.eye-button .icon {
+.rectangle-container .eye-button .icon {
   width: 20px;
   height: 20px;
 }
 
-.error-text {
+.rectangle-container .error-text {
   color: #ef4444;
   font-size: 12px;
   margin-top: 4px;
 }
 
-.message-box {
+.rectangle-container .message-box {
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -103,19 +104,19 @@
   text-align: center;
 }
 
-.message-box.success {
+.rectangle-container .message-box.success {
   background-color: #dcfce7;
   color: #166534;
   border: 1px solid #86efac;
 }
 
-.message-box.error {
+.rectangle-container .message-box.error {
   background-color: #fee2e2;
   color: #b91c1c;
   border: 1px solid #fca5a5;
 }
 
-.submit-button {
+.rectangle-container .submit-button {
   background-color: #4f46e5;
   color: white;
   width: 130px;
@@ -127,21 +128,21 @@
   transition: all 0.2s;
 }
 
-.submit-button:hover {
+.rectangle-container .submit-button:hover {
   background-color: #4338ca;
 }
 
-.submit-button:focus {
+.rectangle-container .submit-button:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.5);
 }
 
-.submit-button:disabled {
+.rectangle-container .submit-button:disabled {
   background-color: #9ca3af;
   cursor: not-allowed;
 }
 
-.submit-button.loading {
+.rectangle-container .submit-button.loading {
   opacity: 0.7;
 }
 

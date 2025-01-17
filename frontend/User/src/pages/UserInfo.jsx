@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../styles/UserInfo.css";
+import { useAuthStore } from '../pages/login/authStore';
 
 function UserInfo() {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const setUserName = useAuthStore(state => state.setUserName);
   const [editFormData, setEditFormData] = useState({
     fullname: "",
     citizen_card: "",
@@ -30,6 +32,7 @@ function UserInfo() {
           config
         );
         setUserInfo(response.data);
+        setUserName(response.data.fullname);
       } catch (error) {
         console.error("Error fetching user info:", error);
       } finally {
@@ -37,8 +40,7 @@ function UserInfo() {
       }
     };
     fetchUserData();
-  }, []);
-
+  }, [setUserName]);
 
   const handleEditClick = () => {
     setIsEditMode(true);
@@ -71,12 +73,15 @@ function UserInfo() {
       await axios.put(url, null, config);
       setIsEditMode(false);
       setUserInfo((prevInfo) => ({ ...prevInfo, ...editFormData }));
+      setUserName(editFormData.fullname); // Update name in global store
+      
     } catch (error) {
       console.error("Error updating user info:", error);
     }
   };
 
-  if (!userInfo) return <div></div>;
+  if (loading) return <div>Loading...</div>;
+  if (!userInfo) return <div>No user information available</div>;
 
   return (
     <div className="rectangle1">
@@ -89,13 +94,12 @@ function UserInfo() {
                 key !== "photo_url" && (
                   <div className="info-row" key={key}>
                     <strong>
-                      {key || key.replace(/_/g, " ")}:
+                      {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")}:
                     </strong>{" "}
                     <span>{value}</span>
                   </div>
                 )
             )}
-            
           </div>
         </div>
         <button className="edit-button" onClick={handleEditClick}>
@@ -109,7 +113,7 @@ function UserInfo() {
               {Object.keys(editFormData).map((field) => (
                 <React.Fragment key={field}>
                   <label htmlFor={field}>
-                    {field || field.replace(/_/g, " ")}
+                    {field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, " ")}
                   </label>
                   <input
                     type={field === "date_of_birth" ? "date" : "text"}
@@ -120,14 +124,16 @@ function UserInfo() {
                   />
                 </React.Fragment>
               ))}
-              <button type="submit">Submit</button>
-              <button
-                type="button"
-                className="cancel"
-                onClick={() => setIsEditMode(false)}
-              >
-                Cancle
-              </button>
+              <div className="form-buttons">
+                <button type="submit">Submit</button>
+                <button
+                  type="button"
+                  className="cancel"
+                  onClick={() => setIsEditMode(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </form>
           </div>
         )}

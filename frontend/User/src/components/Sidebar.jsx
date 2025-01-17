@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Grid, CheckSquare, Calendar, DollarSign, LogOut, CalendarX, Shell,CircleUser  } from 'lucide-react';
+import { Grid, CheckSquare, Calendar, DollarSign, LogOut, CalendarX, Shell, CircleUser } from 'lucide-react';
 import axios from 'axios';
 import imageCompression from 'browser-image-compression';
 import { useAuthStore } from '../pages/login/authStore';
@@ -9,8 +9,8 @@ import '../styles/Sidebar.css';
 const Sidebar = () => {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
+  const userName = useAuthStore(state => state.userName);
   const [userProfile, setUserProfile] = useState({
-    name: '',
     id: '',
     department: '',
     avatar_url: '',
@@ -40,7 +40,6 @@ const Sidebar = () => {
         ]);
 
         setUserProfile({
-          name: personalInfoResponse.data.fullname || 'No name',
           id: personalInfoResponse.data.user_id || 'No ID',
           department: departmentResponse.data.name || 'No department',
           avatar_url:
@@ -68,7 +67,6 @@ const Sidebar = () => {
         return;
       }
   
-      // Gửi thời gian đăng xuất lên API
       const logoutTime = new Date().toISOString();
       await axios.post(
         'http://52.184.86.56:8000/api/logout/me',
@@ -76,7 +74,6 @@ const Sidebar = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      // Xóa token và đăng xuất
       localStorage.removeItem('token');
       logout();
       navigate('/login');
@@ -96,23 +93,20 @@ const Sidebar = () => {
     }
   
     try {
-      // Nén ảnh trước khi tải lên
       const compressedFile = await imageCompression(selectedFile, {
         maxSizeMB: 0.5,
         maxWidthOrHeight: 1024,
         useWebWorker: true,
       });
   
-      // Tạo FormData
       const formData = new FormData();
-      formData.append('file', compressedFile); // Changed from 'photo' to 'file' based on API docs
+      formData.append('file', compressedFile);
   
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No tokens found. Unload the photo.');
       }
   
-      // Đầu tiên, lấy personal_info_id
       const personalInfoResponse = await axios.get(
         'http://52.184.86.56:8000/api/me/personal_info',
         {
@@ -126,7 +120,6 @@ const Sidebar = () => {
         throw new Error('Không tìm thấy personal_info_id');
       }
   
-      // Cấu hình headers
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -134,14 +127,12 @@ const Sidebar = () => {
         },
       };
   
-      // Gửi yêu cầu API với endpoint đúng
       const response = await axios.put(
         `http://52.184.86.56:8000/api/me/personal_info/${personalInfoId}/photo`,
         formData,
         config
       );
   
-      // Cập nhật avatar URL mới
       setUserProfile((prev) => ({
         ...prev,
         avatar_url: response.data.photo_url,
@@ -167,7 +158,6 @@ const Sidebar = () => {
       alert(errorMessage);
     }
   };
-  
 
   return (
     <div className="sidebar">
@@ -175,7 +165,7 @@ const Sidebar = () => {
         <div className="avatar" onClick={() => setIsModalOpen(true)} style={{ cursor: 'pointer' }}>
           <img src={userProfile.avatar_url} alt="Avatar" />
         </div>
-        <div className="name-user">{userProfile.name}</div>
+        <div className="name-user">{userName || 'No name'}</div>
         <div className="name-department">{userProfile.department}</div>
       </div>
 

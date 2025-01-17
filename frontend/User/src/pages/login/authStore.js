@@ -23,6 +23,10 @@ export const useAuthStore = create((set) => ({
     isCheckingAuth: true,
     message: null,
     token: null,
+    userName: '',  // Add userName state
+
+    // Add function to update userName
+    setUserName: (name) => set({ userName: name }),
 
     login: async (username, password) => {
         set({ isLoading: true, error: null });
@@ -56,14 +60,18 @@ export const useAuthStore = create((set) => ({
             // Set auth header
             setAuthHeader(token);
             
-            // You can add additional user data fetching here if needed
+            // Fetch user data including name
+            const response = await axios.get(`${API_URL}/me/personal_info`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             
             set({ 
                 token,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
-                isCheckingAuth: false
+                isCheckingAuth: false,
+                userName: response.data.fullname || '' // Set initial userName
             });
         } catch (error) {
             set({ isCheckingAuth: false, isLoading: false });
@@ -79,7 +87,8 @@ export const useAuthStore = create((set) => ({
             user: null, 
             isAuthenticated: false, 
             token: null,
-            isCheckingAuth: false
+            isCheckingAuth: false,
+            userName: '' // Clear userName on logout
         });
     },
 

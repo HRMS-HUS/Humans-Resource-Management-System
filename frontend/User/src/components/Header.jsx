@@ -27,8 +27,10 @@ function Header() {
         return "Holiday";
       case "/application":
         return "Application";
+      case "/user-info":
+        return "Personal Information";
       default:
-        return "Profile";
+        return "Change Password";
     }
   };
 
