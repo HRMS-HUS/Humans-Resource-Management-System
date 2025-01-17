@@ -13,7 +13,7 @@ limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 @router.get("/me/department", response_model=schemas.DepartmentResponseWithManager)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_current_user_department(
     request: Request,
     db: AsyncSession = Depends(get_db),

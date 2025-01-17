@@ -349,7 +349,7 @@ async def delete_user_personal_info(db: AsyncSession, personal_info_id: str):
             )
 
 
-async def get_all_user_personal_info(db: AsyncSession, skip: int = 0, limit: int = 100):
+async def get_all_user_personal_info(db: AsyncSession, skip: int = 0, limit: int = 200):
     try:
         result = await db.execute(
             select(models.UserPersonalInfo)

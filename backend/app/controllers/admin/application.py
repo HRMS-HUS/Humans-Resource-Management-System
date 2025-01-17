@@ -18,7 +18,7 @@ router = APIRouter()
     response_model=schemas.ApplicationResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_application(
     request: Request,
     application: schemas.ApplicationCreate = Query(...),
@@ -31,7 +31,7 @@ async def create_application(
     "/admin/application/{application_id}",
     response_model=schemas.ApplicationResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_application_by_id(
     request: Request,
     application_id: str = Path(..., description="Application ID to retrieve"),
@@ -44,7 +44,7 @@ async def get_application_by_id(
     "/admin/application/{application_id}",
     response_model=schemas.ApplicationResponse
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_application(
     request: Request,
     application: schemas.ApplicationUpdate = Query(...),
@@ -55,7 +55,7 @@ async def update_application(
     return await services.update_application(db, application_id, application)
 
 @router.delete("/admin/application/{application_id}")
-@limiter.limit("3/minute")
+@limiter.limit("20/minute")
 async def delete_application(
     request: Request,
     application_id: str = Path(..., description="Application ID to delete"),
@@ -68,11 +68,11 @@ async def delete_application(
     "/admin/application",
     response_model=List[schemas.ApplicationResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_all_applications(
     request: Request,
     skip: int = Query(0, description="Number of records to skip"),
-    limit: int = Query(100, description="Maximum number of records to return"),
+    limit: int = Query(200, description="Maximum number of records to return"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -82,7 +82,7 @@ async def get_all_applications(
     "/admin/application/user/{user_id}",
     response_model=List[schemas.ApplicationResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_applications_by_user_id(
     request: Request,
     user_id: str = Path(...),

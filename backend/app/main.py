@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job,  department, daysHoliday, daysWorking, deptAnnouncement, application, payment, userMessage, expense
+from .routers import authentication, userPersonalInfo, users, userFinancialInfo, userPersonalEvent, job,  department, daysHoliday, daysWorking, deptAnnouncement, application, payment, userMessage, expense, websocket
 from .configs.database import init_db
 from .configs.cloudinary import init_cloudinary
 import os, redis
@@ -19,10 +19,13 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
+origins = [
+    "http://localhost:5173",
+    "http://52.184.86.56:5173"
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=origins,  # Allows all origins
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
@@ -67,3 +70,4 @@ app.include_router(application.router)
 app.include_router(payment.router)
 app.include_router(userMessage.router)
 app.include_router(expense.router)
+app.include_router(websocket.router)

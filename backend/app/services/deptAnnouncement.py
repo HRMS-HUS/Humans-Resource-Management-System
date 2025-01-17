@@ -80,7 +80,7 @@ async def get_dept_announcement_by_id(db: AsyncSession, announcement_id: str):
 async def get_all_dept_announcements(
     db: AsyncSession, 
     skip: int = 0, 
-    limit: int = 100
+    limit: int = 200
 ) -> List[models.DeptAnnouncement]:
     try:
         result = await db.execute(

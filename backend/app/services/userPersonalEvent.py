@@ -95,7 +95,7 @@ async def get_user_event_by_user_id(db: AsyncSession, user_id: str):
         raise
 
 async def get_all_events(
-    db: AsyncSession, skip: int = 0, limit: int = 100
+    db: AsyncSession, skip: int = 0, limit: int = 200
 ) -> List[models.UserPersonalEvent]:
     try:
         result = await db.execute(

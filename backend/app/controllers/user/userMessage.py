@@ -18,7 +18,7 @@ router = APIRouter()
     response_model=schemas.MessageResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_message_me(
     request: Request,
     message: schemas.MessageCreate = Query(...),
@@ -38,7 +38,7 @@ async def create_message_me(
     "/me/messages/sent",
     response_model=List[schemas.MessageResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_sent_messages_me(
     request: Request,
     db: AsyncSession = Depends(get_db),

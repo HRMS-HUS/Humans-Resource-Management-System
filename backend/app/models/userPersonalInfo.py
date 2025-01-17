@@ -17,7 +17,7 @@ class UserPersonalInfo(Base):
     citizen_card = Column(String, nullable=True)
     date_of_birth = Column(Date, nullable=True)
     sex = Column(String, nullable=True)
-    phone = Column(String, nullable=True)
+    phone = Column(String, nullable=True, index=True)
     email = Column(String, nullable=True, index=True)
     marital_status = Column(Enum(MaritalStatusEnum),nullable=True)
     address = Column(String, nullable=True)

@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.put("/admin/users/{user_id}", response_model=schemas.User)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_user(
     request: Request,
     user_id: str,
@@ -28,7 +28,7 @@ async def update_user(
 
 
 @router.delete("/admin/users/{user_id}")
-@limiter.limit("3/minute")
+@limiter.limit("20/minute")
 async def delete_user(
     request: Request,
     user_id: str = Path(...),
@@ -39,12 +39,12 @@ async def delete_user(
 
 
 @router.get("/admin/users", response_model=List[schemas.User])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_all_users(
     request: Request,
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(10, ge=1, le=100, description="Number of records to return"),
+    limit: int = Query(200, description="Number of records to return"),
     role: Optional[models.RoleEnum] = Query(None, description="Filter by user role"),
     status: Optional[models.StatusEnum] = Query(
         None, description="Filter by user status"
@@ -58,7 +58,7 @@ async def get_all_users(
 
 
 @router.get("/admin/users/{user_id}", response_model=schemas.User)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_user(
     request: Request,
     user_id: str = Path(...),
@@ -68,15 +68,3 @@ async def get_user(
     return await users_service.get_user_by_id(db, user_id)
 
 
-# @router.put("/admin/users/{user_id}/change-password", response_model=schemas.User)
-# async def admin_change_user_password(
-#     user_id: str,
-#     password_change: schemas.AdminChangePassword,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: models.Users = Depends(jwt.get_current_admin),
-# ):
-#     return await users_service.admin_change_password(
-#         db,
-#         user_id,
-#         password_change.new_password
-#     )

@@ -19,7 +19,7 @@ router = APIRouter()
     response_model=schemas.UserPersonalEventResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_user_event_me(
     request: Request,
     event: schemas.UserPersonalEventCreate = Query(...),
@@ -39,7 +39,7 @@ async def create_user_event_me(
     "/me/personal_event/{event_id}",
     response_model=schemas.UserPersonalEventResponse,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_user_event_me(
     request: Request,
     event_id: str = Path(..., description="Event ID to update"),
@@ -63,7 +63,7 @@ async def update_user_event_me(
     return await services.update_user_event(db, event_id, event_update)
 
 @router.get("/me/personal_event", response_model=List[schemas.UserPersonalEventResponse])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_current_user_personal_event(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -75,7 +75,7 @@ async def get_current_user_personal_event(
     )
 
 @router.delete("/me/personal_event/{event_id}")
-@limiter.limit("3/minute")
+@limiter.limit("20/minute")
 async def delete_event(
     request: Request,
     event_id: str = Path(..., description="Event ID to delete"),

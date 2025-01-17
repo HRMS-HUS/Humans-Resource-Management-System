@@ -18,7 +18,7 @@ router = APIRouter()
     "/me/working/history",
     response_model=List[schemas.DaysWorkingResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_my_working_days(
     request: Request,
     skip: int = 0,
@@ -49,42 +49,17 @@ async def get_my_working_days(
     "/me/working/{working_id}",
     response_model=schemas.DaysWorkingResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_working_day(
     request: Request,
     working_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_active_user)
 ):
+    working = await services.get_working_day_by_id(db, working_id)
+    if working.user_id != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to access this working day"
+        )
     return await services.get_working_day_by_id(db, working_id)
-
-# @router.get(
-#     "/me/attendance",
-#     response_model=List[schemas.DaysWorkingResponse]
-# )
-# @limiter.limit("10/minute")
-# async def get_my_attendance_records(
-#     request: Request,
-#     skip: int = 0,
-#     limit: int = 100,
-#     start_date: date = None,
-#     end_date: date = None,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: dict = Depends(jwt.get_active_user)
-# ):
-#     return await services.get_all_working_days(
-#         db, skip, limit, start_date, end_date, current_user.user_id
-#     )
-
-# @router.get(
-#     "/me/attendance/{working_id}",
-#     response_model=schemas.DaysWorkingResponse
-# )
-# @limiter.limit("10/minute")
-# async def get_my_attendance_record(
-#     request: Request,
-#     working_id: str,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: dict = Depends(jwt.get_active_user)
-# ):
-#     return await services.get_working_day_by_id(db, working_id)

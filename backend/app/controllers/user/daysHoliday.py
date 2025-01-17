@@ -17,7 +17,7 @@ router = APIRouter()
     "/me/holiday/{holiday_id}",
     response_model=schemas.DaysHolidayResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_holiday(
     request: Request,
     holiday_id: str = Path(...),
@@ -30,7 +30,7 @@ async def get_holiday(
     "/me/holidays",
     response_model=List[schemas.DaysHolidayResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_all_holidays(
     request: Request,
     skip: int = 0,

@@ -100,7 +100,7 @@ async def get_applications_by_user_id(db: AsyncSession, user_id: str):
         raise
 
 async def get_all_applications(
-    db: AsyncSession, skip: int = 0, limit: int = 100
+    db: AsyncSession, skip: int = 0, limit: int = 200
 ) -> List[models.Application]:
     try:
         result = await db.execute(

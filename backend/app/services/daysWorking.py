@@ -12,79 +12,6 @@ import pytz
 class DatabaseOperationError(Exception):
     pass
 
-# async def create_working_day(
-#     working: schemas.DaysWorkingCreate, db: AsyncSession
-# ):
-#     async with DistributedLock(f"working:{working.day}"):
-#         try:
-#             # Check if working day already exists on the same date
-#             existing = await db.execute(
-#                 select(models.DaysWorking).filter(
-#                     models.DaysWorking.day == working.day
-#                 )
-#             )
-
-#             db_working = models.DaysWorking(**working.dict())
-#             db.add(db_working)
-#             await db.commit()
-#             await logger.info("Created working day", {
-#                 "working_id": db_working.working_id,
-#                 "day": str(working.day)
-#             })
-#             await db.refresh(db_working)
-#             return db_working
-#         except HTTPException:
-#             await db.rollback()
-#             raise
-#         except DatabaseOperationError:
-#             await db.rollback()
-#             raise HTTPException(
-#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#                 detail="Database operation failed"
-#             )
-#         except Exception as e:
-#             await logger.error("Create working day failed", error=e)
-#             await db.rollback()
-#             raise HTTPException(
-#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#                 detail="Internal server error"
-#             )
-
-
-# async def update_working_day(
-#     db: AsyncSession, working_id: str, working: schemas.DaysWorkingUpdate
-# ):
-#     async with DistributedLock(f"working:{working_id}"):
-#         try:
-#             db_working = await get_working_day_by_id(db, working_id)
-
-#             for key, value in working.dict(exclude_unset=True).items():
-#                 setattr(db_working, key, value)
-
-#             await db.commit()
-#             await db.refresh(db_working)
-#             await logger.info("Updated working day", {
-#                 "working_id": db_working.working_id,
-#                 "day": str(db_working.day)
-#             })
-#             return db_working
-#         except HTTPException:
-#             await db.rollback()
-#             raise
-#         except DatabaseOperationError:
-#             await db.rollback()
-#             raise HTTPException(
-#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#                 detail="Database operation failed"
-#             )
-#         except Exception as e:
-#             await logger.error("Update working day failed", error=e)
-#             await db.rollback()
-#             raise HTTPException(
-#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#                 detail="Internal server error"
-#             )
-
 
 async def get_working_day_by_id(db: AsyncSession, working_id: str):
     try:
@@ -111,7 +38,7 @@ async def get_working_day_by_id(db: AsyncSession, working_id: str):
 
 
 async def get_all_working_days(
-    db: AsyncSession, skip: int = 0, limit: int = 100
+    db: AsyncSession, skip: int = 0, limit: int = 200
 ) -> List[models.DaysWorking]:
     try:
         result = await db.execute(
@@ -212,11 +139,15 @@ async def update_attendance_logout(
 ):
     async with DistributedLock(f"working:{user_id}"):
         try:
+            # Get the latest record for today by ordering by creation time or working_id
             result = await db.execute(
-                select(models.DaysWorking).filter(
+                select(models.DaysWorking)
+                .filter(
                     models.DaysWorking.user_id == user_id,
                     models.DaysWorking.day == date.today()
                 )
+                .order_by(models.DaysWorking.working_id.desc())
+                .limit(1)
             )
             record = result.scalar_one_or_none()
             
@@ -224,6 +155,12 @@ async def update_attendance_logout(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="No attendance record found for today"
+                )
+
+            if record.logout_time:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Already logged out for today"
                 )
 
             # Get current time with timezone

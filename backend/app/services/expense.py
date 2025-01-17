@@ -85,7 +85,7 @@ async def get_expenses_by_user_id(db: AsyncSession, user_id: str):
         raise
 
 async def get_all_expenses(
-    db: AsyncSession, skip: int = 0, limit: int = 100
+    db: AsyncSession, skip: int = 0, limit: int = 200
 ) -> List[models.Expense]:
     try:
         result = await db.execute(

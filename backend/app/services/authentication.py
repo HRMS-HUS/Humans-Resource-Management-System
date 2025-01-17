@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import users as models_user
 from ..schemas import users as schemas_user
-from ..models import authentication as models
 from ..models import users as user_model
 from ..schemas import authentication as schemas
 from fastapi import HTTPException,status
@@ -11,15 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import userPersonalInfo as models_user_info
 from ..models import users as models_user
 from ..schemas import users as schemas_user
-from ..models import authentication as models
 from ..schemas import authentication as schemas
 from ..services import users
 from fastapi import HTTPException, status, Depends, APIRouter, Query
 from sqlalchemy import select, and_, func, text, delete
 from ..utils import crypto, jwt, email, otp
 from ..configs.database import get_db
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-import os
+from fastapi.security import OAuth2PasswordRequestForm
 from pathlib import Path
 from ..configs.redis import redis_client
 from ..utils.redis_lock import DistributedLock
@@ -77,13 +74,13 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession):
         db_user = user_info
 
         # Check if user is admin - reject if true
-        if db_user.role == user_model.RoleEnum.Admin:
-            await logger.warning("Admin attempted to use regular login", {"username": form_data.username})
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Administrators must use 2FA login. Please use the admin login endpoint.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        # if db_user.role == user_model.RoleEnum.Admin:
+        #     await logger.warning("Admin attempted to use regular login", {"username": form_data.username})
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="Administrators must use 2FA login. Please use the admin login endpoint.",
+        #         headers={"WWW-Authenticate": "Bearer"},
+        #     )
 
         if not crypto.verify_password(form_data.password, db_user.password):
             raise HTTPException(

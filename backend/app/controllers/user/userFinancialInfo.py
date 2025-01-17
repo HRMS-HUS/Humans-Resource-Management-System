@@ -15,7 +15,7 @@ limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 @router.get("/me/financial_info", response_model=schemas.UserFinancialInfoResponse)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_current_user_financial_info(
     request: Request,
     db: AsyncSession = Depends(get_db),

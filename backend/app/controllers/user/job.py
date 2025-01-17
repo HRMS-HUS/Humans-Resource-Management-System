@@ -19,7 +19,7 @@ router = APIRouter()
     response_model=schemas.Job,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_job_me(
     request: Request,
     job: schemas.JobCreate = Query(...),

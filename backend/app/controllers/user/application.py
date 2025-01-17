@@ -18,7 +18,7 @@ router = APIRouter()
     response_model=schemas.ApplicationResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_application_me(
     request: Request,
     application: schemas.ApplicationCreate = Query(...),
@@ -38,7 +38,7 @@ async def create_application_me(
     "/me/application",
     response_model=List[schemas.ApplicationResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_current_user_applications(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -50,7 +50,7 @@ async def get_current_user_applications(
     "/me/application/{application_id}",
     response_model=schemas.ApplicationResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_application_me(
     request: Request,
     application_id: str = Path(..., description="Application ID to retrieve"),
@@ -69,7 +69,7 @@ async def get_application_me(
     "/me/application/{application_id}",
     response_model=schemas.ApplicationResponse
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_application_me(
     request: Request,
     application_id: str = Path(..., description="Application ID to update"),
@@ -95,7 +95,7 @@ async def update_application_me(
     return await services.update_application(db, application_id, application)
 
 @router.delete("/me/application/{application_id}")
-@limiter.limit("3/minute")
+@limiter.limit("20/minute")
 async def delete_application_me(
     request: Request,
     application_id: str = Path(..., description="Application ID to delete"),

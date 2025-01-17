@@ -18,7 +18,7 @@ router = APIRouter()
     response_model=schemas.ExpenseResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_expense(
     request: Request,
     expense: schemas.ExpenseCreate,
@@ -28,7 +28,7 @@ async def create_expense(
     return await services.create_expense(db, expense)
 
 @router.get("/admin/expense/{expense_id}", response_model=schemas.ExpenseResponse)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_expense_by_id(
     request: Request,
     expense_id: str = Path(..., description="Expense ID to retrieve"),
@@ -38,7 +38,7 @@ async def get_expense_by_id(
     return await services.get_expense_by_id(db, expense_id)
 
 @router.put("/admin/expense/{expense_id}", response_model=schemas.ExpenseResponse)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_expense(
     request: Request,
     expense: schemas.ExpenseUpdate,
@@ -49,7 +49,7 @@ async def update_expense(
     return await services.update_expense(db, expense_id, expense)
 
 @router.delete("/admin/expense/{expense_id}")
-@limiter.limit("3/minute")
+@limiter.limit("20/minute")
 async def delete_expense(
     request: Request,
     expense_id: str = Path(..., description="Expense ID to delete"),
@@ -59,18 +59,18 @@ async def delete_expense(
     return await services.delete_expense(db, expense_id)
 
 @router.get("/admin/expense", response_model=List[schemas.ExpenseResponse])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_all_expenses(
     request: Request,
     skip: int = Query(0, description="Number of records to skip"),
-    limit: int = Query(100, description="Maximum number of records to return"),
+    limit: int = Query(200, description="Maximum number of records to return"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
     return await services.get_all_expenses(db, skip=skip, limit=limit)
 
 @router.get("/admin/expense/user/{user_id}", response_model=List[schemas.ExpenseResponse])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_expenses_by_user_id(
     request: Request,
     user_id: str = Path(...),

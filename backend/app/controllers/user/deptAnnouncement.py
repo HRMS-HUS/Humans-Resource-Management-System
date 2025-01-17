@@ -14,33 +14,12 @@ limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 
-# @router.get(
-#     "/me/announcement", 
-#     response_model=List[schemas.DeptAnnouncementResponse]
-# )
-# # async def get_my_department_announcements(
-# #     db: AsyncSession = Depends(get_db),
-# #     current_user: models.Users = Depends(jwt.get_active_user),
-# # ):
-# #     # Get user's department
-# #     department = await dept_services.get_user_department(
-# #         db, current_user.user_id
-# #     )
-# #     if not department:
-# #         raise HTTPException(
-# #             status_code=status.HTTP_404_NOT_FOUND,
-# #             detail="You don't belong to any department"
-# #         )
-# #     # Get announcements for that department
-# #     return await services.get_announcements_by_department_id(
-# #         db, department.department_id
-# #     )
 
 @router.get(
     "/me/announcements", 
     response_model=List[schemas.DeptAnnouncementResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_my_department_announcements(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -52,4 +31,4 @@ async def get_my_department_announcements(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="You don't belong to any department"
         )
-    return await services.get_announcements_by_department_id(db, department.department_id)
+    return await services.get_announcements_by_department_id(db, department['department_id'])

@@ -17,7 +17,7 @@ router = APIRouter()
     response_model=schemas.DaysHolidayResponse,
     status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_holiday(
     request: Request,
     holiday: schemas.DaysHolidayCreate = Query(...),
@@ -30,7 +30,7 @@ async def create_holiday(
     "/admin/holiday/{holiday_id}",
     response_model=schemas.DaysHolidayResponse
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_holiday(
     request: Request,
     holiday_id: str,
@@ -43,7 +43,7 @@ async def update_holiday(
     )
 
 @router.delete("/admin/holiday/{holiday_id}")
-@limiter.limit("3/minute")
+@limiter.limit("20/minute")
 async def delete_holiday(
     request: Request,
     holiday_id: str,
@@ -56,11 +56,11 @@ async def delete_holiday(
     "/admin/holidays",
     response_model=List[schemas.DaysHolidayResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_all_holidays(
     request: Request,
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 200,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -70,7 +70,7 @@ async def get_all_holidays(
     "/admin/holiday/{holiday_id}",
     response_model=schemas.DaysHolidayResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_holiday(
     request: Request,
     holiday_id: str,

@@ -18,7 +18,7 @@ router = APIRouter()
     response_model=schemas.ExpenseResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_expense_me(
     request: Request,
     expense: schemas.ExpenseCreate = Query(...),
@@ -38,7 +38,7 @@ async def create_expense_me(
     "/me/expense/{expense_id}",
     response_model=schemas.ExpenseResponse,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_expense_me(
     request: Request,
     expense_id: str = Path(..., description="Expense ID to update"),
@@ -62,7 +62,7 @@ async def update_expense_me(
     return await services.update_expense(db, expense_id, expense_update)
 
 @router.get("/me/expense", response_model=List[schemas.ExpenseResponse])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_current_user_expense(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -73,7 +73,7 @@ async def get_current_user_expense(
     )
 
 @router.delete("/me/expense/{expense_id}")
-@limiter.limit("3/minute")
+@limiter.limit("20/minute")
 async def delete_expense_me(
     request: Request,
     expense_id: str = Path(..., description="Expense ID to delete"),

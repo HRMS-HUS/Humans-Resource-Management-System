@@ -36,7 +36,8 @@ class DepartmentManagerInfo(BaseModel):
 class DepartmentResponseWithManager(BaseModel):
     department_id: str
     name: str
-    description: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    location: Optional[str] = None
     manager_id: str
     manager: Optional[DepartmentManagerInfo] = None
 

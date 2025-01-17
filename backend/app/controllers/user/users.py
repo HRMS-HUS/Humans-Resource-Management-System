@@ -14,7 +14,7 @@ router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
 @router.get("/me/user", response_model=schemas.User)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def read_users_me(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -24,7 +24,7 @@ async def read_users_me(
     return await users_service.get_user_by_id(db, current_user.user_id)
 
 @router.put("/me/user/change-password", response_model=schemas.User)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def change_password(
     request: Request,
     password_change: schemas.ChangePassword = Query(...),

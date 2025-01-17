@@ -63,7 +63,7 @@ async def get_holiday_by_id(db: AsyncSession, holiday_id: str):
         await logger.error("Get holiday by id failed", error=e)
         raise
 
-async def get_all_holidays(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[models.DaysHoliday]:
+async def get_all_holidays(db: AsyncSession, skip: int = 0, limit: int = 200) -> List[models.DaysHoliday]:
     try:
         result = await db.execute(
             select(models.DaysHoliday).offset(skip).limit(limit)

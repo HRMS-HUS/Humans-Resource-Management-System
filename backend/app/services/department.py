@@ -127,7 +127,7 @@ async def get_department_by_id(db: AsyncSession, department_id: str):
         raise
 
 
-async def get_all_departments(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[models.Department]:
+async def get_all_departments(db: AsyncSession, skip: int = 0, limit: int = 200) -> List[models.Department]:
     try:
         result = await db.execute(
             select(models.Department).offset(skip).limit(limit)
@@ -219,7 +219,8 @@ async def get_user_department(db: AsyncSession, user_id: int):
             response = {
                 "department_id": department.department_id,
                 "name": department.department_name,
-                "description": department.description if hasattr(department, 'description') else None,
+                "contact_email": department.contact_email,
+                "location": department.location,
                 "manager_id": department.manager_id,
                 "manager": {
                     "user_id": manager.user_id,

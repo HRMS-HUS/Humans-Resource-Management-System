@@ -94,33 +94,6 @@ async def decode_access_token(token: str):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-# async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
-#     try:
-#         # Decode the token to get the username
-#         user_id = await decode_access_token(token)
-        
-#         # Find user in the database
-#         stmt = select(models_user.Users).where(models_user.Users.user_id == user_id)
-#         result = await db.execute(stmt)
-#         user = result.scalars().first()
-        
-#         if user is None:
-#             raise HTTPException(
-#                 status_code=status.HTTP_401_UNAUTHORIZED,
-#                 detail="User not found",
-#                 headers={"WWW-Authenticate": "Bearer"},
-#             )
-        
-#         return user
-    
-#     except HTTPException as e:
-#         raise e
-#     except Exception:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Invalid credentials",
-#             headers={"WWW-Authenticate": "Bearer"},
-#         )
 
 
 async def get_token(authorization: str = Header(None)):

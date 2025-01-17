@@ -22,7 +22,7 @@ router = APIRouter()
     response_model=schemas.UserInfoResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_user_personal_info(
     request: Request,
     user: schemas.UserInfoCreate = Query(...),
@@ -33,7 +33,7 @@ async def create_user_personal_info(
 
 
 @router.get("/admin/personal_info/{personal_info_id}", response_model=schemas.UserInfoResponse)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_personal_info_by_id(
     request: Request,
     personal_info_id: str = Path(..., description="Personal Info ID to retrieve"),
@@ -47,7 +47,7 @@ async def get_personal_info_by_id(
 
 
 @router.get("/admin/personal_info/user/{user_id}", response_model=schemas.UserInfoResponse)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_personal_info_by_user_id(
     request: Request,
     user_id: str = Path(..., description="User ID to retrieve personal info"),
@@ -59,7 +59,7 @@ async def get_personal_info_by_user_id(
 
 
 @router.put("/admin/personal_info/{personal_info_id}", response_model=schemas.UserInfoResponse)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_personal_info(
     request: Request,
     data: schemas.UserInfoUpdate = Query(...),
@@ -84,38 +84,9 @@ async def update_personal_info(
             detail=str(e)
         )
 
-@router.put("/admin/personal_info/{personal_info_id}/photo", response_model=schemas.UserInfoResponse)
-@limiter.limit("5/minute")
-async def update_profile_photo(
-    request: Request,
-    file: UploadFile = File(...),
-    personal_info_id: str = Path(...),
-    db: AsyncSession = Depends(get_db),
-    current_user: models.Users = Depends(jwt.get_current_admin),
-):
-    try:
-        existing_info = await services.get_user_personal_info_by_id(db, personal_info_id)
-        if not existing_info:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Personal info not found"
-            )
-        
-        photo_url = await upload_photo(file)
-        photo_data = schemas.UserInfoPhotoUpdate(photo_url=photo_url)
-        
-        updated_user = await services.update_user_personal_info_photo(db, personal_info_id, photo_data)
-        return updated_user
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
 
 @router.delete("/admin/personal_info/{personal_info_id}")
-@limiter.limit("3/minute")
+@limiter.limit("20/minute")
 async def delete_personal_info(
     request: Request,
     personal_info_id: str = Path(..., description="Personal Info ID to delete"),
@@ -127,11 +98,11 @@ async def delete_personal_info(
 
 
 @router.get("/admin/personal_info", response_model=List[schemas.UserInfoResponse])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_all_personal_info(
     request: Request,
     skip: int = Query(0, description="Number of records to skip"),
-    limit: int = Query(100, description="Maximum number of records to return"),
+    limit: int = Query(200, description="Maximum number of records to return"),
     db: AsyncSession = Depends(get_db),
     current_user: models.Users = Depends(jwt.get_current_admin),
 ):
@@ -142,7 +113,7 @@ async def get_all_personal_info(
 
 
 @router.get("/admin/users/department/{department_id}", response_model=List[schemas.UserInfoResponse])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_users_by_department(
     request: Request,
     department_id: str = Path(..., description="Department ID to get users from"),

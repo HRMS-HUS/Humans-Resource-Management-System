@@ -19,7 +19,7 @@ router = APIRouter()
     response_model=schemas.UserFinancialInfoResponse,
     status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_financial_info(
     request: Request,
     financial: schemas.UserFinancialInfoCreate = Query(...),
@@ -32,7 +32,7 @@ async def create_financial_info(
     "/admin/financial_info/{financial_info_id}",
     response_model=schemas.UserFinancialInfoResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_financial_info(
     request: Request,
     financial_info_id: str = Path(...),
@@ -45,11 +45,11 @@ async def get_financial_info(
     "/admin/financial_info",
     response_model=List[schemas.UserFinancialInfoResponse]
 )
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_all_financial_info(
     request: Request,
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 200,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(jwt.get_current_admin)
 ):
@@ -59,7 +59,7 @@ async def get_all_financial_info(
     "/admin/financial_info/{financial_info_id}",
     response_model=schemas.UserFinancialInfoResponse
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_financial_info(
     request: Request,
     financial_info_id: str = Path(...),
@@ -82,7 +82,7 @@ async def delete_financial_info(
     return await services.delete_financial_info(db, financial_info_id)
 
 @router.get("/admin/financial_info/user/{user_id}", response_model=schemas.UserFinancialInfoResponse)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_financial_info_by_user_id(
     request: Request,
     user_id: str = Path(...),

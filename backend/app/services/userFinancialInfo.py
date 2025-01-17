@@ -139,7 +139,7 @@ async def get_financial_info_by_id(db: AsyncSession, financial_info_id: str):
 
 
 async def get_all_financial_info(
-    db: AsyncSession, skip: int = 0, limit: int = 100
+    db: AsyncSession, skip: int = 0, limit: int = 200
 ) -> List[models.UserFinancialInfo]:
     try:
         result = await db.execute(
