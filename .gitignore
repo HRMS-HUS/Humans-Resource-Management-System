@@ -1,0 +1,11 @@
+.env
+**/__pycache__/
+*.ini
+env.py
+script.py.mako
+data
+admin_hr_management
+frontend
+backend.7z
+package.json
+nginx.conf
