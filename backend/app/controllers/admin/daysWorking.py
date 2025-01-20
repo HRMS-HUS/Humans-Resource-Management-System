@@ -13,19 +13,6 @@ limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 
-# @router.post(
-#     "/admin/working",
-#     response_model=schemas.DaysWorkingResponse,
-#     status_code=status.HTTP_201_CREATED
-# )
-# @limiter.limit("5/minute")
-# async def create_working_day(
-#     request: Request,
-#     working: schemas.DaysWorkingCreate = Query(...),
-#     db: AsyncSession = Depends(get_db),
-#     current_user: dict = Depends(jwt.get_current_admin)
-# ):
-#     return await services.create_working_day(working, db)
 
 @router.put(
     "/admin/working/{working_id}",

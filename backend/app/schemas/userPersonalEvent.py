@@ -12,11 +12,11 @@ class UserPersonalEventBase(BaseModel):
     event_start_date: Optional[date] = None
     event_end_date: Optional[date] = None
 
-    # @validator('event_end_date')
-    # def check_dates(cls, v, values):
-    #     if 'event_start_date' in values:
-    #         validate_event_dates(values['event_start_date'], v)
-    #     return v
+    @validator('event_end_date')
+    def check_dates(cls, v, values):
+        if 'event_start_date' in values:
+            validate_event_dates(values['event_start_date'], v)
+        return v
 
 class UserPersonalEventCreate(UserPersonalEventBase):
     pass
@@ -27,11 +27,11 @@ class UserPersonalEventUpdate(BaseModel):
     event_start_date: Optional[date] = None
     event_end_date: Optional[date] = None
 
-    # @validator('event_end_date')
-    # def check_dates(cls, v, values):
-    #     if 'event_start_date' in values:
-    #         validate_event_dates(values['event_start_date'], v)
-    #     return v
+    @validator('event_end_date')
+    def check_dates(cls, v, values):
+        if 'event_start_date' in values:
+            validate_event_dates(values['event_start_date'], v)
+        return v
 
 class UserPersonalEventResponse(UserPersonalEventBase):
     event_id: str

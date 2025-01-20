@@ -217,6 +217,7 @@ async def get_all_users(
     status: Optional[models.StatusEnum] = None
 ) -> List[models.Users]:
     try:
+        # Create base query
         query = select(models.Users)
         
         if role is not None:
@@ -224,6 +225,9 @@ async def get_all_users(
         
         if status is not None:
             query = query.filter(models.Users.status == status)
+        
+        # Add ordering by user_id as integer
+        query = query.order_by(text("CAST(user_id AS INTEGER)"))
         
         query = query.offset(skip).limit(limit)
         

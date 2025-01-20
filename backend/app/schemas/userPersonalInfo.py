@@ -21,17 +21,17 @@ class UserInfoBase(BaseModel):
     department_id: Optional[str] = None
     photo_url: Optional[str] = None
 
-    # @validator('phone')
-    # def check_phone(cls, v):
-    #     if v is not None:  # Only validate if value is provided
-    #         validate_phone(v)
-    #     return v
+    @validator('phone')
+    def check_phone(cls, v):
+        if v is not None:  # Only validate if value is provided
+            validate_phone(v)
+        return v
 
-    # @validator('citizen_card')
-    # def check_citizen_card(cls, v):
-    #     if v is not None:  # Only validate if value is provided
-    #         validate_citizen_card(v)
-    #     return v
+    @validator('citizen_card')
+    def check_citizen_card(cls, v):
+        if v is not None:  # Only validate if value is provided
+            validate_citizen_card(v)
+        return v
 
 class UserInfoCreate(UserInfoBase):
     pass
@@ -49,17 +49,17 @@ class UserInfoUpdate(BaseModel):
     country: Optional[str] = None
     department_id: Optional[str] = None
 
-    # @validator('phone')
-    # def check_phone(cls, v):
-    #     if v is not None:  # Only validate if value is provided
-    #         validate_phone(v)
-    #     return v
+    @validator('phone')
+    def check_phone(cls, v):
+        if v is not None:  # Only validate if value is provided
+            validate_phone(v)
+        return v
 
-    # @validator('citizen_card')
-    # def check_citizen_card(cls, v):
-    #     if v is not None:  # Only validate if value is provided
-    #         validate_citizen_card(v)
-    #     return v
+    @validator('citizen_card')
+    def check_citizen_card(cls, v):
+        if v is not None:  # Only validate if value is provided
+            validate_citizen_card(v)
+        return v
 
 class UserInfoUpdateNoDepartment(BaseModel):
     fullname: Optional[str] = None
@@ -73,17 +73,17 @@ class UserInfoUpdateNoDepartment(BaseModel):
     city: Optional[str] = None
     country: Optional[str] = None
 
-    # @validator('phone')
-    # def check_phone(cls, v):
-    #     if v is not None:  # Only validate if value is provided
-    #         validate_phone(v)
-    #     return v
+    @validator('phone')
+    def check_phone(cls, v):
+        if v is not None:  # Only validate if value is provided
+            validate_phone(v)
+        return v
 
-    # @validator('citizen_card')
-    # def check_citizen_card(cls, v):
-    #     if v is not None:  # Only validate if value is provided
-    #         validate_citizen_card(v)
-    #     return v
+    @validator('citizen_card')
+    def check_citizen_card(cls, v):
+        if v is not None:  # Only validate if value is provided
+            validate_citizen_card(v)
+        return v
 
 class UserInfoPhotoUpdate(BaseModel):
     photo_url: Optional[str] = None
