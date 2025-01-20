@@ -73,7 +73,7 @@ Access the design prototype [here](https://www.figma.com/design/tbEnJE5uA1bJqBOZ
 ## 📊 Entity Relationship Diagram (ERD)
 Below is the ERD for the database structure. It outlines the relationships between entities such as Users, User_personal_info, User_personal_finance, Department,... 
 
-![ERD Diagram](./docs/erd.drawio (1).png)
+![ERD Diagram](./docs/erd_drawio.png)
 
 ---
 
