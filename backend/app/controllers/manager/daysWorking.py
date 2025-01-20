@@ -107,38 +107,3 @@ async def get_user_working_days(
         )
     
     return await services.get_working_day_by_user_id(db, user_id, skip, limit)
-
-# @router.get("/manager/attendance", response_model=List[schemas.DaysWorkingResponse])
-# @limiter.limit("10/minute")
-# async def get_department_attendance(
-#     request: Request,
-#     skip: int = 0,
-#     limit: int = 100,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: models.Users = Depends(jwt.get_current_manager)
-# ):
-#     await validate_manager_role(db, current_user.user_id)
-#     return await services.get_all_working_days(db, skip, limit)
-
-# @router.get("/manager/attendance/{working_id}", response_model=schemas.DaysWorkingResponse)
-# @limiter.limit("10/minute")
-# async def get_attendance_record(
-#     request: Request,
-#     working_id: str = Path(...),
-#     db: AsyncSession = Depends(get_db),
-#     current_user: models.Users = Depends(jwt.get_current_manager)
-# ):
-#     await validate_manager_role(db, current_user.user_id)
-#     return await services.get_working_day_by_id(db, working_id)
-
-# @router.put("/manager/attendance/{working_id}", response_model=schemas.DaysWorkingResponse)
-# @limiter.limit("5/minute")
-# async def update_attendance_record(
-#     request: Request,
-#     working_id: str = Path(...),
-#     working: schemas.DaysWorkingUpdate = Query(...),
-#     db: AsyncSession = Depends(get_db),
-#     current_user: models.Users = Depends(jwt.get_current_manager)
-# ):
-#     await validate_manager_role(db, current_user.user_id)
-#     return await services.update_working_day(db, working_id, working)

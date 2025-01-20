@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete, update, cast, Integer
 from fastapi import HTTPException, status
 from ..models import department as models
 from ..models import userPersonalInfo as models_user_info
@@ -130,7 +130,10 @@ async def get_department_by_id(db: AsyncSession, department_id: str):
 async def get_all_departments(db: AsyncSession, skip: int = 0, limit: int = 200) -> List[models.Department]:
     try:
         result = await db.execute(
-            select(models.Department).offset(skip).limit(limit)
+            select(models.Department)
+            .order_by(models.Department.department_id.cast(Integer))
+            .offset(skip)
+            .limit(limit)
         )
         departments = result.scalars().all()
         await logger.info("Retrieved all departments", {"count": len(departments), "skip": skip, "limit": limit})
