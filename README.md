@@ -19,7 +19,8 @@ This project is a **Human Resource Management System** (HRMS) designed to stream
 ## 🏗️ Tech Stack
 - **Backend:** Python, FastAPI, SQLAlchemy
 - **Frontend:** React.js, Vite
-- **Database:** PostgreSQL
+- **Styling:** TailwindCSS
+- **Database:** PostgreSQL, Redis
 - **Authentication:** JWT + Gmail OTP (Two-Factor Authentication)
 - **Containerization:** Docker
 
@@ -30,36 +31,61 @@ This project is a **Human Resource Management System** (HRMS) designed to stream
 .
 ├── backend
 │   ├── alembic             # Database migrations
+│   ├── README              # Backend documentation
 │   ├── app                 # Main backend application
+│   │   ├── api             # API endpoints
+│   │   ├── configs         # Configuration files
+│   │   ├── controllers     # Business logic
+│   │   ├── models          # Database models
+│   │   ├── providers       # External integrations
+│   │   ├── routers         # API routers
+│   │   ├── schemas         # Pydantic schemas
+│   │   ├── services        # Service layer
+│   │   ├── templates       # HTML templates
+│   │   ├── utils           # Utility functions
+│   │   ├── validations     # Input validation logic
+│   │   └── main.py         # Entry point for the backend
 │   ├── backend.Dockerfile  # Dockerfile for backend service
 │   ├── docker-compose.yml  # Docker Compose file for backend
+│   ├── .dockerignore       # Docker ignore rules for backend
 │   ├── .env.example        # Example environment variables
-│   ├── requirements.txt    # Python dependencies
+│   ├── .gitignore          # Git ignore rules for backend
+│   └── requirements.txt    # Python dependencies
 ├── design
 │   ├── .gitkeep            # Placeholder for design assets
 ├── docs
-│   ├── erd-diagram.png     # Entity-Relationship Diagram
-│   └── figma-design.png    # Link or snapshot of the Figma design
+│   ├── erd_drawio.png      # Entity-Relationship Diagram
+│   └── README.md           # Documentation for the project
 ├── frontend
-│   ├── public              # Static assets for the frontend
-│   ├── src                 # React source files
-│   ├── Dockerfile          # Dockerfile for frontend service
-│   ├── docker-compose.yml  # Docker Compose file for frontend
-│   ├── tailwind.config.js  # TailwindCSS configuration
-│   ├── vite.config.js      # Vite configuration
-│   ├── package.json        # Frontend dependencies
-├── admin_hr_management
-│   ├── public              # Static assets for admin panel
-│   ├── src                 # React source files
-│   ├── Dockerfile          # Dockerfile for admin panel service
-│   ├── docker-compose.yml  # Docker Compose file for admin panel
-│   ├── jsconfig.json       # JavaScript configuration
-│   ├── package.json        # Admin panel dependencies
+│   ├── User                # User-facing React application
+│   │   ├── public          # Static assets for the frontend
+│   │   ├── src             # React source files
+│   │   ├── Dockerfile      # Dockerfile for frontend service
+│   │   ├── docker-compose.yml  # Docker Compose file for frontend
+│   │   ├── eslint.config.js    # ESLint configuration
+│   │   ├── index.html      # HTML entry point
+│   │   ├── package-lock.json   # Lockfile for npm dependencies
+│   │   ├── package.json    # Frontend dependencies
+│   │   ├── tailwind.config.js  # TailwindCSS configuration
+│   │   └── vite.config.js  # Vite configuration
+│   ├── admin_hr_management # Admin-facing React application
+│   │   ├── public          # Static assets for admin panel
+│   │   ├── src             # React source files
+│   │   ├── Dockerfile      # Dockerfile for admin panel service
+│   │   ├── docker-compose.yml  # Docker Compose file for admin panel
+│   │   ├── eslint.config.js    # ESLint configuration
+│   │   ├── index.html      # HTML entry point
+│   │   ├── jsconfig.json   # JavaScript configuration
+│   │   ├── package-lock.json   # Lockfile for npm dependencies
+│   │   ├── package.json    # Admin panel dependencies
+│   │   └── vite.config.js  # Vite configuration
 ├── nginx
+│   ├── nginx.conf          # NGINX configuration file
 │   ├── Dockerfile          # Dockerfile for NGINX reverse proxy
 │   ├── docker-compose.yml  # Docker Compose file for NGINX
 │   ├── README.md           # NGINX configuration details
 │   ├── .dockerignore       # Docker ignore rules for NGINX
+│   └── .gitignore          # Git ignore rules for NGINX
 └── README.md               # Project documentation
 ```
 
