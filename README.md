@@ -115,10 +115,5 @@ API documentation is available [here]([./docs/api-documentation.md](https://docu
 
 ---
 
-## 📬 Contribution Guidelines
-We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
----
-
 ## 📜 License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
